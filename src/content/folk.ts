@@ -56,6 +56,8 @@ export type Doing =
   | 'counting'
   | 'building'
   | 'prowling'
+  /** Up on the common, being followed by animals that decided about you. */
+  | 'herding'
   | 'gone';
 
 export interface FolkLook {
@@ -176,6 +178,8 @@ export const FOLK: Record<string, FolkLook> = {
   brother: { r: 10, y: 27, hair: 'crop', prop: 'bottle', cloth: 'work', doing: 'pouring' },
   aunt: { r: 9, y: 27, hair: 'kerchief', prop: 'bell', cloth: 'poor', doing: 'resting' },
   digger: { r: 10, y: 26, hair: 'cap', prop: 'spade', cloth: 'work', doing: 'digging' },
+  /** Small head, low on the shoulders, a stick and nothing else: he is sixteen. */
+  odo: { r: 8, y: 29, hair: 'crop', prop: 'stick', cloth: 'poor', doing: 'herding' },
   wolf: { r: 10, y: 26, cloth: 'work', doing: 'prowling' },
 };
 
@@ -194,23 +198,40 @@ export function folkLook(character: string | undefined): FolkLook {
  *
  * You carry the seal, because on the second night the others voted and it was
  * you. The four behind you carry what people carry when they are leaving
- * somewhere for good: a spade, a basket, a stick and a bottle.
+ * somewhere for good: a spade, a basket, a stick, a bottle.
+ *
+ * Which five, though, is the reign's own. These are the tables the seed picks
+ * out of, so two reigns do not walk out of the old place wearing each other's
+ * faces, and the head you are given at the founding is the head on your own
+ * row at the reckoning forty years later. The picking is
+ * `foundingLooks()` in `engine/folk.ts`, because a seed going in and a shape
+ * coming out is arithmetic and belongs there, not here.
  */
-export const YOU_LOOK: FolkLook = {
-  r: 9.5,
-  y: 26,
-  hair: 'crop',
-  seal: true,
-  cloth: 'work',
-  doing: 'writing',
-};
 
-export const FOUNDER_LOOKS: FolkLook[] = [
-  { r: 9.5, y: 26, hair: 'kerchief', prop: 'basket', cloth: 'poor', doing: 'foraging' },
-  { r: 10, y: 27, hair: 'cap', prop: 'spade', cloth: 'work', doing: 'digging' },
-  { r: 9, y: 26, hair: 'hood', prop: 'stick', cloth: 'poor', doing: 'hauling' },
-  { r: 10, y: 27, hair: 'bald', prop: 'bottle', cloth: 'work', doing: 'mending' },
+/** Head size and how high it sits. Five different people, not five sizes of one. */
+export const FOUNDING_HEADS: readonly (readonly [number, number])[] = [
+  [9, 25], [9.5, 26], [10, 26], [10.5, 27], [9, 27], [10, 27.5],
 ];
+
+/** Six heads of hair for five people, so nobody is left with the last one. */
+export const FOUNDING_HAIR: readonly FolkHair[] = [
+  'crop', 'long', 'bald', 'hood', 'cap', 'kerchief',
+];
+
+/** What people carry when they are leaving somewhere for good. */
+export const LEAVING_KIT: readonly FolkProp[] = [
+  'basket', 'spade', 'stick', 'bottle', 'bell', 'reins',
+];
+
+/** What the thing in their hands says they will be doing by the second spring. */
+export const KIT_DOING: Record<string, Doing> = {
+  basket: 'foraging',
+  spade: 'digging',
+  stick: 'hauling',
+  bottle: 'tending',
+  bell: 'preaching',
+  reins: 'riding',
+};
 
 /**
  * What each scene leaves a person doing afterwards.
@@ -256,6 +277,7 @@ export const CASE_DOING: Record<string, Doing> = {
   tr_accused: 'mending',
   tr_accused_wrong: 'writing',
   tr_accused_again: 'mending',
+  w_goats: 'herding',
   w_wolf: 'prowling',
   w_wolf_dog: 'prowling',
   w_wolf_back: 'prowling',
@@ -285,6 +307,9 @@ export const CHOICE_DOING: Record<string, Doing> = {
   'v1_idle_hand:his_own_field': 'digging',
   // the one answer that gives him a job rather than a verdict
   'v1_idle_hand:headman_decides': 'building',
+  // a goat in every yard is a goat in every yard, and the boy who walked them
+  // has his basket back and the beeches to take it to
+  'w_goats:split_them': 'foraging',
   // the basket burns at noon, so she is back out in the beeches by autumn
   'd1_pies:barred': 'foraging',
   'd1_pies:fine_anyway': 'foraging',
@@ -335,6 +360,8 @@ export const WINTER_DOING: Partial<Record<Doing, Doing>> = {
   running: 'hauling',
   // a market row in a blizzard is two boards and nobody
   trading: 'milling',
+  // the goats are in, and somebody still has to carry fodder to them
+  herding: 'hauling',
 };
 
 /**
@@ -371,6 +398,7 @@ export const AGES: Record<string, number> = {
   runner: 11,
   brother: 40,
   digger: 48,
+  odo: 16,
   crowd: 0,
   monarch: 0,
   wolf: 0,
@@ -399,6 +427,7 @@ export const DOING_LINES: Record<Doing, string> = {
   counting: 'Counting something that has been counted already.',
   building: 'Up a frame, with a hammer.',
   prowling: 'Out past the last roof, moving.',
+  herding: 'Up on the common, with the goats behind him.',
   gone: 'Not here any more. The window was left open.',
 };
 
@@ -440,5 +469,7 @@ export const STATIONS: Record<Doing, { x: number; y: number; span: number }> = {
   counting: { x: 1030, y: 362, span: 8 },
   building: { x: 896, y: 332, span: 14 },
   prowling: { x: 1180, y: 250, span: 76 },
+  // the top of the common, above the goats and well clear of the card
+  herding: { x: 206, y: 556, span: 46 },
   gone: { x: 0, y: 0, span: 0 },
 };

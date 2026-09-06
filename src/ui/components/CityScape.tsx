@@ -662,14 +662,58 @@ export function CityScape({
           <rect width="20" height="12" fill={paint.fieldRow} />
           <rect width="20" height="2.5" fill={paint.fieldSoil} />
         </pattern>
-        <pattern id="flowers" width="76" height="54" patternUnits="userSpaceOnUse">
-          <circle cx="9" cy="13" r="2.3" fill="#f3ecd2" opacity=".9" />
-          <circle cx="39" cy="7" r="2" fill="#e3aab0" opacity=".85" />
-          <circle cx="59" cy="30" r="2.3" fill="#ecd188" opacity=".9" />
-          <circle cx="23" cy="39" r="1.8" fill="#f3ecd2" opacity=".85" />
-          <circle cx="51" cy="46" r="1.7" fill="#e3aab0" opacity=".8" />
-          <circle cx="69" cy="11" r="1.6" fill="#f3ecd2" opacity=".8" />
-          <circle cx="4" cy="47" r="1.7" fill="#ecd188" opacity=".85" />
+        {/* The flowers on the meadow.
+            Seven dots in a 76 by 54 tile is a grid at any distance a player
+            actually looks from, and the near meadow is the widest flat thing
+            on the screen, so it read as wallpaper: the same handful of dots,
+            nineteen times across. Two tiles now, one big and one small and
+            turned seventeen degrees off it, both scattered rather than spaced.
+            Their repeats are coprime and out of alignment, so what a meadow
+            wide of it comes to is 233 by 167 of dots that never line up. */}
+        <pattern id="flowers" width="233" height="167" patternUnits="userSpaceOnUse">
+          <circle cx="21.8" cy="12.9" r="1.63" fill="#e3aab0" opacity="0.9" />
+          <circle cx="52.8" cy="7" r="1.89" fill="#ecd188" opacity="0.87" />
+          <circle cx="100.5" cy="22.9" r="2.42" fill="#e3aab0" opacity="0.67" />
+          <circle cx="171.8" cy="26.4" r="2.5" fill="#f3ecd2" opacity="0.79" />
+          <circle cx="6" cy="60.6" r="2.44" fill="#f3ecd2" opacity="0.68" />
+          <circle cx="62.4" cy="55.8" r="1.71" fill="#e3aab0" opacity="0.72" />
+          <circle cx="141.6" cy="59.8" r="2.15" fill="#e3aab0" opacity="0.79" />
+          <circle cx="167.2" cy="42.1" r="2.15" fill="#f3ecd2" opacity="0.79" />
+          <circle cx="219.5" cy="46.4" r="1.83" fill="#e3aab0" opacity="0.67" />
+          <circle cx="63.7" cy="79.2" r="2.26" fill="#ecd188" opacity="0.78" />
+          <circle cx="91.8" cy="86.7" r="2.3" fill="#f3ecd2" opacity="0.66" />
+          <circle cx="161.6" cy="76.9" r="2.48" fill="#e3aab0" opacity="0.76" />
+          <circle cx="218.1" cy="90.2" r="1.68" fill="#e3aab0" opacity="0.83" />
+          <circle cx="22.7" cy="105.2" r="1.8" fill="#f3ecd2" opacity="0.67" />
+          <circle cx="95.2" cy="127" r="2.42" fill="#ecd188" opacity="0.86" />
+          <circle cx="147" cy="113.8" r="2.28" fill="#ecd188" opacity="0.83" />
+          <circle cx="165.3" cy="108.7" r="1.58" fill="#e3aab0" opacity="0.83" />
+          <circle cx="226.7" cy="116" r="1.95" fill="#ecd188" opacity="0.78" />
+          <circle cx="12.9" cy="138.3" r="1.98" fill="#e3aab0" opacity="0.87" />
+          <circle cx="44.6" cy="138.4" r="2.49" fill="#e3aab0" opacity="0.88" />
+          <circle cx="105.5" cy="152" r="2.1" fill="#f3ecd2" opacity="0.66" />
+          <circle cx="163.7" cy="153" r="1.81" fill="#ecd188" opacity="0.83" />
+          <circle cx="223.8" cy="141.2" r="1.99" fill="#ecd188" opacity="0.87" />
+        </pattern>
+        <pattern
+          id="flowers-fine"
+          width="149"
+          height="113"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(17)"
+        >
+          <circle cx="63.9" cy="11.2" r="1.99" fill="#f3ecd2" opacity="0.81" />
+          <circle cx="95.1" cy="6.6" r="1.34" fill="#f3ecd2" opacity="0.62" />
+          <circle cx="44.4" cy="33.9" r="1.57" fill="#e3aab0" opacity="0.64" />
+          <circle cx="90" cy="33.2" r="1.33" fill="#f3ecd2" opacity="0.81" />
+          <circle cx="134.4" cy="51" r="1.94" fill="#e3aab0" opacity="0.65" />
+          <circle cx="20.8" cy="72.1" r="1.58" fill="#e3aab0" opacity="0.9" />
+          <circle cx="43.9" cy="77.7" r="1.52" fill="#f3ecd2" opacity="0.67" />
+          <circle cx="83.3" cy="77.7" r="1.44" fill="#f3ecd2" opacity="0.87" />
+          <circle cx="119.9" cy="67.7" r="1.5" fill="#f3ecd2" opacity="0.73" />
+          <circle cx="13.4" cy="89.6" r="1.95" fill="#ecd188" opacity="0.87" />
+          <circle cx="102.6" cy="108.9" r="1.64" fill="#e3aab0" opacity="0.62" />
+          <circle cx="117.1" cy="91" r="1.54" fill="#ecd188" opacity="0.74" />
         </pattern>
       </defs>
 
@@ -913,6 +957,18 @@ export function CityScape({
         <>
           <polygon points="0,540 860,540 860,600 716,820 0,820" fill="url(#flowers)" opacity=".32" />
           <polygon points="900,616 1440,576 1440,820 790,820" fill="url(#flowers)" opacity=".32" />
+          {/* and the small turned one over the top of both, which is what
+              stops either repeat from being findable */}
+          <polygon
+            points="0,540 860,540 860,600 716,820 0,820"
+            fill="url(#flowers-fine)"
+            opacity=".26"
+          />
+          <polygon
+            points="900,616 1440,576 1440,820 790,820"
+            fill="url(#flowers-fine)"
+            opacity=".26"
+          />
         </>
       )}
       {paint.meadow === 'snow' && (

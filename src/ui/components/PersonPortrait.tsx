@@ -8,8 +8,9 @@
  * the hood you pick out of a street at a tenth of it.
  */
 
-import { FOUNDER_LOOKS, YOU_LOOK, folkLook } from '../../content/folk';
+import { folkLook } from '../../content/folk';
 import type { FolkLook } from '../../content/folk';
+import { foundingLooks } from '../../engine/folk';
 
 const INK = 'var(--color-parchment-dim)';
 const SOFT = 'var(--color-ink-line)';
@@ -344,20 +345,25 @@ function WolfPortrait({ size, grim }: { size: number; grim: boolean }) {
  * is the same ink, the same heads and the same props as every face the reign
  * will put in front of you afterwards, which is the only reason it is worth
  * drawing: the game opens on its own people rather than on its own logo.
+ *
+ * Who the five are is the seed's, so the first thing on the first screen is
+ * already this reign and not the last one. The same seed draws your head on
+ * your own row at the reckoning, which is the point: it was one person.
  */
-export function FoundingPortrait({ size = 96 }: { size?: number }) {
+export function FoundingPortrait({ seed, size = 96 }: { seed: number; size?: number }) {
   const small = Math.round(size * 0.6);
+  const { you, others } = foundingLooks(seed);
   return (
     <div className="flex items-end justify-center">
-      {FOUNDER_LOOKS.slice(0, 2).map((look, i) => (
+      {others.slice(0, 2).map((look, i) => (
         <div key={`l${i}`} className={i === 0 ? '-mr-3' : '-mr-4'}>
           <PersonPortrait look={look} size={small} dim />
         </div>
       ))}
       <div className="relative z-10 rounded-xl ring-2 ring-seal/70">
-        <PersonPortrait look={YOU_LOOK} size={size} />
+        <PersonPortrait look={you} size={size} />
       </div>
-      {FOUNDER_LOOKS.slice(2).map((look, i) => (
+      {others.slice(2).map((look, i) => (
         <div key={`r${i}`} className={i === 0 ? '-ml-4' : '-ml-3'}>
           <PersonPortrait look={look} size={small} dim />
         </div>

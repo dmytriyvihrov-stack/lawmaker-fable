@@ -3,6 +3,7 @@ import { monarchOf } from '../../engine/monarch';
 import type { PhilTag } from '../../engine/types';
 import { ChoiceButton } from '../components/ChoiceButton';
 import { DevEditTrigger, DevText } from '../components/DevText';
+import { MonarchPortrait } from '../components/MonarchPortrait';
 import { FoundingPortrait } from '../components/PersonPortrait';
 import { useDevEdit } from '../dev/useDevEdit';
 
@@ -55,14 +56,17 @@ export function Intro({ seed, dev = false, onDeclare }: Props) {
     <div className="mx-auto w-full max-w-3xl px-5 py-7">
       {/* the five of you, on the day, before anything is decided */}
       <section className="text-center">
-        <FoundingPortrait size={92} />
+        <FoundingPortrait seed={seed} size={92} />
         <h1 className="mt-4 text-[26px] leading-tight tracking-wide text-parchment">
           {brief.heading}
         </h1>
         <p className="mt-1 text-[10px] uppercase tracking-[0.22em] text-parchment-dim">
           {brief.kicker}
         </p>
-        <p className="mt-2 text-[12px] italic text-hair">{brief.caption}</p>
+        {/* two sentences about the people in the picture, and no more */}
+        <p className="mx-auto mt-3 max-w-xl text-[14px] italic leading-relaxed text-hair">
+          <DevText id="intro:brief:caption" text={brief.caption} dev={dev} />
+        </p>
       </section>
 
       {/* what the whole reign is for, said once, before anybody talks */}
@@ -70,12 +74,15 @@ export function Intro({ seed, dev = false, onDeclare }: Props) {
         <DevText id="intro:brief:charge" text={brief.charge} dev={dev} />
       </p>
 
-      {/* and then the crown, who has come a long way to ask one thing */}
-      <section className="mt-6 rounded-lg border border-ink-line bg-ink-soft p-4">
+      {/* and then the crown, who has come a long way to ask one thing: a
+          picture of this one, their name, why they are here, and the one thing
+          about them that will bend the whole reign */}
+      <section className="mt-5 rounded-lg border border-ink-line bg-ink-soft p-4">
         <header className="mb-3 flex items-center gap-3">
-          <span aria-hidden className="text-3xl leading-none">
-            {monarch.emoji}
-          </span>
+          {/* The crown is painted, like everybody else in this game. An emoji
+              here made the one person with an actual portrait the only one
+              without, and five monarchs read as one. */}
+          <MonarchPortrait monarch={monarch} mood={72} size={48} />
           <div className="min-w-0">
             <div className="text-[11px] uppercase tracking-[0.15em] text-parchment-dim">
               {UI.intro.speaker}

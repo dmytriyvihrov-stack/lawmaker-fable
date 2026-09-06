@@ -62,6 +62,7 @@ const POSTURE: Record<Doing, Posture> = {
   counting: 'stand',
   building: 'stand',
   prowling: 'none',
+  herding: 'stand',
   gone: 'none',
 };
 
@@ -90,6 +91,7 @@ const PLACE: Record<Doing, Place> = {
   counting: 'roofs',
   building: 'roofs',
   prowling: 'wood',
+  herding: 'field',
   gone: 'none',
 };
 
@@ -102,7 +104,10 @@ const PLACE: Record<Doing, Place> = {
  */
 export function FolkFigure({ pin, scale = 1 }: { pin: FolkPin; scale?: number }) {
   const look = folkLook(pin.character);
-  const moving = ['hauling', 'running', 'riding', 'ferrying', 'prowling'].includes(pin.doing);
+  // and the one who does not go anywhere so much as get followed there
+  const moving = ['hauling', 'running', 'riding', 'ferrying', 'prowling', 'herding'].includes(
+    pin.doing,
+  );
   return (
     <g transform={`translate(${pin.x} ${pin.y})`} className="town-folk" data-doing={pin.doing}>
       <title>{pin.label}</title>
@@ -253,6 +258,24 @@ function Figure({ look, doing }: { look: FolkLook; doing: Doing }) {
   );
 }
 
+/**
+ * A goat, at the size a person is eight units tall.
+ *
+ * Not the town's `Goat`, which wants the season's palette and is drawn four
+ * times this big. At this size an animal is a body, a leg at each end, a head
+ * on a neck and one horn, and anything more is a smudge.
+ */
+function TinyGoat({ x, s = 1 }: { x: number; s?: number }) {
+  return (
+    <g transform={`translate(${x} 0) scale(${s})`} opacity="0.9">
+      <path d="M-1.9 -1.3 q1.9 -0.8 3.7 0 l0 1.1 q-1.8 0.5 -3.7 0 z" fill={SOFT} />
+      <path d="M-1.4 -0.2 v0.4 M1.2 -0.2 v0.4" stroke={SOFT} strokeWidth="0.45" />
+      <path d="M1.6 -1.4 l1.3 -0.7 l0.4 1 l-1.4 0.6 z" fill={SOFT} />
+      <path d="M2.9 -2.2 q0.8 -0.5 0.4 -1.2" fill="none" stroke={SOFT} strokeWidth="0.35" />
+    </g>
+  );
+}
+
 /** Where the head sits, which is the only thing the posture moves. */
 function headY(posture: Posture): number {
   return posture === 'sit' ? -7.1 : -9.3;
@@ -368,6 +391,15 @@ function Ground({ doing }: { doing: Doing }) {
           <path d="M3.5 -2.6 h1.8 M4.4 -3.4 v1.6" stroke={SOFT} strokeWidth="0.4" />
         </g>
       );
+    case 'herding':
+      // Two of them at his heel and one that has not looked up yet, because
+      // the point of the scene is that they go where he goes.
+      return (
+        <g>
+          <TinyGoat x={4.4} />
+          <TinyGoat x={-6.2} s={0.82} />
+        </g>
+      );
     case 'mending':
       return (
         <g stroke={SOFT} strokeWidth="0.7" fill="none">
@@ -462,6 +494,20 @@ function Hands({ doing, posture, seal }: { doing: Doing; posture: Posture; seal:
     case 'foraging':
       // one hand down at the ground, which is what picking looks like
       return <path d="M-1.6 -5 L-3.4 -1.4" stroke={INK} strokeWidth="0.65" strokeLinecap="round" />;
+    case 'herding':
+      // an arm out low with something in it, which is why they follow him
+      return (
+        <g>
+          <path
+            d="M1.6 -5.2 L3.5 -3.1"
+            stroke={INK}
+            strokeWidth="0.65"
+            strokeLinecap="round"
+            fill="none"
+          />
+          <path d="M3.2 -3.4 q1.1 -1.5 2.1 0 q-1.1 1 -2.1 0 z" fill={bright} opacity="0.85" />
+        </g>
+      );
     case 'milling':
       return (
         <g>

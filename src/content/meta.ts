@@ -85,6 +85,7 @@ export const CHARACTERS: Record<string, { label: string; emoji: string }> = {
   brother: { label: 'Your Brother', emoji: '🍶' },
   aunt: { label: 'Nell', emoji: '🛏️' },
   digger: { label: 'The Digger', emoji: '⛏️' },
+  odo: { label: 'Odo', emoji: '🐐' },
 };
 
 export const STATS: { id: StatId; label: string; emoji: string }[] = [

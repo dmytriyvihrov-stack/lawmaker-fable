@@ -236,7 +236,14 @@ export const CONFIG = {
    * it gives back is the one steady thing in the whole game: somebody who is
    * glad you came home, every year, for as long as they are here.
    */
-  bond: { giftCost: 2, giftEvery: 2, loverCost: 3, loverSanity: 1 },
+  /**
+   * `loverAge` is the one number here that is not a balance decision. The
+   * register knows how old everybody is, because it has known since the year
+   * they walked in, and three of the people who come to the door are children:
+   * Iva is nine, Wat is eleven, Lark is twelve. Nothing else in the game reads
+   * that number before offering to take somebody, and it has to.
+   */
+  bond: { giftCost: 2, giftEvery: 2, loverCost: 3, loverSanity: 1, loverAge: 18 },
 
   /**
    * How fast the years are allowed to go past.

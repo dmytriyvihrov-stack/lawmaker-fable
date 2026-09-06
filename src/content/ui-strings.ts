@@ -14,25 +14,28 @@ export const UI = {
     speaker: 'The Monarch',
     question: 'Who is a good ruler?',
     /**
-     * The one place the game says what it is.
+     * The one place the game says what it is, and it now says it in four
+     * lines instead of six paragraphs.
      *
-     * Everything under this is the Monarch talking, and the Monarch is not
-     * going to tell you what you are for. Three lines: who is in the picture,
-     * what you are holding, and what winning even means here, which is the
-     * question a first screen is actually being asked.
+     * A first screen is read once, standing up, by somebody who does not yet
+     * care. It used to open with three paragraphs of a monarch nobody had met
+     * about a place nobody had seen, and the answers were below the fold. So:
+     * a picture of the five of you and two sentences about them, a picture of
+     * the crown and two sentences about this one in particular, the job in a
+     * line, and then the question. Everything cut from here is said again by
+     * something that happens: the long winter has its own warning, and what
+     * the seal costs is learned the first time it is spent.
      */
     brief: {
       heading: 'The founding',
       kicker: 'Spring. Five of you, and nothing written down anywhere.',
-      caption: 'You, and the four who walked out with you.',
+      caption:
+        'You walked out of the old place together and stopped here, for the water. On the second night the others voted in a field with their hands up, and the seal is yours.',
       charge:
-        'Look after your people. Write good laws, settle what they bring to your door, and raise this hamlet into a town. The place is the only thing that outlasts you, so the place is the legacy.',
+        'Look after them, settle what they bring to your door, and raise this place into a town.',
     },
     lead: [
-      'Five of you walked out of the old place in the spring and stopped here, for the water, and because nobody was standing on it already.',
-      'On the second night the others voted in a field, with their hands up, and it was you. Since then everybody asks you things, and there is nothing to look the answers up in.',
-      'A rider came from the capital with a seal, a stick of wax, and one question: the one the crown asks every place it has only just noticed.',
-      'The old ones say the long winter comes every tenth year. That gives you nine years to decide how this place is going to live.',
+      'A rider has come up from the capital with a stick of wax and one question.',
     ],
     footnote: 'Nothing binds you to this answer. It will be remembered anyway.',
     answers: [

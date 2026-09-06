@@ -108,7 +108,9 @@ export function Register({ state, season, onGift, onTake, onClose }: Props) {
                     ? BOND_UI.giftPoor
                     : take === 'gone'
                       ? BOND_UI.giftGone
-                      : BOND_UI.loverNeeds;
+                      : take === 'child'
+                        ? BOND_UI.loverChild
+                        : BOND_UI.loverNeeds;
 
             return (
               <li

@@ -56,11 +56,11 @@ function schedule(): void {
   if (!quiet) {
     if ((season === 'spring' || season === 'summer') && beat % 3 === 1) cue(ctx, ambience, buffer, 'bird', at + .4, .55);
     if (season === 'autumn') brush(ctx, ambience, buffer, at, 3.5, .09, 3500);
-    if (settled && beat % 4 === 2) {
-      cue(ctx, ambience, buffer, 'wood', at + .3, .30);
-      cue(ctx, ambience, buffer, 'wood', at + .85, .22);
-    }
-    if (settled && beat % 5 === 3) murmur(ctx, ambience, 'crowd', true, at + .3);
+    // A settled place used to knock twice on a fixed beat, which is a clock and
+    // not a village: two dry wooden taps every ten seconds is the one sound a
+    // room notices and cannot stop noticing. What is left is voices, which
+    // wander, and the wind, which does not repeat.
+    if (settled && beat % 3 === 2) murmur(ctx, ambience, 'crowd', true, at + .3);
   }
   beat++;
   nextAt = at + 2.6;

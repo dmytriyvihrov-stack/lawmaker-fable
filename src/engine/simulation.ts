@@ -3,7 +3,7 @@ import { loverOf } from './bonds';
 import { monarchOf } from './monarch';
 import { allTechs, allWorks, findLawOption, getWork } from './registry';
 import { BOND_UI } from '../content/bonds';
-import { DOGS_KEPT, WOLF_FED, type AnimalKeep } from '../content/animals';
+import { DOGS_KEPT, HERD_HIS, HERD_WALKED, WOLF_FED, type AnimalKeep } from '../content/animals';
 import type {
   Effects,
   TechDef,
@@ -369,6 +369,27 @@ export function winterBill(s: GameState): {
 export function animalKeep(s: GameState): AnimalKeep | null {
   if (s.flags.includes('dogs_kept')) return DOGS_KEPT;
   if (s.flags.includes('wolf_kept')) return WOLF_FED;
+  return null;
+}
+
+/**
+ * The herd on the common, and which way it went.
+ *
+ * Read off the log rather than off a flag, the way the town reads what
+ * everybody is doing: the scene is the record, and a ruling that has been made
+ * cannot be unmade, so there is nothing to keep in the save. It stacks with
+ * whatever is at the woodpile, because goats and a dog are not the same
+ * animal and the place feeds both.
+ */
+export function herdKeep(s: GameState): AnimalKeep | null {
+  for (let i = s.log.length - 1; i >= 0; i--) {
+    const entry = s.log[i];
+    if (entry.kind !== 'case' || entry.refId !== 'w_goats') continue;
+    if (entry.choiceId === 'split_them') return null;
+    return entry.choiceId === 'his_herd' || entry.choiceId === 'by_the_law_owned'
+      ? HERD_HIS
+      : HERD_WALKED;
+  }
   return null;
 }
 

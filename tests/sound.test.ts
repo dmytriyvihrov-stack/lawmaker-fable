@@ -106,6 +106,44 @@ describe('settlement audio', () => {
     expect(context.resume.mock.calls.length).toBe(calls);
   });
 
+  /**
+   * The settlement bed used to knock twice on a fixed beat, and a room hears
+   * that as a clock. Nothing in the ambience may be percussive and periodic:
+   * the wind overlaps and the voices wander, and neither of them repeats.
+   */
+  it('never strikes a fixed beat while it is just being a place', async () => {
+    vi.useFakeTimers();
+    vi.resetModules();
+    const { context, sources } = audioMock();
+    const win = new EventTarget();
+    const doc = new EventTarget();
+    Object.assign(doc, { hidden: false });
+    Object.assign(win, { AudioContext: function () { return context; }, setInterval, clearInterval });
+    vi.stubGlobal('window', win);
+    vi.stubGlobal('document', doc);
+    vi.stubGlobal('localStorage', { getItem: () => null, setItem: vi.fn() });
+    const sound = await import('../src/ui/audio/sound');
+    const detach = sound.attach();
+    win.dispatchEvent(new Event('pointerdown'));
+    await Promise.resolve();
+    // a place with people in it, in the season with the most going on
+    sound.environment('summer', false, true);
+
+    for (let beat = 0; beat < 30; beat++) {
+      context.currentTime = beat * 3;
+      vi.advanceTimersByTime(400);
+    }
+
+    // 310 is the wood note, and a wood note is a tap on a table
+    const taps = sources.filter(
+      (source) => source.frequency.setValueAtTime.mock.calls[0]?.[0] === 310,
+    );
+    expect(taps.length, 'the ambience is knocking on something').toBe(0);
+    // and it is not silent either: the wind and the birds are still out there
+    expect(sources.length).toBeGreaterThan(0);
+    detach();
+  });
+
   it('stays playable when storage and audio are unavailable', async () => {
     vi.resetModules();
     vi.stubGlobal('window', Object.assign(new EventTarget(), { setInterval, clearInterval }));

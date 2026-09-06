@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { rand01 } from '../../../engine/rng';
 import type { TownPaint } from './paint';
 
 // The same centreline as the crossing and fishing spots. Bank details are
@@ -127,22 +128,44 @@ export function River({ paint }: { paint: TownPaint }) {
   );
 }
 
-/** Handfuls of grass, with quiet gaps left for the eye and for the cards. */
+/**
+ * Handfuls of grass, with quiet gaps left for the eye and for the cards.
+ *
+ * Placed by a stride and a modulo, these landed on a diagonal lattice: 97
+ * across and 61 down repeats itself in the eye long before it repeats in the
+ * arithmetic, and a meadow with a pattern in it is a carpet. The stride still
+ * spreads them, and then each one is nudged off it. `rand01` with a fixed seed
+ * rather than the reign's, because this is scenery: the same meadow every
+ * time, and no seed can put a tuft in the river.
+ */
+const MEADOW_SEED = 5411;
+
 export function MeadowDetails({ paint }: { paint: TownPaint }) {
   return (
     <g aria-hidden pointerEvents="none">
       {Array.from({ length: 54 }, (_, i) => {
         const right = i % 3 === 0;
-        const x = right ? 1010 + (i * 83) % 420 : 26 + (i * 97) % 570;
-        const y = 555 + (i * 61) % 255;
-        const scale = .7 + (y - 540) / 320;
+        const x = (right ? 1010 + (i * 83) % 420 : 26 + (i * 97) % 570)
+          + Math.round((rand01(MEADOW_SEED, 'tuft-x', i) - .5) * 74);
+        const y = 555 + (i * 61) % 255
+          + Math.round((rand01(MEADOW_SEED, 'tuft-y', i) - .5) * 38);
+        const scale = (.7 + (y - 540) / 320) * (.82 + rand01(MEADOW_SEED, 'tuft-s', i) * .4);
         return (
           <g key={i} transform={`translate(${x} ${y}) scale(${scale})`} opacity={paint.roofSnow ? .24 : .38}>
             <g className={i % 4 === 0 ? 'city-reeds' : undefined} style={{ animationDelay: `-${i % 7}s` } as CSSProperties}>
               <path d="M-5 0 q1 -4 -2 -6 M0 1 q0 -7 2 -10 M4 0 q0 -3 3 -5" fill="none" stroke={paint.roofSnow ? paint.crownFar : paint.crownNear} strokeWidth="1.2" strokeLinecap="round" />
-              {paint.meadow === 'flowers' && i % 3 === 1 && (
-                <g fill={i % 2 ? '#f6e4b0' : '#edc2b8'}>
-                  <circle cx="2" cy="-10" r="2" /><circle cx="-6" cy="-6" r="1.6" />
+              {paint.meadow === 'flowers' && rand01(MEADOW_SEED, 'tuft-bloom', i) > .58 && (
+                <g fill={rand01(MEADOW_SEED, 'tuft-hue', i) > .5 ? '#f6e4b0' : '#edc2b8'}>
+                  <circle
+                    cx={1 + Math.round(rand01(MEADOW_SEED, 'bloom-x', i) * 5)}
+                    cy={-12 + Math.round(rand01(MEADOW_SEED, 'bloom-y', i) * 5)}
+                    r={1.6 + rand01(MEADOW_SEED, 'bloom-r', i) * .8}
+                  />
+                  <circle
+                    cx={-7 + Math.round(rand01(MEADOW_SEED, 'bloom-x2', i) * 5)}
+                    cy={-8 + Math.round(rand01(MEADOW_SEED, 'bloom-y2', i) * 5)}
+                    r={1.2 + rand01(MEADOW_SEED, 'bloom-r2', i) * .7}
+                  />
                 </g>
               )}
             </g>

@@ -10,6 +10,7 @@ import {
   nudgeBond,
 } from '../src/engine/bonds';
 import { chooseCase, chooseWork, giveGift, newGame, takeLover } from '../src/engine/reducer';
+import { agesNow } from '../src/engine/folk';
 import { growthLadder } from '../src/engine/growth';
 import { DEFAULT_PLOT, freePlots, needsPlacement, occupantOf } from '../src/engine/plots';
 import { trendOf, trendSourcesOf } from '../src/engine/simulation';
@@ -234,5 +235,51 @@ describe('the ladder the place climbs by filling up', () => {
     expect(first.boards).toEqual(['culture']);
     expect(second.taken).toBe(true);
     expect(second.boards).toEqual(['army']);
+  });
+});
+
+/**
+ * The register knows how old everybody is. Until now, nothing asked it before
+ * offering to take somebody, and three of the people who come to the door are
+ * children: Iva is nine, Wat eleven, Lark twelve.
+ */
+describe('who can be taken', () => {
+  function met(character: string, caseId: string, year: number): GameState {
+    const s = newGame(11);
+    s.turn = year;
+    s.log = [{ turn: 1, kind: 'case', refId: caseId, choiceId: 'x', tags: [] }];
+    s.bonds = { [character]: { level: 2 } };
+    s.stats.economy = 40;
+    return s;
+  }
+
+  it('never offers a child, whatever the rung says', () => {
+    for (const [character, caseId] of [
+      ['iva', 'd1_pies'],
+      ['lark', 'c1_lark'],
+      ['runner', 'w_race'],
+      ['odo', 'w_goats'],
+    ] as const) {
+      const s = met(character, caseId, 1);
+      expect(bondLevel(s, character), character).toBe(2);
+      expect(loverBlock(s, character), character).toBe('child');
+    }
+  });
+
+  it('and stops saying so on the year it stops being true', () => {
+    // Iva is nine the year she walks in, so the reign has to be long enough
+    const young = met('iva', 'd1_pies', 5);
+    expect(loverBlock(young, 'iva')).toBe('child');
+    const grown = met('iva', 'd1_pies', 14);
+    expect(agesNow(grown).get('iva')).toBe(22);
+    expect(loverBlock(grown, 'iva')).toBeNull();
+  });
+
+  it('leaves the grown ones exactly as they were', () => {
+    const s = met('tam', 'v1_idle_hand', 3);
+    expect(loverBlock(s, 'tam')).toBeNull();
+    // and the rung still decides everything else
+    s.bonds = { tam: { level: 1 } };
+    expect(loverBlock(s, 'tam')).toBe('needs');
   });
 });

@@ -10,6 +10,7 @@ import { computePortrait } from '../../engine/portrait';
 import { MonarchPortrait } from '../components/MonarchPortrait';
 import { FolkIcon } from '../components/Folk';
 import { PLACING_LINES, SCORE_UI, YOU_LOOK } from '../../content/scoreboard';
+import { foundingLooks } from '../../engine/folk';
 import { placing, reignScore, scoreboard } from '../../engine/score';
 import type { GameState } from '../../engine/types';
 
@@ -184,6 +185,11 @@ export function Portrait({ state, onBeginAnew }: Props) {
   const came = placing(rows);
   const monarch = monarchOf(state.seed);
   const epithet = epithetOf(state);
+  /* Your own row wears the head you were given at the founding, over the coat
+     and the quill the job put on you. Forty years is a long time and it was
+     still one person. */
+  const founder = foundingLooks(state.seed).you;
+  const yours = { ...YOU_LOOK, r: founder.r, y: founder.y, hair: founder.hair };
   const [fallbackSvg, setFallbackSvg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -378,8 +384,8 @@ export function Portrait({ state, onBeginAnew }: Props) {
                 {i + 1}
               </span>
               <FolkIcon
-                doing={(row.rival?.look ?? YOU_LOOK).doing}
-                look={row.rival?.look ?? YOU_LOOK}
+                doing={(row.rival?.look ?? yours).doing}
+                look={row.rival?.look ?? yours}
                 size={40}
               />
               <span className="min-w-0 flex-1">

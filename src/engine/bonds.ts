@@ -1,5 +1,5 @@
 import { CONFIG } from './config';
-import { doingsNow } from './folk';
+import { agesNow, doingsNow } from './folk';
 import type { Bond, BondLevel, CaseChoice, GameState } from './types';
 
 /**
@@ -105,11 +105,17 @@ export function giftAgainAt(s: GameState, character: string): number {
 }
 
 /** Why you cannot take somebody, or null when you can. */
-export type LoverBlock = 'gone' | 'needs' | 'taken' | 'poor' | null;
+export type LoverBlock = 'gone' | 'child' | 'needs' | 'taken' | 'poor' | null;
 
 export function loverBlock(s: GameState, character: string): LoverBlock {
   if (!isPerson(character)) return 'gone';
   if (doingsNow(s).get(character) === 'gone') return 'gone';
+  // Before anything else, and before whether you are already holding somebody:
+  // the register carries everybody's age and this is the one place that has to
+  // read it. They grow up. A reign is twenty years long, and the girl of nine
+  // in year three is a woman by the time it ends.
+  const age = agesNow(s).get(character);
+  if (age !== undefined && age > 0 && age < CONFIG.bond.loverAge) return 'child';
   const held = loverOf(s);
   if (held !== null && held !== character) return 'taken';
   if (held === character) return null;

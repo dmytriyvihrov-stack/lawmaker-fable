@@ -117,6 +117,13 @@ export const VERDICT_VERBS: WordTile[] = [
   { id: 'is_fed_after_all', text: 'IS FED, AFTER ALL' },
   { id: 'is_shut_out_nightly', text: 'IS SHUT OUT, NIGHT AFTER NIGHT' },
 
+  // the herd on the common, and the boy it decided about
+  { id: 'is_split_between_houses', text: 'IS SPLIT, A GOAT TO EVERY HOUSE' },
+  { id: 'is_the_boys', text: 'IS HIS, AND SO IS THE MILK' },
+  { id: 'stays_whole_he_walks_it', text: 'STAYS WHOLE, AND HE WALKS IT' },
+  { id: 'is_everybodys_by_law', text: "IS EVERYBODY'S, AND SO IS HIS DAY" },
+  { id: 'is_his_by_law', text: 'IS HIS, BY THE LAW OF THE WORK' },
+
   // the coat, and the toll box
   { id: 'gives_it_back', text: 'GIVES THE COAT BACK' },
   { id: 'keeps_it', text: 'KEEPS THE COAT' },
@@ -1344,6 +1351,20 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
       { verb: 'is_left_in_the_eaves', choiceId: 'keep' },
       { verb: 'is_smoked_out', choiceId: 'smoke' },
       { verb: 'is_sold_boxed', choiceId: 'sell' },
+    ],
+  },
+
+  w_goats: {
+    subject: 'THE HERD',
+    verbs: ['is_split_between_houses', 'is_the_boys', 'stays_whole_he_walks_it'],
+    objects: [],
+    rulings: [
+      { verb: 'is_split_between_houses', choiceId: 'split_them' },
+      { verb: 'is_the_boys', choiceId: 'his_herd' },
+      { verb: 'stays_whole_he_walks_it', choiceId: 'he_walks_them' },
+      // and the two the work law answers before you open your mouth
+      { verb: 'is_everybodys_by_law', choiceId: 'by_the_law_shared', needsLaw: 'work_shared' },
+      { verb: 'is_his_by_law', choiceId: 'by_the_law_owned', needsLaw: 'work_owned' },
     ],
   },
 

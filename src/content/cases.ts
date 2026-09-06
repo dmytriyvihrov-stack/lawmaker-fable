@@ -2037,6 +2037,87 @@ export const CASES: CaseEvent[] = [
     ],
   },
 
+  // =============================================================== the herd
+  /**
+   * The one warm argument in the game.
+   *
+   * Nothing here is wrong. A boy went out to the common because it was warmer
+   * than the house, stayed out, and the goats decided about him before anybody
+   * else did. So the question is not who deserves what: it is whether a thing
+   * that is working should be broken into fair pieces, and every answer is a
+   * kind one. It is here because a reign of nothing but hard cases teaches a
+   * player that the seal is only ever for damage control, and that is not what
+   * the seal is.
+   *
+   * It also runs on a clock nothing else does. The share-it-out answer is the
+   * biggest number on the day and the smallest one by the tenth year; the herd
+   * kept whole pays a little, every year, forever. Read the two results side
+   * by side and the second one looks worse, which is the point.
+   */
+  {
+    id: 'w_goats',
+    trigger: {
+      kind: 'all',
+      conds: [
+        { kind: 'turn', op: 'gte', value: 4 },
+        { kind: 'souls', op: 'gte', value: 12 },
+      ],
+    },
+    priority: 17,
+    character: 'odo',
+    season: 'summer',
+    title: 'The One the Goats Follow',
+    question: 'The goats will not be driven by anybody but Odo, and the place has worked out what a herd is worth.',
+    scene: [
+      'Nobody set him to it. Odo went up to the common in the spring because it was warmer than the house, and he has been up there since, and somewhere around June the goats began going where he went.',
+      'They come when he calls. They will not be driven by anybody else, which was funny in July and is a question in August, because a herd that thrives is worth something and this one is thriving. Three people have asked, politely, whose it is.',
+    ],
+    choices: [
+      {
+        id: 'split_them',
+        text: 'Split the herd. A goat to every house that will keep one.',
+        result:
+          'Every yard has a goat in it by Sunday and every house is pleased with you for a fortnight. Four of them are back on the common by Friday, standing where Odo usually stands, and he has taken a basket to the beeches instead.',
+        tags: ['egalitarian'],
+        effects: { mood: 6, economy: 2 },
+      },
+      {
+        id: 'his_herd',
+        text: 'They are his. He found them, he fed them, they follow him.',
+        result:
+          'He is told in front of everybody that they are his, goes red, says nothing, and is out on the common before light. There is cheese at the gate by autumn, at a price, and it is a fair price.',
+        tags: ['libertarian'],
+        effects: { economy: 3, mood: 2 },
+      },
+      {
+        id: 'he_walks_them',
+        text: "The herd is the place's. He is the one who walks it.",
+        result:
+          'He is given the herd to walk and a share of what it gives, which is the first wage anybody here has been paid for anything. The Treasurer wants that written down. It is written down.',
+        tags: ['communitarian'],
+        effects: { mood: 3, economy: 1, crownSanity: -1 },
+      },
+      {
+        // what the law already said, on the day it turns out to have been
+        // about goats
+        id: 'by_the_law_shared',
+        text: "By the law of the work: the herd is everybody's, and so is his day.",
+        result:
+          'Nobody argues, because the arguing was done years ago. {{law:work_shared}} is read out once, over the noise of goats, and put away. He walks them, and the place drinks the milk.',
+        tags: ['egalitarian', 'communitarian'],
+        effects: { mood: 4, economy: 1 },
+      },
+      {
+        id: 'by_the_law_owned',
+        text: 'By the law of the work: what his hands raised is his.',
+        result:
+          '{{law:work_owned}} says it before you have to, which saves a speech. The two houses that carried water up there in the dry month say nothing about it, at some length.',
+        tags: ['libertarian'],
+        effects: { economy: 4, mood: -1 },
+      },
+    ],
+  },
+
   // ================================================================= the pot
   /**
    * Found money, and nobody's law. The pot belongs to one of two people and

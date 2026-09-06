@@ -31,3 +31,26 @@ export const DOGS_KEPT: AnimalKeep = {
   label: 'The dogs',
   every: { economy: -1, mood: 3 },
 };
+
+/**
+ * The herd on the common, once somebody has said whose it is.
+ *
+ * The other half of the wolf's shape, turned the right way up. The wolf is a
+ * cost now and a gift later; the herd is the answer that pays most on the day
+ * paying least afterwards. Split between the houses it gives a fortnight of
+ * goodwill and then nothing at all, which is why it has no entry here: a goat
+ * in a yard is a goat in a yard, and there is nothing standing to count.
+ *
+ * Kept whole it is a small number that never stops. Twelve years of it beats
+ * anything the split ever paid, and no card ever says so.
+ */
+export const HERD_WALKED: AnimalKeep = {
+  label: 'The herd on the common',
+  every: { economy: 1, mood: 1 },
+};
+
+/** The same animals, owned. More coin, and the ones who carried water know it. */
+export const HERD_HIS: AnimalKeep = {
+  label: "Odo's herd",
+  every: { economy: 2, mood: -1 },
+};

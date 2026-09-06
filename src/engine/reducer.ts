@@ -17,6 +17,7 @@ import { breachFor, truthOf, wrongfulConvictions } from './verdict';
 import {
   activeStats,
   animalKeep,
+  herdKeep,
   crowdingOnHealth,
   isActiveStat,
   isWinter,
@@ -687,6 +688,10 @@ export function advance(s: GameState): GameState {
   {
     const kept = animalKeep(draft);
     if (kept) applyEffects(draft, kept.every, kept.label, true);
+    // and whatever is up on the common, which is a separate animal and a
+    // separate arrangement: the one that pays quietly, every year, for good
+    const herd = herdKeep(draft);
+    if (herd) applyEffects(draft, herd.every, herd.label, true);
   }
   // and the person upstairs, whose habits are a fact about every year of a reign
   {

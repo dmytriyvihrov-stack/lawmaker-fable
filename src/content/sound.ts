@@ -9,6 +9,7 @@ export const VOICES: Record<string, readonly [number, number, number]> = {
   lark: [275, 1100, .10], ferrier: [140, 650, .16], wolf: [78, 310, .24],
   players: [260, 1300, .09], singer: [240, 1000, .14], runner: [200, 1450, .085],
   brother: [150, 830, .135], aunt: [190, 690, .16], digger: [120, 580, .145],
+  odo: [268, 1180, .095],
 };
 
 /** Keep arrivals restrained around death, punishment and collapse. */

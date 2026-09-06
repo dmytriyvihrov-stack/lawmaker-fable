@@ -79,6 +79,7 @@ export const BOND_UI = {
   loverLabel: 'Take them',
   loverLine: 'Costs the store three. The place stops pretending it had not noticed.',
   loverNeeds: 'Only from the top rung, and only if it is already true.',
+  loverChild: 'They are a child. Not while that is true.',
   loverHas: 'You have somebody.',
   loverIs: 'Yours',
   loverMark: '💗',

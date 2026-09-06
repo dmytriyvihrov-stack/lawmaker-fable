@@ -1,7 +1,11 @@
-import { AGES, CASE_DOING, CHOICE_DOING, STATIONS, WINTER_DOING, folkLook } from '../content/folk';
-import type { Doing } from '../content/folk';
+import {
+  AGES, CASE_DOING, CHOICE_DOING, FOUNDING_HAIR, FOUNDING_HEADS, KIT_DOING, LEAVING_KIT,
+  STATIONS, WINTER_DOING, folkLook,
+} from '../content/folk';
+import type { Doing, FolkLook } from '../content/folk';
 import { characterMeta } from '../content/meta';
 import { getCase } from './registry';
+import { rand01 } from './rng';
 import type { GameState, Season } from './types';
 
 /**
@@ -144,4 +148,56 @@ export function townFolk(s: GameState, season?: Season): FolkPin[] {
   });
 
   return pins;
+}
+
+/**
+ * The five who walked out of the old place, drawn out of the reign's own seed.
+ *
+ * The founding used to be five fixed faces, which meant every reign that has
+ * ever been played opened on the same photograph. It is the one picture a
+ * player sees before anything has happened, so it is the one picture that
+ * should say *this* reign rather than *the* reign: the seed picks the heads,
+ * the hair and what is in the four pairs of hands, and picks them without
+ * repeating, so nobody stands next to their own twin.
+ *
+ * You are the one with the seal, because on the second night the others voted
+ * in a field with their hands up and it was you. Everything else about you is
+ * the seed's business.
+ */
+export function foundingLooks(seed: number): { you: FolkLook; others: FolkLook[] } {
+  /** Take one out of the bag and do not put it back. */
+  const draw = <T,>(bag: T[], salt: string, i: number): T =>
+    bag.splice(Math.floor(rand01(seed, 'founding', salt, i) * bag.length), 1)[0];
+
+  const heads = [...FOUNDING_HEADS];
+  const hairs = [...FOUNDING_HAIR];
+  const kit = [...LEAVING_KIT];
+
+  const [yr, yy] = draw(heads, 'head', 0);
+  const you: FolkLook = {
+    r: yr,
+    y: yy,
+    hair: draw(hairs, 'hair', 0),
+    seal: true,
+    cloth: 'work',
+    doing: 'writing',
+  };
+
+  const others: FolkLook[] = [];
+  for (let i = 1; i <= 4; i++) {
+    const [r, y] = draw(heads, 'head', i);
+    const prop = draw(kit, 'kit', i);
+    others.push({
+      r,
+      y,
+      hair: draw(hairs, 'hair', i),
+      prop,
+      // nobody walking out of anywhere is rich, and half of them are not even
+      // working: two coats between four people is what leaving looks like
+      cloth: rand01(seed, 'founding', 'coat', i) > 0.5 ? 'work' : 'poor',
+      doing: KIT_DOING[prop] ?? 'hauling',
+    });
+  }
+
+  return { you, others };
 }
