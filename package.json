@@ -1,0 +1,28 @@
+{
+  "name": "lawmaker-dilemmas",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "bundle": "npm run build && node bundle.mjs",
+    "preview": "vite preview",
+    "test": "vitest run --passWithNoTests",
+    "validate": "vitest run tests/content.test.ts --passWithNoTests",
+    "bundle:minigames": "vite build --config vite.minigames.config.ts && node bundle-minigames.mjs"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.0",
+    "vitest": "^2.1.8"
+  }
+}

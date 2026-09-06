@@ -1,62 +1,67 @@
-# Lawmaker Fable - the published page
+# Lawmaker Fable
 
-This repository is **not the game**. It is the thing that puts the game on a
-link. The game itself lives next door, in `..\Lawmaker Dilemmas\`, which has no
-git in it and is shared with a second system (Codex). Nothing here writes into
-that folder.
+A small game about writing law for a place that is still too small to need it.
+Five people, one field, and a seal. Play it here:
 
-One command builds the page out of the build next door, checks the sound is
-really in it, commits it and pushes it:
+**https://dmytriyvihrov-stack.github.io/lawmaker-fable/**
+
+## Deploying it
+
+Double click **`deploy.cmd`**. That is the whole thing: it refreshes the source
+from the desk next door, installs anything missing, builds the page, refuses to
+publish it if the sound did not travel, commits and pushes. The live page
+updates about a minute later, and **the link never changes**.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File deploy.ps1
 ```
 
-The live page updates about a minute later. **The link never changes.**
-
 | Flag | What it does |
 |---|---|
 | `-m "what changed"` | your own commit message instead of the dated default |
+| `-Check` | run the content validator and the tests first, and refuse to publish if either fails |
+| `-NoSync` | do not refresh the source; publish exactly what is in this repo |
 | `-NoPush` | build and commit, do not push |
-| `-Check` | run `npm run validate` and `npm test` in the build first, and refuse to publish if either fails |
 
-## What is in here
+## This repo stands on its own
+
+It carries the whole game: `src/`, `tests/`, `tools/`, the vite and typescript
+configuration and the lockfile. It installs its own `node_modules` and builds
+with them. Clone it onto a machine that has never seen anything else of this
+project, run `npm install`, and it builds.
+
+It is also **completely separate from every other game in this account** - its
+own repository, its own history, its own link. Nothing here ever pushes
+anywhere else.
+
+## But it is not where you edit
+
+The game is worked on at the desk in `..\Lawmaker Dilemmas\`, which two systems
+share (see `AGENTS.md` and `DESK.md` there). Step 1 of every deploy mirrors that
+folder's `src`, `tests` and `tools` over this repo's, deletions included, so
+**anything edited here is destroyed by the next deploy**. Edit at the desk,
+deploy from here. Nothing in this script ever writes back into the desk - it is
+read, never touched, and no build of it is disturbed.
+
+If the desk is not there at all, the deploy says so and publishes this repo's
+own copy. That is the independence working, not a failure.
 
 | Path | What |
 |---|---|
-| `docs/` | the published site. **Every file in it is generated.** Do not edit anything here by hand; the next deploy wipes it. |
-| `deploy.ps1` | the one command above |
-| `README.md` | this page |
+| `deploy.cmd`, `deploy.ps1` | the one command |
+| `src/`, `tests/`, `tools/`, `index.html`, `vite.config.ts`, `tsconfig*.json`, `package*.json` | the game, mirrored from the desk on every deploy |
+| `docs/` | the published site. **Every file in it is generated.** Editing anything here is pointless; the next build wipes the folder. |
 
 `docs/` is where GitHub Pages is pointed: *Settings -> Pages -> Deploy from a
-branch -> `main` / `docs`*. That was set once and does not need touching again.
+branch -> `main` / `docs`*. Set once, never touched again.
 
-## How it works
+## The sound, and the guard
 
-`deploy.ps1` runs vite in the build next door with `--outDir` aimed straight at
-this repo's `docs/`. That matters for two reasons:
-
-- the build's own `dist/` and `lawmaker-fable.html` are never rewritten by a
-  deploy, so a deploy can never collide with whoever holds the bundle in
-  `..\Lawmaker Dilemmas\DESK.md`;
-- the site is a **real static site**, not the single inlined file. The single
-  file (`lawmaker-fable.html`, made by `npm run bundle`) carries only the
-  stylesheet and the script inside it. A site directory carries whatever else
-  the build emits as well - fonts, pictures, audio - each as its own file with
-  its own URL. That is the format that keeps working the day this game stops
-  synthesising its sound and starts loading it.
-
-`--emptyOutDir` is what lets vite write outside its own root. It keeps `.git`
-and wipes everything else in `docs/`, which is the whole reason nothing but
-build output may live there. `.nojekyll`, `robots.txt` and the `noindex` line
-are written back in after every build, by the script, on purpose.
-
-## The guard
-
-The sister project (`Battle rothers + taletop`) once shipped a page that was
-perfect at this desk and **silent for every playtester**, because the audio
-lived in a folder the host did not have. It went unnoticed for forty builds.
-`deploy.ps1` reads the built page back and refuses to push if:
+The sister project in this account once shipped a page that was perfect at the
+desk and **silent for every playtester**, because the audio lived in a folder
+the host did not have. It went unnoticed for forty builds. That is what the
+guard in `deploy.ps1` is for. It reads the built page back and refuses to push
+if:
 
 - there is no `#root` in `docs/index.html`, or no javascript under
   `docs/assets/` - the page would be blank;
@@ -66,17 +71,23 @@ lived in a folder the host did not have. It went unnoticed for forty builds.
 - there is neither synthesised sound in the bundle nor a single audio file -
   the sound went missing entirely.
 
-Today this game's sound is synthesised in `src/ui/audio/synthesis.ts`: there is
-no audio file in the project at all, and the guard counts the Web Audio calls
+Today this game has no audio file at all: the sound is synthesised in
+`src/ui/audio/synthesis.ts`, and the guard counts the Web Audio calls
 (`createOscillator`, `createGain`) in the shipped bundle instead. Those are DOM
 API names, so no minifier can rename them and the count is a real assertion.
-The day real audio files appear, the first rule above starts doing the work and
-no change to this script is needed.
 
-One thing the guard cannot check, because it is not a property of the file: a
+The published site is a **directory**, not the single inlined
+`lawmaker-fable.html`. That file carries only the stylesheet and the script
+inside it; a directory carries whatever else the build emits - fonts, pictures,
+audio - each as its own file with its own URL. So the day this game stops
+synthesising its sound and starts loading it, the files travel on their own and
+the first guard above starts doing the work. Nothing about this script has to
+change.
+
+One thing the guard cannot check, because it is not a property of a file: a
 browser will not start an `AudioContext` until the player has clicked
-something. The game already waits for that. If the page seems silent, click it
-once before believing the guard was wrong.
+something. The game already waits for that gesture. If the page seems silent,
+click it once before believing the guard was wrong.
 
 ## The link is public, and quiet
 
@@ -87,11 +98,10 @@ public. Two things keep the page from being found by accident:
 - `docs/index.html` carries `<meta name="robots" content="noindex, nofollow">`.
 
 Both are needed: `robots.txt` stops the crawl, the meta stops the indexing of a
-page someone else linked to.
+page someone else has linked to. Share the link and it works; nobody finds it by
+searching.
 
 What that does **not** do is hide the repository. A public repo is listed on the
-GitHub profile that owns it, and anyone who opens the page can read the game's
-javascript - that is true of every web game. If the game ever needs a real
-lock - a password, a list of who may open it - the answer is a host with access
-control in front of it (Cloudflare Pages has one on its free plan), not
-GitHub Pages.
+profile that owns it, and its source can be read by anyone who opens it. If the
+game ever needs a real lock - a password, a list of who may open it - that means
+a host with access control in front of it, not GitHub Pages.

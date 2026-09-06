@@ -1,4 +1,16 @@
 node_modules
+
+# build output that is not the published site
+dist
+dist-minigames
+.vite-cache
+.vite-cache-minigames
+*.tsbuildinfo
+
+# the single inlined file, made by `npm run bundle`. The published site under
+# docs\ is what this repo ships; this one is only ever a local convenience.
+lawmaker-fable.html
+minigames-v1.html
+
 *.local
 .DS_Store
-.deploy-temp

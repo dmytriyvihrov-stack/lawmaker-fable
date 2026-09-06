@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lawmaker design console</title>
+    <link rel="stylesheet" href="/ui/app.css" />
+  </head>
+  <body>
+    <header class="top">
+      <h1>Lawmaker design console</h1>
+      <nav class="tabs">
+        <button class="tab on" data-tab="rates">Rates</button>
+        <button class="tab" data-tab="laws">Laws</button>
+        <button class="tab" data-tab="cases">Cases</button>
+        <button class="tab" data-tab="tree">Tree</button>
+      </nav>
+      <span class="spacer"></span>
+      <span class="pill" id="dirty">no unsaved edits</span>
+      <button class="btn primary" id="save" disabled>Save to files</button>
+      <button class="btn ghost" id="discard" disabled>Discard</button>
+      <button class="btn ghost" id="reload">Reload</button>
+      <button class="btn ghost" id="validate">Run validate</button>
+      <button class="btn ghost" id="tests">Run tests</button>
+    </header>
+    <main>
+      <div id="runout"></div>
+      <div id="view"></div>
+    </main>
+    <script type="module" src="/ui/app.js"></script>
+  </body>
+</html>

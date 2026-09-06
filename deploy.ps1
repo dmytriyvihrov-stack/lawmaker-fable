@@ -1,19 +1,28 @@
 # ============================================================================
-# ONE COMMAND. Builds this game's page out of the build next door, checks the
-# sound is really in it, commits it, pushes it. GitHub Pages serves docs\.
+# ONE COMMAND. Refreshes this repo's copy of the game from the desk next door,
+# builds the page out of THIS repo, checks the sound is really in it, commits
+# it and pushes it. GitHub Pages serves docs\.
 #
+#   deploy.cmd                     <- double click this, it calls the line below
 #   powershell -NoProfile -ExecutionPolicy Bypass -File deploy.ps1
+#
 #   ... -m "what changed"    your own commit message
+#   ... -NoSync              do not refresh the source, publish what is here
 #   ... -NoPush              build and commit, do not push
-#   ... -Check               run the content validator and the tests first
+#   ... -Check               run the validator and the tests before publishing
 #
 # The live page updates about a minute after the push. The link never changes.
 #
-# WHAT THIS DOES NOT TOUCH. The build next door is shared with a second system
-# (see ..\Lawmaker Dilemmas\DESK.md, and AGENTS.md beside it). This script only
-# READS that folder. Vite is told to write straight into this repo's docs\ with
-# --outDir, so neither that folder's own dist\ nor lawmaker-fable.html is
-# rewritten by a deploy, and nobody's claim on the bundle is broken.
+# THIS REPO STANDS ON ITS OWN. It carries the whole game - src\, tests\, the
+# vite and typescript configuration, the lockfile - and builds with its own
+# node_modules. Clone it on a bare machine, run npm install, and it builds. The
+# desk next door is only where the source is COPIED FROM, and only if it
+# happens to be there.
+#
+# BUT IT IS NOT WHERE YOU EDIT. Step 1 mirrors ..\Lawmaker Dilemmas\src over
+# this repo's src on every deploy, so anything changed here is destroyed the
+# next time this script runs. Edit at the desk, deploy from here. Nothing in
+# this script ever writes back into the desk.
 #
 # THE ONE THING THIS SCRIPT EXISTS TO PREVENT: shipping a page that is silent
 # for everyone but you. In this game the sound is SYNTHESISED - there is no
@@ -29,6 +38,7 @@
 # ============================================================================
 param(
   [Alias('m')] [string] $Message = '',
+  [switch] $NoSync,
   [switch] $NoPush,
   [switch] $Check
 )
@@ -41,46 +51,79 @@ function Step($n, $t) { Write-Host ""; Write-Host "[$n] $t" -ForegroundColor Cya
 function Die($t) { Write-Host ""; Write-Host "STOPPED: $t" -ForegroundColor Red; exit 1 }
 
 $site = Join-Path $root 'docs'
-
-# ---- 0. the build next door ------------------------------------------------
-$build = Join-Path $root '..\Lawmaker Dilemmas'
-if (-not (Test-Path $build)) {
-  Die "the build is not next door.`n         Expected: $build`n         This repo publishes that folder; it is not the game itself."
-}
-$build = (Resolve-Path -LiteralPath $build).Path
-$vite = Join-Path $build 'node_modules\vite\bin\vite.js'
-if (-not (Test-Path $vite)) {
-  Die "vite is not installed in the build.`n         Run once, in $build :  npm install"
-}
 if (-not (Test-Path (Join-Path $root '.git'))) { Die "this is not a git repo. Run: git init -b main" }
 
-# ---- 1. the checks, if asked -----------------------------------------------
-if ($Check) {
-  Step 1 "running the content validator and the tests in the build"
-  Push-Location $build
-  try {
-    & npm run validate
-    if ($LASTEXITCODE -ne 0) { Die "npm run validate failed. Nothing was published." }
-    & npm test
-    if ($LASTEXITCODE -ne 0) { Die "npm test failed. Nothing was published." }
-  } finally { Pop-Location }
+# ---- 1. the source ---------------------------------------------------------
+# One direction only: the desk is read, this repo is written. Robocopy /MIR
+# also DELETES files here that are gone there, which is what keeps a renamed
+# or removed module from living on in the published build.
+$desk = Join-Path $root '..\Lawmaker Dilemmas'
+if ($NoSync) {
+  Step 1 "not syncing (-NoSync): publishing the copy already in this repo"
+} elseif (-not (Test-Path $desk)) {
+  Step 1 "the desk is not next door, publishing this repo's own copy"
+  "      (looked for $desk - that is fine, this repo builds without it)"
 } else {
-  Step 1 "skipping the validator and the tests (pass -Check to run them)"
+  $desk = (Resolve-Path -LiteralPath $desk).Path
+  Step 1 "refreshing the source from $desk"
+  foreach ($dir in @('src', 'tests', 'tools')) {
+    $from = Join-Path $desk $dir
+    if (-not (Test-Path $from)) { continue }
+    & robocopy $from (Join-Path $root $dir) /MIR /NFL /NDL /NJH /NJS /NP | Out-Null
+    # Robocopy says 0-7 for success and 8 and up for failure. Anything else
+    # would leave a half-copied tree, which must never reach a build.
+    if ($LASTEXITCODE -ge 8) { Die "robocopy failed on $dir (exit $LASTEXITCODE). Nothing was published." }
+  }
+  $files = @('index.html', 'package.json', 'package-lock.json', 'vite.config.ts',
+    'tsconfig.json', 'tsconfig.app.json', 'tsconfig.node.json', 'bundle.mjs',
+    'minigames.html', 'vite.minigames.config.ts', 'bundle-minigames.mjs', 'dev-server.mjs')
+  foreach ($f in $files) {
+    $from = Join-Path $desk $f
+    if (Test-Path $from) { Copy-Item -LiteralPath $from -Destination (Join-Path $root $f) -Force }
+  }
+  "      src, tests, tools and the build configuration are now the desk's"
+}
+if (-not (Test-Path (Join-Path $root 'src'))) { Die "there is no src\ in this repo and no desk to copy one from." }
+
+# ---- 2. the dependencies ---------------------------------------------------
+# This repo installs its own. That is the whole of what "independent" means
+# here: the build does not reach into another folder's node_modules.
+$vite = Join-Path $root 'node_modules\vite\bin\vite.js'
+$stamp = Join-Path $root 'node_modules\.lock-stamp'
+$lock = Join-Path $root 'package-lock.json'
+$lockHash = (Get-FileHash -LiteralPath $lock -Algorithm SHA256).Hash
+$installed = ''
+if (Test-Path $stamp) { $installed = (Get-Content -LiteralPath $stamp -Raw).Trim() }
+if (-not (Test-Path $vite) -or $installed -ne $lockHash) {
+  Step 2 "installing the dependencies (first run, or the lockfile moved - this is the slow one)"
+  & npm ci
+  if ($LASTEXITCODE -ne 0) { Die "npm ci failed. Nothing was published." }
+  Set-Content -LiteralPath $stamp -Value $lockHash -Encoding ascii
+} else {
+  Step 2 "dependencies are current"
 }
 
-# ---- 2. build --------------------------------------------------------------
-# --outDir writes the site into this repo. --emptyOutDir is required because
-# that directory is outside vite's root; vite keeps .git and wipes the rest,
-# which is why NOTHING but build output may live in docs\. The trimmings that
-# belong to the published site are written back in step 3, every time.
-Step 2 "building the page from $build"
-Push-Location $build
-try {
-  & node $vite build --outDir $site --emptyOutDir
-} finally { Pop-Location }
+# ---- 3. the checks, if asked -----------------------------------------------
+if ($Check) {
+  Step 3 "running the content validator and the tests on the copy that is about to ship"
+  & npm run validate
+  if ($LASTEXITCODE -ne 0) { Die "npm run validate failed. Nothing was published." }
+  & npm test
+  if ($LASTEXITCODE -ne 0) { Die "npm test failed. Nothing was published." }
+} else {
+  Step 3 "skipping the validator and the tests (pass -Check to run them)"
+}
+
+# ---- 4. build --------------------------------------------------------------
+# Built from THIS repo's source, into this repo's docs\, so what is published
+# is what a visitor to the repository can read. Vite empties docs\ first, which
+# is why nothing but build output may live there; the trimmings that belong to
+# the published site are written back in step 5, every time.
+Step 4 "building the page"
+& node $vite build --outDir $site --emptyOutDir
 if ($LASTEXITCODE -ne 0) { Die "vite build failed. Nothing was published." }
 
-# ---- 3. the trimmings ------------------------------------------------------
+# ---- 5. the trimmings ------------------------------------------------------
 # .nojekyll   : GitHub Pages otherwise runs Jekyll, which drops _underscored
 #               files. Vite emits none today, but this costs one empty file.
 # robots.txt  : the repo has to be public for Pages to serve it on a free plan,
@@ -88,7 +131,7 @@ if ($LASTEXITCODE -ne 0) { Die "vite build failed. Nothing was published." }
 # the meta    : robots.txt is a crawl rule, the meta is an index rule. A page
 #               linked from somewhere else can be indexed WITHOUT being
 #               crawled, so both are needed to keep the link quiet.
-Step 3 "writing .nojekyll, robots.txt and the noindex line"
+Step 5 "writing .nojekyll, robots.txt and the noindex line"
 Set-Content -LiteralPath (Join-Path $site '.nojekyll') -Value '' -NoNewline -Encoding ascii
 Set-Content -LiteralPath (Join-Path $site 'robots.txt') -Encoding ascii -Value @'
 User-agent: *
@@ -112,17 +155,17 @@ if ($html -notmatch 'name="robots"') {
   [System.IO.File]::WriteAllText($page, $html, (New-Object System.Text.UTF8Encoding($false)))
 }
 
-# ---- 4. the guard ----------------------------------------------------------
+# ---- 6. the guard ----------------------------------------------------------
 # Read the built site back and count what is actually in it. Asserting on the
 # thing that ships, not on the thing that was meant to ship, is the point.
-Step 4 "checking the built page"
+Step 6 "checking the built page"
 $html = [System.IO.File]::ReadAllText($page)
 if ($html -notmatch 'id="root"') { Die "docs\index.html has no #root. React would have nothing to mount to." }
 if ($html -notmatch 'name="robots"') { Die "docs\index.html lost the noindex line. The page would be indexable." }
 if ($html[0] -eq [char]0xFEFF) { Die "docs\index.html starts with a byte order mark. Write it with UTF8Encoding(`$false)." }
 $bundles = @(Get-ChildItem -LiteralPath (Join-Path $site 'assets') -Filter *.js -ErrorAction SilentlyContinue)
 if ($bundles.Count -eq 0) { Die "no javascript bundle under docs\assets. The page would be blank." }
-$js = ($bundles | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw -Encoding utf8 }) -join "`n"
+$js = ($bundles | ForEach-Object { [System.IO.File]::ReadAllText($_.FullName) }) -join "`n"
 $mb = [Math]::Round((($bundles | Measure-Object Length -Sum).Sum) / 1MB, 2)
 
 # The sound. Web Audio method names are DOM API calls, so a minifier cannot
@@ -138,7 +181,7 @@ $actx = ([regex]::Matches($js, 'AudioContext')).Count
 $ext = '(?:mp3|ogg|wav|m4a|webm|aac|flac|opus)'
 $css = ''
 Get-ChildItem -LiteralPath (Join-Path $site 'assets') -Filter *.css -ErrorAction SilentlyContinue | ForEach-Object {
-  $css = $css + (Get-Content -LiteralPath $_.FullName -Raw -Encoding utf8)
+  $css = $css + [System.IO.File]::ReadAllText($_.FullName)
 }
 $named = @([regex]::Matches(($js + "`n" + $css + "`n" + $html), '[A-Za-z0-9_./-]+\.' + $ext) | ForEach-Object { $_.Value } | Sort-Object -Unique)
 $onDisk = @(Get-ChildItem -LiteralPath $site -Recurse -File -ErrorAction SilentlyContinue |
@@ -160,12 +203,14 @@ if ($onDisk.Count -eq 0 -and ($osc -lt 1 -or $gain -lt 3)) {
   Die "no synthesised sound in the bundle ($osc oscillators, $gain gains) and no audio files either.`n         The page would be SILENT. Nothing was pushed."
 }
 
-# ---- 5. commit -------------------------------------------------------------
-Step 5 "committing"
+# ---- 7. commit -------------------------------------------------------------
+Step 7 "committing"
 $sweep = & git status --porcelain
 if ($sweep) {
-  "      this commit will contain:"
-  foreach ($line in $sweep) { "        $line" }
+  $n = ($sweep | Measure-Object).Count
+  "      $n path(s) changed:"
+  foreach ($line in ($sweep | Select-Object -First 12)) { "        $line" }
+  if ($n -gt 12) { "        ... and " + ($n - 12) + " more" }
 }
 & git add -A
 $dirty = & git status --porcelain
@@ -178,7 +223,7 @@ if (-not $dirty) {
   "      " + (& git log --oneline -1)
 }
 
-# ---- 6. push ---------------------------------------------------------------
+# ---- 8. push ---------------------------------------------------------------
 # `git remote get-url` on a missing remote writes to stderr, and PowerShell 5.1
 # turns a native command's stderr into a terminating error under
 # ErrorActionPreference Stop. Ask the question that cannot fail instead.
@@ -186,17 +231,16 @@ $remote = ''
 if ((& git remote) -contains 'origin') { $remote = (& git remote get-url origin) }
 if (-not $remote) {
   Write-Host ""
-  Write-Host "NO REMOTE YET. Four steps, once ever:" -ForegroundColor Yellow
-  Write-Host "  1. github.com/new  ->  name it lawmaker-fable  ->  Public  ->  no README"
-  Write-Host "  2. git remote add origin https://github.com/<you>/lawmaker-fable.git"
-  Write-Host "  3. git push -u origin main"
-  Write-Host "  4. Settings -> Pages -> Deploy from a branch -> main / docs -> Save"
+  Write-Host "NO REMOTE YET. Three steps, once ever:" -ForegroundColor Yellow
+  Write-Host "  1. git remote add origin https://github.com/<you>/lawmaker-fable.git"
+  Write-Host "  2. git push -u origin main"
+  Write-Host "  3. Settings -> Pages -> Deploy from a branch -> main / docs -> Save"
   exit 0
 }
 
-if ($NoPush) { Step 6 "committed, not pushed (-NoPush)"; exit 0 }
+if ($NoPush) { Step 8 "committed, not pushed (-NoPush)"; exit 0 }
 
-Step 6 "pushing"
+Step 8 "pushing"
 & git push -q -u origin HEAD
 if ($LASTEXITCODE -ne 0) { Die "git push failed. If it asks for a password, GitHub wants a personal access token, not the account password." }
 

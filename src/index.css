@@ -1,0 +1,658 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #14110d;
+  --color-ink-soft: #1f1a14;
+  --color-ink-line: #3a3128;
+  --color-parchment: #e9dcbe;
+  --color-parchment-dim: #b6a683;
+  --color-seal: #a3352c;
+  --color-bench: #5c7f86;
+  --color-good: #7fa663;
+  --color-bad: #c96a5a;
+  --color-grass: #55603f;
+  /* what people are wearing, which is the only class marker a dot can carry */
+  /* Hair sits between the ink of the frame and the light of a face, so a head
+     reads as a head against the wall behind it as well as against its own
+     cheek. Drawn in the frame colour it vanished at the silhouette. */
+  --color-hair: #6b5a44;
+
+  --color-cloth-poor: #6f6a60;
+  --color-cloth-work: #4d6647;
+  --color-cloth-rich: #c8a24a;
+  --font-fable: ui-serif, Georgia, "Times New Roman", serif;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background-color: var(--color-ink);
+}
+
+body {
+  margin: 0;
+  color: var(--color-parchment);
+  font-family: var(--font-fable);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Everything you can press says so under the pointer. Tailwind's own reset
+   puts buttons back on the arrow cursor, which left every answer in the game
+   looking like a paragraph that happened to respond to a click. A thing you
+   cannot press keeps the arrow, so the two are told apart before they are
+   tried. */
+button:not(:disabled),
+summary,
+[role='button']:not([aria-disabled='true']) {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* An answer under the pointer lifts off the page a little and lights its own
+   edge. Hovering used to change nothing at all until the mouse went down. */
+.answer {
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    transform 140ms ease;
+}
+
+.answer:hover:not(:disabled) {
+  border-color: var(--color-seal);
+  background-color: color-mix(in srgb, var(--color-seal) 12%, var(--color-ink-soft));
+  transform: translateY(-1px);
+}
+
+.answer:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* the same manners on the word tiles at the bench, in the bench's colour */
+.answer-bench:hover:not(:disabled) {
+  border-color: var(--color-bench);
+  background-color: color-mix(in srgb, var(--color-bench) 22%, var(--color-ink-soft));
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-seal);
+  outline-offset: 2px;
+}
+
+/* the seal coming down on the parchment */
+@keyframes stamp-down {
+  0% {
+    transform: translate(-50%, -50%) scale(2.6) rotate(-18deg);
+    opacity: 0;
+  }
+  55% {
+    transform: translate(-50%, -50%) scale(1) rotate(-6deg);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(1.06) rotate(-6deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1) rotate(-6deg);
+    opacity: 1;
+  }
+}
+
+@keyframes stamp-flash {
+  0% {
+    opacity: 0;
+  }
+  55% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.stamp-seal {
+  animation: stamp-down 600ms cubic-bezier(0.3, 1.4, 0.5, 1) forwards;
+}
+
+.stamp-flash {
+  animation: stamp-flash 600ms ease-out forwards;
+}
+
+/* a stat bar reacting to a delta */
+@keyframes bar-pulse {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.85);
+  }
+}
+
+.bar-pulse {
+  animation: bar-pulse 900ms ease-in-out 2;
+}
+
+/* townsfolk walking across the panorama */
+@keyframes walk-across {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(140px);
+  }
+}
+
+.city-walker {
+  animation: walk-across 14s linear infinite alternate;
+}
+
+/* one person, going somewhere, at their own pace and never quite in step */
+@keyframes stroll {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(var(--stroll, 26px)); }
+  100% { transform: translateX(0); }
+}
+
+.city-person {
+  animation-name: stroll;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+/* Somebody swinging at something: an axe, a hammer, the same thirty degrees.
+   An axe is not a metronome. The stroke goes up slowly, comes down fast, and
+   then the man breathes: two thirds of this cycle is the arm hanging still at
+   the bottom of it, which is what a woodcutter actually looks like and what
+   the first pass, at four strokes to the second, did not. */
+@keyframes swing {
+  0% { transform: rotate(0deg); }
+  26% { transform: rotate(-32deg); }
+  36% { transform: rotate(4deg); }
+  42% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.city-swing {
+  animation: swing 3.6s ease-in-out infinite;
+  transform-origin: 2px -3px;
+}
+
+/* A load coming down out of the wood. The walk is one straight leg there and
+   the same leg back: out under the log, turn, home with empty hands, turn.
+   All four parts run off the same clock, so the log is only ever on the
+   shoulder that is walking towards the town. */
+@keyframes haul-walk {
+  0% { transform: translate(0, 0); }
+  46%, 54% { transform: translate(var(--haul-x, -180px), var(--haul-y, 40px)); }
+  100% { transform: translate(0, 0); }
+}
+
+.city-haul {
+  animation-name: haul-walk;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes haul-turn {
+  0%, 49.9% { transform: scaleX(-1); }
+  50%, 100% { transform: scaleX(1); }
+}
+
+.city-turn {
+  animation-name: haul-turn;
+  animation-timing-function: steps(1);
+  animation-iteration-count: infinite;
+}
+
+@keyframes haul-loaded {
+  0%, 49.9% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.city-load {
+  animation-name: haul-loaded;
+  animation-timing-function: steps(1);
+  animation-iteration-count: infinite;
+}
+
+@keyframes haul-empty {
+  0%, 49.9% { opacity: 0; }
+  50%, 100% { opacity: 1; }
+}
+
+.city-unload {
+  animation-name: haul-empty;
+  animation-timing-function: steps(1);
+  animation-iteration-count: infinite;
+}
+
+/* A day that starts at a door. The figure is drawn at its work and carried
+   home by the translate, so the loop is: indoors, out along the line to the
+   work, at it for most of the day, home along the same line, indoors again.
+   Four animations on one clock: the walk, and then which of the two figures
+   is lit and which way the walking one is facing. */
+@keyframes commute {
+  0%, 6% { transform: translate(var(--home-x, 0px), var(--home-y, 0px)); }
+  24%, 78% { transform: translate(0, 0); }
+  96%, 100% { transform: translate(var(--home-x, 0px), var(--home-y, 0px)); }
+}
+
+.city-commute {
+  animation-name: commute;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes commute-walking {
+  0%, 5.99% { opacity: 0; }
+  6%, 23.99% { opacity: 1; }
+  24%, 77.99% { opacity: 0; }
+  78%, 95.99% { opacity: 1; }
+  96%, 100% { opacity: 0; }
+}
+
+.city-commute-walk {
+  animation-name: commute-walking;
+  animation-timing-function: steps(1);
+  animation-iteration-count: infinite;
+}
+
+@keyframes commute-working {
+  0%, 23.99% { opacity: 0; }
+  24%, 77.99% { opacity: 1; }
+  78%, 100% { opacity: 0; }
+}
+
+.city-commute-work {
+  animation-name: commute-working;
+  animation-timing-function: steps(1);
+  animation-iteration-count: infinite;
+}
+
+/* nobody walks home backwards */
+@keyframes commute-face {
+  0%, 77.99% { transform: scaleX(1); }
+  78%, 100% { transform: scaleX(-1); }
+}
+
+.city-commute-face {
+  animation-name: commute-face;
+  animation-timing-function: steps(1);
+  animation-iteration-count: infinite;
+}
+
+/* a body at work: the small nod of somebody who is not standing still and is
+   not going anywhere either */
+@keyframes toil {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(0.45px) rotate(2deg); }
+}
+
+.city-toil {
+  animation-name: toil;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  transform-origin: 0 9px;
+}
+
+/* A building going up. The window over the finished part climbs from the
+   ground, so the wall arrives in courses and the roof arrives last. It runs
+   again rather than stopping, because a year of building is a year long and
+   nobody sits and watches the whole of it. */
+@keyframes raise {
+  0% { transform: translateY(var(--raise, 280px)); }
+  8% { transform: translateY(var(--raise, 280px)); }
+  78%, 100% { transform: translateY(0); }
+}
+
+.city-raise {
+  animation: raise 9s ease-in-out infinite;
+}
+
+/* the wolf, walking its own line inside the trees and never leaving them */
+@keyframes prowl {
+  0%, 100% { transform: translateX(0); }
+  46% { transform: translateX(var(--prowl, 90px)); }
+  50% { transform: translateX(var(--prowl, 90px)); }
+}
+
+.city-prowl {
+  animation: prowl 26s ease-in-out infinite;
+}
+
+/* Weather, coming down at the speed weather comes down at. A sheet travels
+   exactly one row of its own lattice, so the frame it ends on is the frame it
+   started on and the loop is invisible. Straight down: the lattice only lands
+   on itself that way, and sideways travel that is not a whole column wide ends
+   every cycle in a lurch. The wind is in the lean of each drop instead.
+   `will-change` hands the sheet to the compositor, so a screenful of weather
+   is a layer being moved rather than a few hundred paths drawn again. */
+@keyframes fall {
+  from { transform: translate(0, 0); }
+  to { transform: translate(var(--drift, 0px), var(--fall, 40px)); }
+}
+
+.city-fall {
+  animation-name: fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+/* where a drop lands, which is the part that makes it a drop and not a line */
+@keyframes splash {
+  0% { opacity: 0; transform: scale(0.4); }
+  25% { opacity: 1; transform: scale(1); }
+  70% { opacity: 0; transform: scale(1.5); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+.city-splash {
+  animation-name: splash;
+  animation-timing-function: ease-out;
+  animation-iteration-count: infinite;
+  transform-box: fill-box;
+  transform-origin: bottom center;
+}
+
+/* cloud, and anything else the wind carries slowly across a whole sky */
+@keyframes drift-across {
+  from { transform: translateX(-560px); }
+  to { transform: translateX(560px); }
+}
+
+.city-drift {
+  animation-name: drift-across;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* a cold clear night, which is the only thing the long winter has going for it */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.9; }
+}
+
+.city-star {
+  animation: twinkle 5s ease-in-out infinite;
+}
+
+/* fire, which never holds still and is the whole reason to draw one */
+@keyframes flicker {
+  0%, 100% { transform: scaleY(1) scaleX(1); opacity: 0.95; }
+  25% { transform: scaleY(1.18) scaleX(0.92); opacity: 1; }
+  50% { transform: scaleY(0.9) scaleX(1.06); opacity: 0.85; }
+  75% { transform: scaleY(1.1) scaleX(0.96); opacity: 1; }
+}
+
+.city-flame {
+  animation: flicker 1.3s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: bottom center;
+}
+
+@keyframes ember-rise {
+  0% { transform: translateY(0); opacity: 0.9; }
+  100% { transform: translateY(-26px); opacity: 0; }
+}
+
+.city-ember {
+  animation: ember-rise 3.4s ease-out infinite;
+}
+
+/* smoke, which is the sign that somebody is in there and warm */
+@keyframes smoke-rise {
+  0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+  16% { opacity: 0.5; }
+  65% { transform: translate(5px, -22px) scale(1.25); opacity: .25; }
+  100% { transform: translate(12px, -38px) scale(1.8); opacity: 0; }
+}
+
+.city-smoke {
+  animation: smoke-rise 7s linear infinite;
+}
+
+/* the sun: a thing that turns and burns, not a sticker in the corner */
+@keyframes sun-turn {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sun-glow {
+  0%, 100% { opacity: 0.62; }
+  50% { opacity: 1; }
+}
+
+.city-sun-rays {
+  animation: sun-turn 80s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.city-sun-glow {
+  animation: sun-glow 6.5s ease-in-out infinite;
+}
+
+/* anything whose colour is the season's rather than its own */
+.city-tint {
+  transition: fill 700ms ease, stop-color 700ms ease, opacity 700ms ease;
+}
+
+/* a building you have not paid for yet, showing you where it would stand */
+@keyframes ghost {
+  0%, 100% { opacity: 0.16; }
+  50% { opacity: 0.55; }
+}
+
+.city-ghost {
+  animation: ghost 1.6s ease-in-out infinite;
+}
+
+.city-layer {
+  transition: opacity 0.6s ease;
+}
+
+/* Small movements in local coordinates. Placing groups never animate. */
+@keyframes canopy-breeze {
+  0%, 100% { transform: rotate(-1.4deg); }
+  50% { transform: rotate(1.8deg); }
+}
+.city-canopy { animation: canopy-breeze 7s ease-in-out infinite; transform-origin: 0 16px; }
+.city-reeds { animation: canopy-breeze 4.6s ease-in-out infinite; transform-origin: 0 0; }
+
+@keyframes current-flow { to { stroke-dashoffset: -145; } }
+.city-current { animation: current-flow 16s linear infinite; }
+@keyframes water-glint {
+  0%, 100% { opacity: .12; }
+  45% { opacity: .65; }
+  70% { opacity: .28; }
+}
+.city-water-glint { animation: water-glint 5.6s ease-in-out infinite; }
+.city-window { animation: water-glint 8s ease-in-out infinite; }
+
+@keyframes footfall {
+  0%, 50%, 100% { transform: translateY(0); }
+  25%, 75% { transform: translateY(-.65px); }
+}
+.city-footfall { animation: footfall 1.1s ease-in-out infinite; }
+@keyframes stroll-turn {
+  0%, 49.99% { transform: scaleX(1); }
+  50%, 100% { transform: scaleX(-1); }
+}
+.city-stroll-turn { animation-name: stroll-turn; animation-timing-function: steps(1); animation-iteration-count: infinite; }
+.city-wolf-turn { animation: stroll-turn 26s steps(1) infinite; }
+@keyframes wolf-step {
+  0%, 100% { transform: skewX(-10deg); }
+  50% { transform: skewX(10deg); }
+}
+.city-wolf-step { animation: wolf-step 1.3s ease-in-out infinite; transform-origin: 0 3px; }
+.city-wolf-step-back { animation-delay: -.65s; }
+@keyframes quiet-breath {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.025); }
+}
+.city-breathe { animation: quiet-breath 4.8s ease-in-out infinite; transform-origin: 0 9px; }
+
+@keyframes wing-beat {
+  0%, 40%, 100% { transform: scaleY(1); }
+  20% { transform: scaleY(-.5); }
+}
+.city-wings { animation: wing-beat 2.8s ease-in-out infinite; }
+@keyframes seed-cast {
+  0%, 22%, 100% { opacity: 0; transform: translate(0, 0); }
+  30% { opacity: 1; }
+  62% { opacity: 0; transform: translate(4px, 6px); }
+}
+.city-seed-cast { animation: seed-cast 3.8s ease-out infinite; }
+@keyframes draw-water {
+  0%, 20%, 100% { transform: translateY(0); }
+  58%, 74% { transform: translateY(-2.5px); }
+}
+.city-draw-water { animation: draw-water 4.6s ease-in-out infinite; }
+
+/* Only people on the map move. Register marks remain still while being read. */
+@keyframes folk-work {
+  0%, 65%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(6deg); }
+  43% { transform: rotate(-1deg); }
+}
+@keyframes folk-hand {
+  0%, 70%, 100% { transform: rotate(0deg); }
+  35% { transform: rotate(-12deg); }
+  48% { transform: rotate(3deg); }
+}
+.town-folk .folk-body { transform-origin: 0 0; animation-delay: var(--folk-delay, 0s); }
+.town-folk .folk-hands { transform-origin: 1px -4px; animation-delay: var(--folk-delay, 0s); }
+.town-folk:is([data-doing='digging'], [data-doing='foraging'], [data-doing='hauling'], [data-doing='building']) .folk-body {
+  animation: folk-work 4.2s ease-in-out infinite;
+  animation-delay: var(--folk-delay, 0s);
+}
+.town-folk:is([data-doing='writing'], [data-doing='painting'], [data-doing='mending'], [data-doing='counting'], [data-doing='tending'], [data-doing='playing'], [data-doing='pouring'], [data-doing='trading'], [data-doing='preaching'], [data-doing='building']) .folk-hands {
+  animation: folk-hand 3.6s ease-in-out infinite;
+  animation-delay: var(--folk-delay, 0s);
+}
+.town-folk:is([data-doing='running'], [data-doing='riding']) .folk-body { animation: footfall .9s ease-in-out infinite; }
+
+/* A paper edge, a legible scrollbar, and no scroll leaking into the map. */
+.decision-paper {
+  background-image: linear-gradient(135deg, rgb(255 232 188 / .025), transparent 55%);
+  box-shadow: 0 18px 48px rgb(30 26 15 / .35), inset 0 1px 0 rgb(255 228 183 / .09);
+  scrollbar-width: thin;
+  scrollbar-color: #796548 #262119;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.decision-paper::-webkit-scrollbar { width: 7px; }
+.decision-paper::-webkit-scrollbar-track { background: #262119; }
+.decision-paper::-webkit-scrollbar-thumb { background: #796548; border-radius: 9px; border: 2px solid #262119; }
+.decision-paper :focus-visible { outline-color: var(--color-parchment-dim); outline-offset: 3px; }
+.city-world [role='button']:focus-visible { outline: 2px solid #f0e6cc; outline-offset: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .city-world *, .town-folk * { animation: none !important; transition: none !important; }
+  .city-water-glint { opacity: .35; }
+  /* with nothing moving, the one at work is the one that is there */
+  .city-commute-walk { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stamp-seal,
+  .stamp-flash,
+  .bar-pulse,
+  .city-walker,
+  .city-person,
+  .city-fall,
+  .city-splash,
+  .city-sun-rays,
+  .city-sun-glow,
+  .city-drift,
+  .city-star,
+  .city-flame,
+  .city-ember,
+  .city-smoke,
+  .city-swing,
+  .city-haul,
+  .city-turn,
+  .city-load,
+  .city-unload,
+  .city-toil,
+  .city-raise,
+  .city-prowl,
+  .city-commute,
+  .city-commute-walk,
+  .city-commute-work,
+  .city-commute-face,
+  .city-ghost {
+    animation: none !important;
+  }
+  .city-tint {
+    transition: none;
+  }
+  .city-layer {
+    transition: none;
+  }
+  .city-ghost {
+    opacity: 0.4;
+  }
+  .answer {
+    transition: none;
+  }
+  .answer:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* the pin on the town: something is happening there, right now */
+@keyframes marker-breathe {
+  0%, 100% { opacity: 0.55; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-1.5px); }
+}
+
+.city-marker {
+  animation: marker-breathe 2.4s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .city-marker { animation: none; opacity: 1; }
+}
+/* the marker on a case that is waiting to be heard: a knock, not a klaxon */
+@keyframes knock {
+  0%, 100% { opacity: 0.35; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.12); }
+}
+
+.city-knock {
+  animation: knock 1.1s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+  cursor: pointer;
+}
+
+/* the years going by with nobody at the door */
+@keyframes drift-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.drift-in {
+  animation: drift-in 500ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .city-knock { animation: none; opacity: 1; }
+  .drift-in { animation: none; }
+}
