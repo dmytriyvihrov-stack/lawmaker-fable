@@ -49,13 +49,46 @@ class Reader {
     this.trivia();
     const c = this.src[this.pos];
     if (c === undefined) this.fail('unexpected end of file');
-    if (c === '{') return this.object();
-    if (c === '[') return this.array();
-    if (c === "'" || c === '"') return this.string();
-    if (c === '-' || (c >= '0' && c <= '9')) return this.number();
-    if (ID_START.test(c)) return this.word();
-    this.fail('unexpected character ' + JSON.stringify(c));
-    return null;
+    let node = null;
+    if (c === '{') node = this.object();
+    else if (c === '[') node = this.array();
+    else if (c === "'" || c === '"') node = this.string();
+    else if (c === '-' || (c >= '0' && c <= '9')) node = this.number();
+    else if (ID_START.test(c)) node = this.word();
+    else {
+      this.fail('unexpected character ' + JSON.stringify(c));
+      return null;
+    }
+    this.assertion();
+    return node;
+  }
+
+  /**
+   * A TypeScript type assertion after a value, which this parser reads and
+   * throws away: the value is the same value either way.
+   *
+   * Without this, one `as const` anywhere inside an object stops the whole
+   * declaration being read, and every tab that reads it opens empty. That is
+   * exactly what had happened to `CONFIG`, on the one line that says which
+   * speeds the wheel runs at.
+   */
+  assertion() {
+    const SPACE = ' \t\r\n';
+    const TYPE = '_$.<>[]| ';
+    let i = this.pos;
+    while (i < this.src.length && SPACE.includes(this.src[i])) i++;
+    if (this.src.slice(i, i + 2) !== 'as') return;
+    const after = this.src[i + 2];
+    if (after === undefined || !SPACE.includes(after)) return;
+    i += 2;
+    while (i < this.src.length && SPACE.includes(this.src[i])) i++;
+    const isType = (c) => /[A-Za-z0-9]/.test(c) || TYPE.includes(c);
+    let end = i;
+    while (end < this.src.length && isType(this.src[end])) end++;
+    // a trailing space belongs to whatever comes next, not to the type
+    while (end > i && this.src[end - 1] === ' ') end--;
+    if (end === i) return;
+    this.pos = end;
   }
 
   object() {
@@ -198,7 +231,15 @@ export function parseModule(src, file) {
     let node = null;
     try {
       node = reader.value();
-    } catch {
+    } catch (err) {
+      /* A value this parser cannot read is skipped rather than fatal, so one
+         new piece of syntax never blackens the whole console. It is not silent
+         any more: PARSE_DEBUG=1 says which declaration was dropped and why,
+         which is how a console that had quietly stopped reading config.ts got
+         found. */
+      if (process.env.PARSE_DEBUG) {
+        console.error('parse: dropped ' + m[1] + ' in ' + file + ': ' + err.message);
+      }
       node = null;
     }
     if (node === null) continue;

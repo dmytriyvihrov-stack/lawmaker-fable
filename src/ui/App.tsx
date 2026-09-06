@@ -12,9 +12,12 @@ import {
   openBoard,
   newGame,
   reopenLaw,
+  sendAbroad,
   takeLover,
   takeMoment,
 } from '../engine/reducer';
+import { beginAt } from '../engine/chapters';
+import type { WorldAction } from '../engine/world';
 import { freePlots, needsPlacement } from '../engine/plots';
 import { getMoment, momentsNow } from '../engine/moments';
 import { clearSave, loadGame, saveGame } from '../engine/save';
@@ -23,6 +26,7 @@ import type {
   PhilTag,
   PlotId,
   Season,
+  Stage,
   StatId,
   TechId,
   WorkId,
@@ -59,6 +63,7 @@ import { MonarchPortrait } from './components/MonarchPortrait';
 import { Codex } from './overlays/Codex';
 import { Register } from './overlays/Register';
 import { TechTree } from './overlays/TechTree';
+import { World } from './overlays/World';
 import { WORK_SITES, siteOf } from './components/town/sites';
 import { fitToMap, fitToScreen, useMapFit } from './useMapFit';
 import { useHand } from './hand/useHand';
@@ -70,6 +75,11 @@ import { Intro } from './screens/Intro';
 import { Portrait } from './screens/Portrait';
 import { Title } from './screens/Title';
 import { Works } from './screens/Works';
+import { useJourney } from './journey/useJourney';
+import { JourneyLayer, RulerControls } from './journey/Ruler';
+import { JourneyCard } from './journey/JourneyCard';
+import './journey/journey.css';
+import { onFoot } from './journey/routes';
 
 type Action =
   | { type: 'new'; seed: number }
@@ -85,11 +95,14 @@ type Action =
   | { type: 'openBoard'; board: StatId }
   | { type: 'reopen'; proposalId: string }
   | { type: 'moment'; id: string }
+  | { type: 'world'; action: WorldAction; target: string }
+  | { type: 'begin'; chapter: Stage; seed: number }
   | { type: 'advance' }
   | { type: 'reset' };
 
 function appReducer(game: GameState | null, action: Action): GameState | null {
   if (action.type === 'new') return newGame(action.seed);
+  if (action.type === 'begin') return beginAt(action.chapter, action.seed);
   if (action.type === 'continue') return action.game;
   if (action.type === 'reset') return null;
   if (!game) return game;
@@ -99,6 +112,8 @@ function appReducer(game: GameState | null, action: Action): GameState | null {
       return chooseDeclared(game, action.tag);
     case 'moment':
       return takeMoment(game, action.id);
+    case 'world':
+      return sendAbroad(game, action.action, action.target);
     case 'law':
       return chooseLaw(game, action.proposalId, action.optionIdx, action.label);
     case 'case':
@@ -128,6 +143,22 @@ function freshSeed(): number {
     return crypto.getRandomValues(new Uint32Array(1))[0];
   }
   return 1;
+}
+
+/**
+ * `?chapter=village|town|kingdom` on the URL, with an optional `?seed=`.
+ *
+ * Not gated on the dev switch, for the same reason `?see=end` is not: it is
+ * how a chapter gets reloaded and reloaded while it is being looked at, and a
+ * switch that has to be found again after every reload is not a tool. It reads
+ * once, on mount, and it never fires over a save that is being continued.
+ */
+function chapterInUrl(): { chapter: Stage; seed: number } | null {
+  const params = new URLSearchParams(window.location.search);
+  const asked = params.get('chapter');
+  if (asked !== 'village' && asked !== 'town' && asked !== 'kingdom') return null;
+  const wanted = Number(params.get('seed'));
+  return { chapter: asked, seed: Number.isInteger(wanted) && wanted > 0 ? wanted : freshSeed() };
 }
 
 const WHEEL: Season[] = ['spring', 'summer', 'autumn', 'winter'];
@@ -165,8 +196,11 @@ export function App() {
   const [game, dispatch] = useReducer(appReducer, null);
   const [codexOpen, setCodexOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
+  const [worldOpen, setWorldOpen] = useState(false);
   const [treeOpen, setTreeOpen] = useState(false);
   const [dev, setDev] = useState(false);
+  const [instantJourneys, setInstantJourneys] = useState(false);
+  const deferredYear = useRef<Action | null>(null);
   const [saved, setSaved] = useState<GameState | null>(null);
   const [idle, setIdle] = useState<Idle>(null);
   /** A work being considered, so the town can show where it would stand. */
@@ -224,6 +258,12 @@ export function App() {
 
   useEffect(() => {
     setSaved(loadGame());
+  }, []);
+
+  // the chapter door, taken once and only when the URL actually asks for it
+  useEffect(() => {
+    const asked = chapterInUrl();
+    if (asked) dispatch({ type: 'begin', chapter: asked.chapter, seed: asked.seed });
   }, []);
 
   useEffect(() => {
@@ -410,8 +450,41 @@ export function App() {
       ? game.current.id
       : null;
   const handSpotNow = game && handCaseId ? handSpot(handCaseId, game) : null;
+  const visitKey = game && handCaseId ? `${game.seed}:${game.turn}:${handCaseId}` : '';
+  const visitEvent = handCaseId ? getCase(handCaseId) : undefined;
+  const visitAt = handSpotNow ?? (handCaseId ? CASE_SPOTS[handCaseId] : null);
+  const journey = useJourney({
+    reign: game?.seed ?? null,
+    visit: game && visitEvent && visitAt && (idle === null || idle === 'waiting')
+      ? { key: visitKey, id: visitEvent.id, character: visitEvent.character, at: onFoot(visitAt) } : null,
+    speed: CONFIG.speeds[speed] ?? 1,
+    paused: !game || game.phase === 'intro' || game.phase === 'portrait' || codexOpen || registerOpen || treeOpen || worldOpen || worked !== null || named !== null || winterAhead !== null || (!!game && (openableBoard(game) !== null || (!game.townName && game.turn >= CONFIG.townName.fromYear))),
+    instant: dev && instantJourneys,
+    onComplete: ({ moment, turn }) => {
+      if (!game || game.turn !== turn) return;
+      dispatch({ type: 'moment', id: moment.id });
+      setSaid({ id: moment.id, turn });
+    },
+  });
+  const journeyReady = journey.ready(visitKey);
+  useEffect(() => {
+    if (journeyReady) setIdle(null);
+  }, [journeyReady]);
+  // A year cannot discard a promised errand. Its action is applied to the
+  // latest reign after the walk, so the collection reward is not overwritten.
+  const finishThen = (action: Action) => {
+    if (journey.snapshot.errands.length) deferredYear.current = action;
+    else dispatch(action);
+  };
+  useEffect(() => {
+    if (journey.snapshot.errands.length || !deferredYear.current) return;
+    const action = deferredYear.current;
+    deferredYear.current = null;
+    dispatch(action);
+  }, [journey.snapshot.errands.length]);
+  useEffect(() => { deferredYear.current = null; }, [game?.seed]);
   /* The card is up for it: the years are not drifting and nobody is knocking. */
-  const handReady = handCaseId !== null && game?.phase === 'case' && idle === null;
+  const handReady = handCaseId !== null && game?.phase === 'case' && idle === null && journeyReady;
   const hand = useHand({
     mapRef,
     fit,
@@ -423,7 +496,7 @@ export function App() {
     onAnswer: (choiceId, ruling) => dispatch({ type: 'case', choiceId, ruling }),
   });
 
-  const openTheDoor = useCallback(() => setIdle(null), []);
+  const openTheDoor = useCallback(() => setIdle(game?.current?.kind === 'case' ? 'waiting' : null), [game?.current?.kind]);
 
   // dev only: ?faces=1 lays out every monarch for a look, the way ?city=all does
   if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('faces')) {
@@ -470,7 +543,14 @@ export function App() {
             dispatch({ type: 'new', seed: freshSeed() });
           }}
           onContinue={() => saved && dispatch({ type: 'continue', game: saved })}
+          dev={dev}
+          onBeginAt={(chapter) => {
+            clearSave();
+            dispatch({ type: 'begin', chapter, seed: freshSeed() });
+          }}
         />
+        <BuildBadge />
+        <DevToggle on={dev} onToggle={() => setDev((v) => !v)} />
       </main>
     );
   }
@@ -536,7 +616,7 @@ export function App() {
   const showNaming = naming && !sealing;
 
   const caseEvent = game.current?.kind === 'case' ? getCase(game.current.id) : undefined;
-  const caseOpen = game.phase === 'case' && caseEvent !== undefined && !idling;
+  const caseOpen = game.phase === 'case' && caseEvent !== undefined && !idling && journeyReady;
 
   /**
    * The ground this year is choosing between, if it is choosing at all.
@@ -566,7 +646,7 @@ export function App() {
   const markerSpot = drifting
     ? null
     : game.current?.kind === 'case' && (game.phase === 'case' || game.phase === 'aftermath')
-      ? (CASE_SPOTS[game.current.id] ?? null)
+      ? (handSpotNow ?? CASE_SPOTS[game.current.id] ?? null)
       : game.phase === 'composer' || (game.current?.kind === 'proposal' && waiting)
         ? LAW_SPOT
         : game.phase === 'works'
@@ -605,7 +685,7 @@ export function App() {
 
   // nobody stands twice: whoever is at the door is not also out at their station
   const folk = townFolk(game, season).filter(
-    (p) => !((caseOpen || hand.zoomed) && caseEvent?.character === p.character),
+    (p) => !((caseOpen || hand.zoomed || journey.snapshot.visit !== null) && caseEvent?.character === p.character),
   );
 
   const card = (() => {
@@ -616,6 +696,9 @@ export function App() {
        place that does not exist yet, and it takes the window: see the full
        screen layer below the town. */
     if (game.phase === 'intro') return null;
+    if (journey.snapshot.errands.length || (game.phase === 'case' && !drifting && !journeyReady)) {
+      return <JourneyCard state={game} control={journey} cardRef={cardRef} dev={dev} />;
+    }
     if (idling) {
       return (
         <Interlude
@@ -646,10 +729,12 @@ export function App() {
       return (
         <Popup tone="bench" tailX={hand.tailX ?? tailX} wide cardRef={cardRef}>
           <Case
+            key={visitKey}
             state={game}
             dev={dev}
             season={season}
             onChoose={(choiceId, ruling) => {
+              if (!journeyReady) return;
               const text = caseEvent?.choices.find((c) => c.id === choiceId)?.text ?? '';
               if (handCaseId && hand.choose(handCaseId, choiceId, text, ruling)) return;
               dispatch({ type: 'case', choiceId, ruling });
@@ -688,7 +773,7 @@ export function App() {
               setPicked(null);
               setPlot(null);
               setPlotHover(null);
-              dispatch({ type: 'build', id, plot: where });
+              finishThen({ type: 'build', id, plot: where });
             }}
             onReopen={(proposalId) => {
               setPreview(null);
@@ -720,13 +805,15 @@ export function App() {
     !waiting &&
     openPlots.length === 0 &&
     (idling || (game.phase !== 'case' && game.phase !== 'aftermath' && game.phase !== 'composer'));
-  const moments = townIsPokeable ? momentsNow(game, season) : [];
+  const pendingMoments = journey.snapshot.errands.map((e) => e.moment);
+  const moments = [...(townIsPokeable ? momentsNow(game, season) : []), ...pendingMoments]
+    .filter((moment, i, all) => all.findIndex((m) => m.id === moment.id) === i);
   /** What the last one turned out to be. The year clears it, not a timer. */
   const saidNow = said && said.turn === game.turn ? getMoment(said.id) : null;
   const saidAt = saidNow ? fitToScreen(fit, saidNow.x, saidNow.y) : null;
 
   return (
-    <div className="flex h-dvh w-full flex-col overflow-hidden bg-ink">
+    <div className="ruler-edition flex h-dvh w-full flex-col overflow-hidden bg-ink">
       <div className="relative z-30 shrink-0">
         <TopBar
           state={game}
@@ -736,6 +823,7 @@ export function App() {
           onSpeed={changeSpeed}
           onCodex={() => setCodexOpen(true)}
           onRegister={() => setRegisterOpen(true)}
+          onWorld={() => setWorldOpen(true)}
           onTree={() => setTreeOpen(true)}
           onBeginAnew={() => {
             clearSave();
@@ -759,18 +847,24 @@ export function App() {
 
       {/* the place itself, under the bar and down to the bottom of the window,
           with everything else floating on top of it */}
-      <div ref={mapRef} className="relative min-h-0 flex-1 overflow-hidden">
+      <div ref={mapRef} className="ruler-map relative min-h-0 flex-1 overflow-hidden">
       {/* the camera: the town and the scene drawn over it move together */}
       <div ref={hand.zoomRef} className="absolute inset-0 origin-top-left">
       <div className="absolute inset-0">
         <CityScape
+          viewport={fit.w < 1000 ? `${-fit.ox / fit.scale} ${-fit.oy / fit.scale} ${fit.w / fit.scale} ${fit.h / fit.scale}` : undefined}
+          /* The camera in on a scene is a composition of its own, and it draws its
+             own people: the walking pair standing in it would be the same person
+             twice. The layer comes back when the camera pulls out. */
+          journeyLayer={game.phase === 'intro' || hand.zoomed ? null : <JourneyLayer control={journey} />}
+          reservedMoments={pendingMoments.map((m) => m.id)}
           stats={game.stats}
           cityFlags={game.cityFlags}
           population={game.population}
           buildings={game.buildings}
           stage={game.stage}
           season={season}
-          marker={hand.zoomed ? null : markerSpot}
+          marker={hand.zoomed || journey.snapshot.visit !== null ? null : markerSpot}
           markerCharacter={caseOpen ? (caseEvent?.character ?? null) : null}
           markerWaiting={waiting}
           onMarkerClick={waiting ? openTheDoor : undefined}
@@ -789,8 +883,9 @@ export function App() {
           folk={folk}
           moments={moments}
           onMomentTake={(id) => {
-            dispatch({ type: 'moment', id });
-            setSaid({ id, turn: game.turn });
+            if (!townIsPokeable) return;
+            const moment = momentsNow(game, season).find((m) => m.id === id);
+            if (moment) journey.collect({ key: `${game.seed}:${game.turn}:${id}`, turn: game.turn, moment });
           }}
         />
 
@@ -801,7 +896,7 @@ export function App() {
           <div
             key={`${saidNow.id}:${game.turn}`}
             className="moment-said absolute z-20 w-[260px] -translate-x-1/2 -translate-y-full"
-            style={{ left: saidAt.x, top: saidAt.y - 26 }}
+            style={{ left: Math.max(140, Math.min(fit.w - 140, saidAt.x)), top: Math.max(150, saidAt.y - 26) }}
           >
             <p className="rounded-lg border border-seal/40 bg-ink/95 px-3 py-2 text-[13px] leading-relaxed text-parchment shadow-lg">
               {saidNow.line}
@@ -811,6 +906,11 @@ export function App() {
       </div>
       {hand.overlay}
       </div>
+
+      {game.phase !== 'intro' && !hand.zoomed && <div className="ruler-control-dock absolute left-4 top-3 z-20">
+        <RulerControls control={journey} dev={dev} instant={instantJourneys} onInstant={() => setInstantJourneys((v) => !v)}
+          onWeather={idle !== null && idle !== 'waiting' ? () => setIdle({ ...idle, step: idle.step + 1 }) : undefined} />
+      </div>}
 
       {/* the crown, and under it what is written down. Nothing below that:
           there is no game information down there, there is the town. */}
@@ -825,7 +925,7 @@ export function App() {
 
 
       {/* the card, floating over the near meadow, which is what the meadow is for */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-5">
+      <div className="ruler-card-dock pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-5">
         {card}
         {hand.strip}
       </div>
@@ -885,6 +985,19 @@ export function App() {
       )}
 
       {treeOpen && <TechTree state={game} onClose={() => setTreeOpen(false)} />}
+
+      {/* A year spent abroad is spent from in here, and then the year turns the
+          way it does after any other year of work, so the map shuts behind it. */}
+      {worldOpen && game.world && (
+        <World
+          state={game}
+          onAct={(action, target) => {
+            setWorldOpen(false);
+            finishThen({ type: 'world', action, target });
+          }}
+          onClose={() => setWorldOpen(false)}
+        />
+      )}
 
       {/* The music is not part of the reign, so it does not sit in the row of
           things the reign is made of. It waits in the corner, the way the

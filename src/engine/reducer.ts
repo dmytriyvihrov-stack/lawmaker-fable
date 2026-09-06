@@ -14,6 +14,7 @@ import { monarchOf, traitOf } from './monarch';
 import { renderTemplate, roman } from './format';
 import { pickEvent } from './scheduler';
 import { breachFor, truthOf, wrongfulConvictions } from './verdict';
+import { actAbroad, openWorld, tickWorld, type WorldAction } from './world';
 import {
   activeStats,
   animalKeep,
@@ -28,6 +29,7 @@ import {
   researchGain,
   scaleEffects,
   squareHasHadEnough,
+  stageRule,
   trendOf,
   winterMouths,
   workCost,
@@ -110,6 +112,22 @@ export function bump(
 }
 
 /** The monarch on the throne bends one rule of the arithmetic. */
+/**
+ * A line in the ledger for a year in which nothing moved.
+ *
+ * `bump` refuses a delta of zero, and it is right to: a dial that did not move
+ * has nothing to explain. But a year can be spent on something that comes back
+ * with nothing (asking a neighbour for grain and being refused), and a spent
+ * year with no record of what it was spent on is the one thing worse than a
+ * bad outcome. This writes the line and moves no dial.
+ */
+function noteLine(draft: GameState, stat: StatId, source: string): void {
+  draft.ledger.push({ turn: draft.turn, stat, delta: 0, source });
+  if (draft.ledger.length > CONFIG.ledgerKeep) {
+    draft.ledger = draft.ledger.slice(draft.ledger.length - CONFIG.ledgerKeep);
+  }
+}
+
 function applyEffects(
   draft: GameState,
   effects: Effects | undefined,
@@ -635,6 +653,28 @@ export function chooseWork(s: GameState, id: WorkId, plot?: PlotId): GameState {
   return advance(draft);
 }
 
+/**
+ * The year is spent on somebody else's kingdom instead of on your own.
+ *
+ * It is a year of work like any other: it costs the year, it leaves one or two
+ * lines in the ledger, and then the year turns. Nothing is built, so nothing
+ * goes up in the picture and nothing goes into the log of works.
+ */
+export function sendAbroad(s: GameState, action: WorldAction, target: string): GameState {
+  const outcome = actAbroad(s, action, target);
+  if (!outcome) return s;
+
+  const draft = clone(s);
+  draft.world = outcome.world;
+  for (const move of outcome.moves) {
+    if (move.delta === 0) noteLine(draft, move.stat, move.source);
+    else bump(draft, move.stat, move.delta, move.source);
+  }
+  draft.lastWorkTurn = draft.turn;
+  draft.lastWork = null;
+  return advance(draft);
+}
+
 /** The year is spent reopening a law instead of building anything. */
 export function reopenLaw(s: GameState, proposalId: string): GameState {
   const proposal = getProposal(proposalId);
@@ -745,7 +785,7 @@ export function advance(s: GameState): GameState {
   }
 
   // 3. a town is a bigger thing to be responsible for, and it gets bigger
-  if (draft.stage === 'town') {
+  if (stageRule(draft) === 'town') {
     bump(draft, 'crownSanity', CONFIG.town.crownDrift, UI.ledger.crown, true);
     bump(draft, 'culture', CONFIG.town.cultureDrift, UI.ledger.culture, true);
     // health is leaned on above, at every size; a town leans on the mood too
@@ -803,6 +843,32 @@ export function advance(s: GameState): GameState {
     applyEffects(draft, owed, UI.ledger.charter);
     const seq = draft.pending.reduce((m, p) => Math.max(m, p.seq), 0) + 1;
     draft.pending.push({ onTurn: draft.turn, caseId: 't_town', seq });
+  }
+
+  // 6a. the crown, which is the charter again at the next scale up.
+  //
+  // A town answers to the capital; a kingdom is answered to. Nothing new is
+  // handed over on the day, because there is nothing a kingdom has that a town
+  // did not: what arrives is an outside, and the map that goes with it.
+  if (
+    draft.stage === 'town' &&
+    draft.flags.includes('kingdom_open') &&
+    draft.population >= CONFIG.kingdom.at
+  ) {
+    draft.stage = 'kingdom';
+    draft.kingdomSince = draft.turn;
+    if (!draft.flags.includes('became_kingdom')) draft.flags.push('became_kingdom');
+    draft.world = openWorld(draft);
+    noteLine(draft, 'crownSanity', UI.ledger.crownArrives);
+  }
+
+  // 6a2. and then a year passes out there, whether or not anybody looked
+  {
+    const abroad = tickWorld(draft);
+    if (abroad) {
+      draft.world = abroad.world;
+      for (const move of abroad.moves) bump(draft, move.stat, move.delta, move.source);
+    }
   }
 
   // 6b. The square, which is the one board that can end a reign on its own.
@@ -864,8 +930,13 @@ export function advance(s: GameState): GameState {
   const allLawsUsed = draft.usedProposals.length >= allProposals().length;
   // nothing left that can happen: every law written, or a hamlet that has
   // stopped growing and so will never see the charter or the laws behind it
-  const stalled = draft.stage === 'village' && yearlyChange(draft) <= 0;
-  const spent = ev === null && draft.turn >= 12 && (allLawsUsed || stalled);
+  const stalled = stageRule(draft) === 'village' && yearlyChange(draft) <= 0;
+  // a kingdom that has written every law it can still has neighbours, and they
+  // are the reason it is not finished the year the drafting table empties
+  const youngCrown =
+    draft.stage === 'kingdom' &&
+    draft.turn < (draft.kingdomSince ?? draft.turn) + CONFIG.kingdom.years;
+  const spent = ev === null && draft.turn >= 12 && (allLawsUsed || stalled) && !youngCrown;
   const over = draft.turn >= CONFIG.hardCapTurn || spent;
   if (over) {
     draft.current = null;

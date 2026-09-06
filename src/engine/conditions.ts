@@ -28,7 +28,9 @@ export function evaluate(cond: Condition, s: GameState): boolean {
     }
 
     case 'stage':
-      return s.stage === cond.stage;
+      // a kingdom is a town that got neighbours, so everything the charter
+      // unlocked is unlocked still: the town proposals go on being offered
+      return s.stage === cond.stage || (cond.stage === 'town' && s.stage === 'kingdom');
 
     case 'souls':
       return cond.op === 'lte' ? s.population <= cond.value : s.population >= cond.value;

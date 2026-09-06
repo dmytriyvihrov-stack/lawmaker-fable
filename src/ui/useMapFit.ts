@@ -40,13 +40,14 @@ export function useMapFit(ref: RefObject<HTMLElement | null>): MapFit {
       const w = el.clientWidth;
       const h = el.clientHeight;
       if (w === 0 || h === 0) return;
-      const scale = Math.max(w / MAP.w, h / MAP.h);
+      const narrow = w < 1000;
+      const scale = narrow ? w / MAP.w : Math.max(w / MAP.w, h / MAP.h);
       setFit((old) => {
         // the same rule the picture uses: centred across, hung from the bottom
         const next = {
           scale,
           ox: (w - MAP.w * scale) / 2,
-          oy: h - MAP.h * scale,
+          oy: narrow ? -120 * scale : h - MAP.h * scale,
           w,
           h,
         };

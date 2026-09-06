@@ -115,7 +115,7 @@ export function FolkFigure({ pin, scale = 1 }: { pin: FolkPin; scale?: number })
         <g transform={`scale(${scale})`}>
           <ellipse cy=".5" rx="4.8" ry="1.2" fill="#4f523d" opacity=".22" />
           <g className={moving ? 'city-stroll-turn' : undefined} style={{ animationDuration: pin.dur, animationDelay: pin.delay }}>
-            <Figure look={look} doing={pin.doing} />
+            <FolkBody look={look} doing={pin.doing} />
           </g>
         </g>
       </g>
@@ -158,7 +158,7 @@ export function FolkIcon({
       <Backdrop place={PLACE[doing]} />
       <path d="M-11.5 0 h23" stroke={SOFT} strokeWidth="0.8" />
       <g transform={fit < 1 ? `scale(${fit.toFixed(3)})` : undefined}>
-        <Figure look={look} doing={doing} />
+        <FolkBody look={look} doing={doing} />
       </g>
     </svg>
   );
@@ -232,7 +232,7 @@ function Backdrop({ place }: { place: Place }) {
  * then what is on their head, then what is in their hands, so a spade crosses
  * the coat and the coat crosses the furrow.
  */
-function Figure({ look, doing }: { look: FolkLook; doing: Doing }) {
+export function FolkBody({ look, doing }: { look: FolkLook; doing: Doing }) {
   if (doing === 'prowling') return <TinyWolf />;
   if (doing === 'gone') return <Absent />;
 

@@ -169,7 +169,12 @@ export function computePortrait(s: GameState): PortraitData {
   }
 
   // 6. the count, and what was built with the years
-  const what = s.stage === 'town' ? UI.court.town : UI.court.hamlet;
+  const what =
+    s.stage === 'kingdom'
+      ? UI.court.kingdom
+      : s.stage === 'town'
+        ? UI.court.town
+        : UI.court.hamlet;
   const soulsLine = UI.portrait.soulsLine
     .replace('{from}', String(CONFIG.population.start))
     .replace('{what}', what)

@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run --passWithNoTests",
     "validate": "vitest run tests/content.test.ts --passWithNoTests",
-    "bundle:minigames": "vite build --config vite.minigames.config.ts && node bundle-minigames.mjs"
+    "bundle:minigames": "vite build --config vite.minigames.config.ts && node bundle-minigames.mjs",
+    "reign": "vite-node tools/reign.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

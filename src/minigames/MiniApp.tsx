@@ -304,6 +304,7 @@ export function MiniApp() {
   return (
     <div className="flex h-dvh w-full flex-col overflow-hidden bg-ink">
       <div className="relative z-30 shrink-0">
+        {/* the bench is a town and never a kingdom, so the globe never draws */}
         <TopBar
           state={game}
           season={season}
@@ -311,6 +312,7 @@ export function MiniApp() {
           onSpeed={() => {}}
           onCodex={() => setCodexOpen(true)}
           onRegister={() => setRegisterOpen(true)}
+          onWorld={() => {}}
           onTree={() => setTreeOpen(true)}
           onBeginAnew={() => window.location.reload()}
         />

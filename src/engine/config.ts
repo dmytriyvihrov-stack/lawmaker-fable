@@ -109,6 +109,28 @@ export const CONFIG = {
     crowdEvery: 100,
   },
 
+  /**
+   * The third stage: a place with neighbours.
+   *
+   * A kingdom keeps every town rule it grew up with and adds one thing, which
+   * is that it is no longer the only place on the map. The year of work can be
+   * spent abroad instead of at home, and the neighbours go on living whether
+   * or not it is.
+   */
+  kingdom: {
+    at: 300,            // souls: a town becomes a kingdom at this count
+    years: 10,          // a reign that runs out of laws still gets this long with them
+    states: 5,          // neighbours drawn the year the crown arrives
+    askBelow: 25,       // a board under this is a neighbour asking for help
+    askExpires: 3,      // years an ask stands before silence is taken as a no
+    stanceDecay: 3,     // every this many years a stance moves one step toward civil
+    ask:  { gain: 10, debt: 1 },
+    send: { cost: 10, crown: 2, stance: 2 },
+    raid: { needsArmy: 30, roll: 20, edge: 10, win: 15, armyWin: 5,
+            armyLose: 10, moodLose: 5, crown: 6, stance: 3, others: 1 },
+    raided: { economy: 8, mood: 3 },
+  },
+
   village: {
     growthNoLaw: 1.12,    // yearly multiplier before any strangers law
     births: 1,            // added every year on top of the multiplier

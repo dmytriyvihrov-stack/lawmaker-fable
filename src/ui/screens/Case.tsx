@@ -231,7 +231,7 @@ export function Case({ state, dev = false, season, onChoose }: Props) {
   const verbs = grammar ? availableVerbs(event.id, state) : [];
 
   return (
-    <div className="grid gap-4 p-4 lg:grid-cols-[172px_minmax(0,1fr)_392px]">
+    <div className="ruler-case grid gap-4 p-4 lg:grid-cols-[142px_minmax(0,1fr)_360px]">
       <WhoStands state={state} character={event.character} caseId={event.id} />
 
       {/* what happened */}

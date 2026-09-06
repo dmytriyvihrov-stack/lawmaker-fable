@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { CityFlag, PlotId, Season, Stage, StatId, WorkId } from '../../engine/types';
 import { WORKS } from '../../content/works';
 import { UI } from '../../content/ui-strings';
+import { JOURNEY } from '../../content/journey';
 import { FolkFigure } from './Folk';
 import { folkLook } from '../../content/folk';
 import type { FolkPin } from '../../engine/folk';
@@ -126,6 +127,9 @@ interface Props {
    */
   moments?: Moment[];
   onMomentTake?: (id: string) => void;
+  reservedMoments?: string[];
+  journeyLayer?: ReactNode;
+  viewport?: string;
 }
 
 const SEAL = '#a3352c';
@@ -226,6 +230,9 @@ export function CityScape({
   onPlotPick,
   moments = [],
   onMomentTake,
+  reservedMoments = [],
+  journeyLayer,
+  viewport,
   onPlotHover,
   preview = null,
   raising = null,
@@ -241,7 +248,9 @@ export function CityScape({
   const season = devSeason() ?? seasonIn;
   const paint = PAINT[season];
   const level = (id: WorkId): number => buildings[id] ?? 0;
-  const town = stage === 'town';
+  // a kingdom is drawn as the town it grew out of: nothing about the picture
+  // changes the year the crown arrives, because nothing about the place does
+  const town = stage !== 'village';
 
   /**
    * One roof is one household, up to a lane's worth of them. A place of five
@@ -664,16 +673,20 @@ export function CityScape({
 
   return (
     <svg
-      viewBox={`0 0 ${MAP.w} ${MAP.h}`}
+      viewBox={viewport ?? `0 0 ${MAP.w} ${MAP.h}`}
       /* When the window is shorter than the picture, it is the sky that goes,
          never the ground: the card sits on the near meadow and the settlement
          has to stay above it, so the picture hangs from the bottom edge. */
-      preserveAspectRatio="xMidYMax slice"
+      preserveAspectRatio={viewport ? 'none' : 'xMidYMax slice'}
       className="city-world block h-full w-full"
-      role={plots.length > 0 || onMarkerClick ? 'group' : 'img'}
+      role={plots.length > 0 || onMarkerClick || moments.length > 0 ? 'group' : 'img'}
       aria-label={UI.city.label}
     >
       <defs>
+        <linearGradient id="ruler-ground-tail" x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor={paint.groundLow} stopOpacity="0" />
+          <stop offset="1" stopColor={paint.groundLow} />
+        </linearGradient>
         <filter id="wood-soft-edge" x="-10%" y="-25%" width="120%" height="150%">
           <feGaussianBlur stdDeviation="7" />
         </filter>
@@ -890,6 +903,7 @@ export function CityScape({
         className="city-tint"
       />
       <rect y="194" width={MAP.w} height="626" fill="url(#ground)" />
+      {viewport && <rect y="820" width={MAP.w} height="3000" fill={paint.groundLow} />}
       <GroundWashes paint={paint} />
 
       {/* the belt of wood along the whole horizon, and the two woods that come
@@ -1533,7 +1547,8 @@ export function CityScape({
       />
 
       {/* the curtain a card is looked at through */}
-      {veil && <rect width={MAP.w} height={MAP.h} fill="#14110d" opacity=".24" />}
+      {viewport && <rect y="750" width={MAP.w} height="70" fill="url(#ruler-ground-tail)" pointerEvents="none" />}
+      {veil && <rect width={MAP.w} height={viewport ? 3820 : MAP.h} fill="#14110d" opacity=".10" pointerEvents="none" />}
 
       {/* The four small things.
 
@@ -1590,23 +1605,30 @@ export function CityScape({
           key={moment.id}
           transform={`translate(${moment.x} ${moment.y})`}
           role="button"
-          tabIndex={0}
+          tabIndex={reservedMoments.includes(moment.id) ? -1 : 0}
           aria-label={moment.label}
-          className={`city-moment-hit hand-${moment.hand}`}
-          onClick={() => onMomentTake?.(moment.id)}
+          aria-disabled={reservedMoments.includes(moment.id)}
+          data-moment={moment.id}
+          data-reserved={reservedMoments.includes(moment.id)}
+          className={`city-moment-hit hand-${moment.hand} ${reservedMoments.includes(moment.id) ? 'moment-reserved' : ''}`}
+          onClick={() => !reservedMoments.includes(moment.id) && onMomentTake?.(moment.id)}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault();
-              onMomentTake?.(moment.id);
+              if (!reservedMoments.includes(moment.id)) onMomentTake?.(moment.id);
             }
           }}
         >
-          <title>{moment.label}</title>
+          <title>{reservedMoments.includes(moment.id) ? JOURNEY.reserved : moment.label}</title>
           <circle r="26" fill="transparent" />
           <g className="city-moment">
             <circle r="17" fill="#e8c877" opacity=".12" />
             <circle r="11.5" fill="none" stroke="#e8c877" strokeWidth="1.6" opacity=".85" />
             <MomentMark hand={moment.hand} />
+          </g>
+          <g className="moment-name" transform="translate(0 29)" pointerEvents="none">
+            <rect x="-46" y="-11" width="92" height="20" rx="10" fill="#332e21" opacity=".9" />
+            <text textAnchor="middle" y="3" fill="#f2d792" fontSize="12">{reservedMoments.includes(moment.id) ? JOURNEY.queued : moment.label}</text>
           </g>
         </g>
       ))}
@@ -1670,7 +1692,7 @@ export function CityScape({
         <path
           d={`M${marker.x} ${marker.y + 34} L${tailTo.x} ${tailTo.y}`}
           stroke={tailTone === 'bench' ? BENCH : SEAL}
-          strokeWidth="8"
+          strokeWidth="2"
           strokeLinecap="round"
           opacity=".4"
           pointerEvents="none"
@@ -1718,6 +1740,7 @@ export function CityScape({
           )}
         </g>
       )}
+      {journeyLayer}
     </svg>
   );
 }

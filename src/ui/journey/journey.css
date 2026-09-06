@@ -1,0 +1,93 @@
+/* A quieter frame leaves the town and the moving figures in the foreground. */
+.ruler-edition { --color-ink-line: #484333; --color-parchment-dim: #c1b697; }
+.ruler-edition > :first-child { background: linear-gradient(100deg, #20251f, #292a21 70%, #24251f); border-bottom: 1px solid #79704c66; }
+.ruler-map { background: #7d8060; }
+.ruler-edition .decision-paper { background: linear-gradient(140deg, #2b2c24f7, #20231ef8); box-shadow: 0 12px 45px #10160d66, inset 0 1px #f2dfb315; border-color: #9e947578 !important; border-radius: 16px; scrollbar-width: thin; scrollbar-color: #908262 #25251e; }
+.ruler-edition .decision-paper h2 { color: #f2e5c9; }
+.ruler-edition .answer { border-color: #736c4c66; border-radius: 9px; }
+.ruler-edition .answer:hover:not(:disabled) { background-color: #ccb98116; border-color: #cfb775; }
+.ruler-edition .answer-bench:hover:not(:disabled) { border-color: #b7d1be; }
+.ruler-case > aside { background: #131c1638; border-color: #9ab4a04d; }
+.ruler-case > section:last-child { background: #141d173d; border-color: #9ab4a033; }
+.ruler-case > section:nth-child(2) > div:last-child { max-width: 54ch; }
+.ruler-controls { display: flex; align-items: center; gap: 10px; width: 270px; padding: 10px 12px; background: #22291fef; border: 1px solid #d1bd813d; border-radius: 13px; box-shadow: 0 5px 18px #25341b26; color: #f0e5c7; backdrop-filter: blur(6px); }
+.ruler-control-icon { display: grid; place-items: center; width: 37px; height: 40px; background: #d1b26814; border: 1px solid #d1b2683a; border-radius: 9px; }
+.ruler-eyebrow { margin: 0; font-family: system-ui, sans-serif; font-size: 9px; line-height: 1.5; letter-spacing: .16em; text-transform: uppercase; color: #c7b788; }
+.ruler-controls select { display: block; width: 100%; margin-top: 3px; padding: 0 3px 0 0; border: 0; color: #f1e4c8; background: transparent; font: inherit; font-size: 13px; cursor: pointer; }
+.ruler-controls option { background: #262c22; }
+.ruler-task-note { margin: 3px 0 0; font-size: 10px; color: #bbbba1; }
+.ruler-dev { position: absolute; top: calc(100% + 6px); left: 0; display: flex; flex-wrap: wrap; gap: 6px; padding: 7px 9px; background: #21281fed; border: 1px solid #8e7a5266; border-radius: 8px; font: 10px system-ui, sans-serif; }
+.ruler-dev label { display: flex; align-items: center; gap: 5px; }
+.ruler-dev button { border: 1px solid #a3926577; padding: 2px 5px; border-radius: 4px; }
+.journey-card { position: relative; display: flex; align-items: flex-start; gap: 18px; width: 100%; max-width: 800px; max-height: 39dvh; padding: 20px 24px; overflow-y: auto; scrollbar-width: thin; border: 1px solid #bfc8a36b; border-radius: 15px; background: linear-gradient(115deg, #253129f5, #272d24fa); color: #f1e5c7; box-shadow: 0 16px 50px #15220e77, inset 0 1px #d8e6b71a; backdrop-filter: blur(8px); animation: journey-appear 250ms ease-out; }
+.journey-card::before { content: ''; position: absolute; top: 16px; bottom: 16px; left: 0; width: 3px; background: #a5bca4; border-radius: 3px; }
+.journey-person { flex-shrink: 0; padding-top: 2px; }
+.journey-story { flex: 1; min-width: 0; }
+.journey-card h2 { margin: 4px 0 0; color: #f9edce; font-size: 23px; line-height: 1.18; font-weight: normal; }
+.journey-intro { margin: 10px 0 0; font-size: 15px; line-height: 1.5; color: #e6dec4; }
+.journey-details { margin-top: 10px; font-size: 13px; line-height: 1.55; color: #c9c6ad; }
+.journey-details summary { width: fit-content; font-size: 11px; color: #a7c5ae; }
+.journey-details p { margin: 6px 0; max-width: 66ch; }
+.journey-note { margin: 9px 0 0; font-size: 11px; line-height: 1.5; color: #b9b99d; }
+.journey-go { flex-shrink: 0; align-self: center; padding: 12px 16px; border: 1px solid #e2cc8f66; border-radius: 9px; background: #d8bc78; color: #2d3225; font-size: 13px; box-shadow: 0 3px 0 #11170e44; }
+.journey-go:hover { background: #ead095; }
+.journey-go span { padding-left: 16px; font-size: 17px; }
+.journey-errand { align-items: center; max-width: 610px; border-color: #d4b97666; }
+.journey-errand::before { background: #e3c67d; }
+.journey-errand h2 { font-size: 19px; }
+.journey-spark { display: grid; place-items: center; flex: 0 0 43px; width: 43px; height: 43px; border: 1px solid #d6b87666; border-radius: 50%; font-size: 22px; color: #e2c275; background: #dcc2760d; }
+.journey-count { display: grid; place-items: center; flex: 0 0 25px; height: 25px; border: 1px solid #9e926477; border-radius: 50%; color: #dfca8c; }
+.journey-skip { align-self: center; flex-shrink: 0; color: #afc1a2; border: 1px solid #bac89944; border-radius: 5px; padding: 4px 7px; font-size: 10px; }
+.city-moment-hit .moment-name { opacity: 0; transition: opacity 150ms; }
+.city-moment-hit:hover .moment-name, .city-moment-hit:focus-visible .moment-name, .city-moment-hit.moment-reserved .moment-name { opacity: 1; }
+.city-moment-hit.moment-reserved { cursor: progress; }
+.city-moment-hit.moment-reserved .city-moment { animation: none; }
+.city-moment-hit.moment-reserved .city-moment circle { stroke: #fff0ba; }
+.ruler-body, .ruler-leg-a, .ruler-leg-b, .ruler-arm { transform-box: fill-box; transform-origin: center; }
+.ruler-walking .ruler-body { animation: ruler-step 380ms ease-in-out infinite alternate; }
+.ruler-walking .ruler-leg-a { animation: ruler-leg 380ms ease-in-out infinite alternate; }
+.ruler-walking .ruler-leg-b { animation: ruler-leg 380ms ease-in-out infinite alternate-reverse; }
+.ruler-working .ruler-arm { transform-origin: top left; animation: ruler-help 1400ms ease-in-out infinite; }
+.ruler-caller-walk { animation: ruler-step 330ms ease-in-out infinite alternate; }
+.ruler-action-pet .ruler-body, .ruler-action-lift .ruler-body { transform-origin: bottom center; rotate: 12deg; }
+.ruler-action-pull .ruler-body { transform-origin: bottom center; rotate: -9deg; }
+.ruler-speech { animation: journey-appear 250ms ease-out; }
+@keyframes ruler-step { from { translate: 0 0; } to { translate: 0 -1.8px; } }
+@keyframes ruler-leg { from { rotate: -16deg; } to { rotate: 16deg; } }
+@keyframes ruler-help { 0%,100% { rotate: -4deg; } 50% { rotate: 19deg; } }
+@keyframes journey-appear { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
+@media (max-width: 999px) {
+  .ruler-topbar-row { gap: 9px 12px; padding: 9px 14px; }
+  .ruler-topbar-boards { order: 3; flex-basis: 100%; justify-content: space-between; gap: 7px; }
+  .ruler-topbar-actions { margin-left: auto; gap: 6px; }
+  .ruler-topbar-actions > button { height: 28px; padding-left: 7px; padding-right: 7px; }
+  .ruler-edition .decision-paper { max-height: 39dvh; }
+  .ruler-control-dock { left: 10px; top: 8px; }
+  .ruler-controls { width: 228px; gap: 7px; padding: 7px 9px; }
+  .ruler-control-icon { width: 29px; height: 34px; }
+  .ruler-eyebrow { font-size: 8px; }
+  .ruler-controls select { font-size: 12px; }
+  .ruler-card-dock { padding: 0 10px 28px; }
+  .journey-card { gap: 12px; padding: 15px 16px; }
+  .journey-card h2 { font-size: 21px; }
+  .ruler-case { grid-template-columns: 95px minmax(0, 1fr); }
+  .ruler-case > aside { padding: 8px; }
+  .ruler-case > aside svg { max-width: 76px; height: auto; }
+  .ruler-case > aside > div:last-child { display: none; }
+  .ruler-case > section:last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  .journey-card { flex-wrap: wrap; gap: 10px; padding: 13px 15px; max-height: 39dvh; }
+  .journey-person { display: none; }
+  .journey-go { width: 100%; padding: 10px 14px; text-align: left; }
+  .journey-go span { float: right; }
+  .journey-story { flex-basis: 75%; }
+  .journey-errand { flex-wrap: nowrap; gap: 10px; }
+  .journey-spark { flex-basis: 30px; width: 30px; height: 30px; font-size: 16px; }
+  .journey-errand h2 { font-size: 17px; }
+  .ruler-controls { width: 212px; }
+  .ruler-case { padding: 12px; gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ruler-layer *, .journey-card { animation: none !important; }
+}

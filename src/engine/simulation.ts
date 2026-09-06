@@ -33,6 +33,20 @@ export const OPENABLE_BOARDS: StatId[] = ['army', 'culture'];
 export type Place = Pick<GameState, 'stage' | 'boards'>;
 
 /**
+ * Every rule in this file older than the crown asks one question: is this a
+ * hamlet, or is it bigger than one? A kingdom is bigger, so it answers "town"
+ * to all of them and keeps every town rule it grew up with: the charter's six
+ * boards, the town prices, the town works, the crown's yearly drift.
+ *
+ * Only the rules that are actually about a kingdom read `s.stage` itself.
+ * Without this, adding a third stage would have quietly turned a kingdom back
+ * into a hamlet in nine places at once.
+ */
+export function stageRule(s: Place): 'village' | 'town' {
+  return s.stage === 'village' ? 'village' : 'town';
+}
+
+/**
  * A settlement of nine has no watch and no fiddle. It does have a mood, a store
  * and a set of conditions people are living in, and those four are the whole
  * board until the place is big enough to decide it wants more. The other two
@@ -40,7 +54,7 @@ export type Place = Pick<GameState, 'stage' | 'boards'>;
  * and the charter only guarantees whatever is still missing.
  */
 export function activeStats(s: Place): StatId[] {
-  if (s.stage === 'town') return ALL_STATS;
+  if (stageRule(s) === 'town') return ALL_STATS;
   const opened = s.boards ?? [];
   return ALL_STATS.filter((id) => VILLAGE_STATS.includes(id) || opened.includes(id));
 }
@@ -51,7 +65,7 @@ export function isActiveStat(s: Place, stat: StatId): boolean {
 
 /** What the place could open next, if it is big enough to be asked. */
 export function openableBoard(s: GameState): StatId | 'both' | null {
-  if (s.stage === 'town') return null;
+  if (stageRule(s) === 'town') return null;
   const left = OPENABLE_BOARDS.filter((b) => !s.boards.includes(b));
   if (left.length === 0) return null;
   const at = left.length === OPENABLE_BOARDS.length ? CONFIG.boards.firstAt : CONFIG.boards.secondAt;
@@ -204,7 +218,7 @@ export function lawTrend(s: GameState, option: LawOption): Effects {
   const base =
     option.perTurnWatch && keepsWatch(s)
       ? option.perTurnWatch
-      : s.stage === 'town' && option.perTurnTown
+      : stageRule(s) === 'town' && option.perTurnTown
         ? option.perTurnTown
         : option.perTurn;
   return scaleEffects(base, lawWeight(s) * CONFIG.law.trendScale) ?? {};
@@ -429,7 +443,7 @@ export function trendOf(s: GameState, stat: StatId): number {
   // way on the one board that otherwise only ever falls
   if (stat === 'crownSanity' && loverOf(s) !== null) out += CONFIG.bond.loverSanity;
 
-  if (s.stage === 'town' && stat === 'crownSanity') out += CONFIG.town.crownDrift;
+  if (stageRule(s) === 'town' && stat === 'crownSanity') out += CONFIG.town.crownDrift;
 
   // and the one year the store is not a trend at all. Everything above is a
   // promise about a growing season, and there is not one this year: the best a
@@ -495,7 +509,7 @@ export function trendSourcesOf(
     out.push({ kind: 'lover', label: BOND_UI.loverSanity, delta: CONFIG.bond.loverSanity });
   }
 
-  if (s.stage === 'town' && stat === 'crownSanity') {
+  if (stageRule(s) === 'town' && stat === 'crownSanity') {
     out.push({ kind: 'drift', label: '', delta: CONFIG.town.crownDrift });
   }
 
@@ -580,12 +594,12 @@ export function trendsOf(s: GameState): Effects {
  */
 /** What this work asks for, in the place it is being asked in. */
 export function workPrice(s: GameState, work: WorkDef): number {
-  return s.stage === 'town' && work.townCost !== undefined ? work.townCost : work.cost;
+  return stageRule(s) === 'town' && work.townCost !== undefined ? work.townCost : work.cost;
 }
 
 /** What it pays out on the day, in the place it is being held in. */
 export function workOnce(s: GameState, work: WorkDef): Effects | undefined {
-  return s.stage === 'town' && work.townOnce !== undefined ? work.townOnce : work.once;
+  return stageRule(s) === 'town' && work.townOnce !== undefined ? work.townOnce : work.once;
 }
 
 export function workCost(s: GameState, work: WorkDef): number {
@@ -631,7 +645,7 @@ export function worksFor(s: GameState): WorkDef[] {
       return false;
     return (
       w.stage === 'both' ||
-      w.stage === s.stage ||
+      w.stage === stageRule(s) ||
       // a place that has decided it keeps a watch can raise the watch house,
       // charter or no charter: the board is the permission, not the paperwork
       (w.needsBoard !== undefined && s.boards.includes(w.needsBoard))

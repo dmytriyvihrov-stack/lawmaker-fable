@@ -28,8 +28,16 @@ export type ActionId =
   | 'worthy' | 'by_crowd' | 'by_hat';
 export type LawId = `${SubjectId}_${ActionId}`;
 
-/** Five souls or five hundred: the place is one of these two things. */
-export type Stage = 'village' | 'town';
+/**
+ * Five souls, five hundred, or a place with neighbours. The argument between
+ * the three is scale, the same argument three times.
+ *
+ * Every rule written before there was a third stage asks only one question:
+ * is this bigger than a hamlet? `stageRule` in `simulation.ts` answers that
+ * for a kingdom, which is why a kingdom keeps every town rule it grew up
+ * with. Only the rules that are actually about a kingdom read `stage`.
+ */
+export type Stage = 'village' | 'town' | 'kingdom';
 
 /**
  * Where a year can go. Most of these stand afterwards and are counted in
@@ -146,7 +154,11 @@ export type StoryFlag =
   /** The brother on the road, and what a year of him turned into. */
   | 'brother_kept' | 'brother_carried' | 'brother_driven'
   | 'store_burned' | 'brother_paints'
-  | 'became_town';
+  | 'became_town'
+  /** This reign may grow past a town. Set by the dev door only, for now. */
+  | 'kingdom_open'
+  /** The crown, and the five neighbours who had been there all along. */
+  | 'became_kingdom';
 
 /** City layers. One flag equals exactly one visible SVG layer. */
 export type CityFlag =
@@ -377,6 +389,57 @@ export type CurrentEvent =
 
 export interface PendingEvent { onTurn: number; caseId: string; seq: number; }
 
+/**
+ * One people of the kingdom, as a share of the count.
+ *
+ * A hamlet has five names and a town has a crowd; a kingdom has parts of a
+ * crowd that can be told apart, and who came through which gate is the first
+ * thing that tells them apart. Nothing rules on a people yet: they are what a
+ * ruling on a group would be about, and they are counted now so that the
+ * material can be read before it is written.
+ */
+export interface People {
+  id: 'founders' | 'comers' | 'trades' | 'river';
+  share: number;        // 0..1, and the four of them sum to 1
+  mood: number;         // 0..100
+}
+
+/** What a neighbour wants, while it still wants it. */
+export interface WorldAsk {
+  board: 'economy' | 'health';
+  since: number;        // the year it was raised
+}
+
+/**
+ * A kingdom that is not yours.
+ *
+ * The same shape whether it was drawn from a table or taken from a real
+ * reign: `fromReign` makes one out of any `GameState`, and that is the whole
+ * contract a later online layer would need. Nothing here reaches a network.
+ */
+export interface ForeignState {
+  id: string;           // 'k1'..'k5'
+  name: string;
+  kind: 'bot' | 'player';
+  seed: number;
+  tag: PhilTag;         // how they rule, in the word the portrait would use
+  stage: Stage;
+  population: number;
+  stats: Record<StatId, number>;
+  laws: EnactedLaw[];   // active only, two to four
+  /** How they feel about you, -3 (hostile) to 3 (sworn). */
+  stance: number;
+  /** Where they sit on the small map, in map units, with you at 0,0. */
+  position: { x: number; y: number };
+  ask: WorldAsk | null;
+}
+
+/** Everything outside your own walls, once there is an outside. */
+export interface World {
+  peoples: People[];
+  states: ForeignState[];
+}
+
 export interface GameState {
   version: 1;
   seed: number;                          // created on New Game, lives in the save
@@ -446,4 +509,15 @@ export interface GameState {
   placements?: Partial<Record<WorkId, PlotId>>;
   /** The board that ended the reign, if one did. */
   defeat?: StatId;
+  /**
+   * The year the crown arrived. Absent on every save written before there was
+   * a third stage, which reads the same as never having reached one.
+   */
+  kingdomSince?: number | null;
+  /**
+   * The peoples of the kingdom and the kingdoms around it, made the year the
+   * crown arrives and carried in the save from then on. Absent means there is
+   * no outside yet, which is what a hamlet and a town both are.
+   */
+  world?: World;
 }

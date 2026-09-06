@@ -1,4 +1,4 @@
-import { newGame } from '../engine/reducer';
+import { beginAt } from '../engine/chapters';
 import type { GameState } from '../engine/types';
 
 /**
@@ -15,25 +15,16 @@ import type { GameState } from '../engine/types';
  * app runs on ever holds a state, and the save is written from that state.
  */
 export function previewReign(): GameState {
-  const base = newGame(20260904);
+  // the same fabricated town every chapter door opens on, carried to its last
+  // year: one fixture in the engine, and this is the closing screen's view of it
+  const base = beginAt('town', 20260904);
   return {
     ...base,
     turn: 22,
     phase: 'portrait',
-    stats: { crownSanity: 62, mood: 74, health: 58, economy: 66, army: 44, culture: 51 },
     population: 110,
-    stage: 'town',
     townSince: 12,
     townName: 'Beckhold',
-    boards: ['army', 'culture'],
-    buildings: { ...base.buildings, well: 2, granary: 1, hall: 1, fields: 2 },
-    declaredTag: 'egalitarian',
-    laws: [
-      { subject: 'work', action: 'shared', label: 'The work of this place is shared', turn: 2, status: 'active' },
-      { subject: 'trade', action: 'free', label: 'All trade in this town is free', turn: 6, status: 'active' },
-      { subject: 'crime', action: 'forgiven', label: 'A hand that takes is forgiven', turn: 11, status: 'active' },
-    ],
-    exceptions: [{ law: 'trade_free', beneficiary: 'the bakers', turn: 9 }],
     log: [
       { turn: 2, kind: 'case', refId: 'v1_idle_hand', choiceId: 'feed_him', tags: ['communitarian'] },
       { turn: 3, kind: 'case', refId: 'd1_pies', choiceId: 'reward', tags: ['communitarian'] },

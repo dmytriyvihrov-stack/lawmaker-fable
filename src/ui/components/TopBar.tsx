@@ -28,6 +28,8 @@ interface Props {
   onSpeed: (next: number) => void;
   onCodex: () => void;
   onRegister: () => void;
+  /** The map out, which only a place with an outside has. */
+  onWorld: () => void;
   onTree: () => void;
   /** The way out of a reign, which is the one thing here that is not the reign. */
   onBeginAnew: () => void;
@@ -208,6 +210,13 @@ function Gauge({
  * here that is a date rather than a dial. The crown keeps its own dial, on its
  * own face, because it is a person.
  */
+/** What the place is, in one word and one mark. */
+function placeWord(stage: GameState['stage']): { word: string; icon: string } {
+  if (stage === 'kingdom') return { word: UI.court.kingdom, icon: UI.court.kingdomIcon };
+  if (stage === 'town') return { word: UI.court.town, icon: UI.court.townIcon };
+  return { word: UI.court.hamlet, icon: UI.court.hamletIcon };
+}
+
 export function TopBar({
   state,
   season,
@@ -215,6 +224,7 @@ export function TopBar({
   onSpeed,
   onCodex,
   onRegister,
+  onWorld,
   onTree,
   onBeginAnew,
   dev = false,
@@ -243,30 +253,28 @@ export function TopBar({
 
   return (
     <header className="pointer-events-auto border-b-2 border-ink-line bg-ink-soft">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5 px-4 py-2.5 sm:px-7 sm:py-3">
+      <div className="ruler-topbar-row flex flex-wrap items-center gap-x-6 gap-y-1.5 px-4 py-2.5 sm:px-7 sm:py-3">
         {/* what the place is, and what it is called */}
         <span
           className="flex shrink-0 items-center gap-1.5 text-parchment"
-          title={state.stage === 'town' ? UI.court.town : UI.court.hamlet}
+          title={placeWord(state.stage).word}
         >
           <span aria-hidden className="text-[16px] leading-none">
-            {state.stage === 'town' ? UI.court.townIcon : UI.court.hamletIcon}
+            {placeWord(state.stage).icon}
           </span>
           {state.townName && <span className="text-[13px]">{state.townName}</span>}
-          <span className="sr-only">
-            {state.stage === 'town' ? UI.court.town : UI.court.hamlet}
-          </span>
+          <span className="sr-only">{placeWord(state.stage).word}</span>
         </span>
 
         <GrowthNote state={state} />
 
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-1.5">
+        <div className="ruler-topbar-boards flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-1.5">
           {boards.map((id, i) => (
             <Gauge key={id} state={state} stat={id} edge={i >= boards.length - 1} dev={dev} />
           ))}
         </div>
 
-        <span className="flex shrink-0 items-center gap-2.5">
+        <span className="ruler-topbar-actions flex shrink-0 items-center gap-2.5">
           {opening > 0 && (
             <button
               type="button"
@@ -289,6 +297,20 @@ export function TopBar({
                   <span className="ml-1 tabular-nums">{soulsToGo}</span>
                 </span>
               )}
+            </button>
+          )}
+          {/* the world, which a hamlet and a town do not have and a kingdom
+              cannot stop having */}
+          {state.stage === 'kingdom' && (
+            <button
+              type="button"
+              onClick={onWorld}
+              aria-label={UI.court.openWorld}
+              title={UI.court.openWorld}
+              className={box}
+            >
+              <span aria-hidden>{UI.world.icon}</span>
+              <span className="sr-only">{UI.court.openWorld}</span>
             </button>
           )}
           <button

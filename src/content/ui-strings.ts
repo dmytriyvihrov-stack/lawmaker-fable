@@ -6,6 +6,8 @@ export const UI = {
     name: 'Lawmaker Fable',
     tagline: 'Five people, one field, and a seal. Write the law before the place is big enough to need it.',
     newGame: 'Begin a reign',
+    /** The dev door: start a reign already grown, to read a later stage. */
+    beginAt: 'Begin at',
     continueGame: 'Continue your reign',
     confirmNew: 'This burns your current reign. There is no second copy. Begin anew?',
   },
@@ -56,8 +58,11 @@ export const UI = {
     peopleIcon: '🧍',
     hamlet: 'a hamlet',
     town: 'a town',
+    kingdom: 'a kingdom',
     hamletIcon: '🏡',
     townIcon: '🏰',
+    kingdomIcon: '👑',
+    openWorld: 'The world',
     winterNear: 'Winter is close. The woodpiles are being counted.',
     /** The other clock. It runs whether or not anybody is looking at it. */
     winterIn: 'The long winter in {n} years.',
@@ -437,6 +442,16 @@ export const UI = {
     reopen: 'A law reopened',
     charter: 'The charter, and everything it found waiting',
     hidden: 'Not counted in a hamlet.',
+    /** The crown, and the year the map got edges. */
+    crownArrives: 'The crown, and five neighbours who had been there all along',
+    askYes: '{{name}} sent what was asked, and remembers it',
+    askNo: '{{name}} sent nothing',
+    sent: 'Grain went to {{name}}, and word of it went further',
+    sentAsked: '{{name}} asked, and was answered',
+    raidWon: 'The watch came back from {{name}} with carts',
+    raidLost: 'The watch came back from {{name}} with fewer',
+    raidOrdered: 'The order to ride on {{name}}',
+    raided: 'Riders from {{name}} took what they could carry',
   },
 
   codex: {
@@ -576,6 +591,55 @@ export const UI = {
   },
 
   /** The laws that are standing, as the town would list them. */
+  /**
+   * The world outside the walls, which a hamlet and a town do not have and a
+   * kingdom cannot stop having.
+   */
+  world: {
+    icon: '🌍',
+    heading: 'The world, as far as the road goes',
+    close: 'Close',
+    you: 'Your kingdom',
+    yours: 'you',
+    askMark: '!',
+    asks: {
+      economy: 'They are asking for grain',
+      health: 'They are asking for a physician',
+    },
+    stance: {
+      '-3': 'hostile', '-2': 'cold', '-1': 'wary', '0': 'civil',
+      '1': 'warm', '2': 'friendly', '3': 'sworn',
+    },
+    style: 'Rules as',
+    laws: 'Their laws',
+    lawsNone: 'Nothing is written down there.',
+    boards: 'Their boards',
+    souls: 'souls',
+    pick: 'Point at a place to read it.',
+    ask: 'Ask for grain',
+    send: 'Send grain',
+    raid: 'Send the watch',
+    costs: {
+      ask: 'Costs the year. May bring nothing.',
+      send: 'Costs the year and {n} from the store. The crown sits easier.',
+      raid: 'Costs the year and {n} of the crown, won or lost.',
+    },
+    notNow: 'Next autumn, in the year of work',
+    cannot: {
+      store: 'The store cannot spare it',
+      watch: 'The watch is not enough to send',
+    },
+    peoples: {
+      heading: 'Who lives here',
+      founders: 'The old families',
+      comers: 'The ones who came through the gate',
+      trades: 'The trades',
+      river: 'The quarter by the river',
+    },
+    chapters: { village: 'the hamlet', town: 'the town', kingdom: 'the kingdom' },
+    kind: { bot: 'drawn', player: 'a real reign' },
+  },
+
   standing: {
     heading: 'Standing',
     headingIcon: '📖',

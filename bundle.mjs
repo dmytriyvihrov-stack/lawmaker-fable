@@ -14,7 +14,17 @@ const files = readdirSync(assets);
 const css = readFileSync(join(assets, files.find((f) => f.endsWith('.css'))), 'utf8');
 const js = readFileSync(join(assets, files.find((f) => f.endsWith('.js'))), 'utf8');
 
-const page = `<title>Lawmaker Fable</title>
+/**
+ * The one tag this file cannot do without.
+ *
+ * Everything the chrome is made of is an emoji, and they go into this file as
+ * raw UTF-8 bytes. With nothing saying so, the encoding is a guess: over http
+ * with a `Content-Type` that carries no charset, a browser falls back to the
+ * page's locale and every mark in the game turns to mojibake. It costs one
+ * line and it is not a guess after it.
+ */
+const page = `<meta charset="utf-8">
+<title>Lawmaker Fable</title>
 <style>
 ${css}
 /* the artifact frame paints its own ground behind the page */

@@ -246,3 +246,57 @@ pre.out {
   overflow: auto;
   font-size: 11px;
 }
+
+/* ------------------------------------------------------------ reign tab */
+
+.reign-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+}
+.reign-bar .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.reign-bar .field > span {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.reign-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.reign-players label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border: 1px solid var(--line, #d8d2c6);
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.reign-players label.on {
+  border-color: #8a6a2f;
+  background: #f6efe0;
+}
+.reign-timeline {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-x: auto;
+  white-space: pre;
+}
+.reign-timeline .y-heavy { background: #fdf1ee; }
+.reign-timeline .y-empty { opacity: 0.5; }
+.reign-timeline .y-warm { background: #f2f7ee; }
+.reign-note {
+  opacity: 0.7;
+  font-size: 12px;
+  margin-top: 8px;
+}

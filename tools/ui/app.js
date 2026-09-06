@@ -109,6 +109,7 @@ function render() {
   if (tab === 'rates') view.replaceChildren(...ratesTab());
   else if (tab === 'laws') view.replaceChildren(lawsTab());
   else if (tab === 'cases') view.replaceChildren(casesTab());
+  else if (tab === 'reign') view.replaceChildren(reignTab());
   else view.replaceChildren(treeTab());
 }
 
@@ -1242,3 +1243,266 @@ function jumpTo(kind, id) {
 }
 
 boot().then(render).catch((e) => toast(String(e), true));
+
+/* -------------------------------------------------------------- reign tab */
+
+/**
+ * Whole reigns, played through the real engine by `tools/reign.ts` and drawn
+ * here. Nothing on this tab writes anything: it is the check to run after a
+ * balance edit, before and after, to see what the change did to a reign.
+ */
+const reign = {
+  players: ['best', 'comfortable', 'human', 'random'],
+  seeds: '12',
+  moments: '',
+  mistake: 0.3,
+  speed: 1,
+  read: 1,
+  timeline: true,
+  busy: false,
+  data: null,
+  error: null,
+  open: new Set(),
+};
+
+const REIGN_PLAYERS = [
+  ['best', 'the most efficient: every answer tried, the boards kept level'],
+  ['comfortable', 'the kindest answer every time, whatever it costs the crown'],
+  ['human', 'best, with a share of wrong answers'],
+  ['random', 'every answer drawn from a hat'],
+  ['first', 'always the first answer'],
+  ['middle', 'always the middle one'],
+  ['last', 'always the last one'],
+];
+
+const STAT_SHORT = {
+  crownSanity: 'C', mood: 'M', health: 'H', economy: 'E', army: 'W', culture: 'K',
+};
+
+async function runReign() {
+  if (reign.busy) return;
+  if (reign.players.length === 0) {
+    toast('pick at least one player', true);
+    return;
+  }
+  reign.busy = true;
+  reign.error = null;
+  render();
+  try {
+    reign.data = await api('/api/reign', {
+      players: reign.players,
+      seeds: reign.seeds,
+      moments: reign.moments || undefined,
+      mistake: reign.mistake,
+      speed: reign.speed,
+      read: reign.read,
+      timeline: reign.timeline,
+    });
+    reign.open = new Set();
+  } catch (e) {
+    reign.error = String(e.message || e);
+    reign.data = null;
+  }
+  reign.busy = false;
+  render();
+}
+
+function reignControls() {
+  const pills = h(
+    'div',
+    { class: 'reign-players' },
+    REIGN_PLAYERS.map(([id, why]) => {
+      const on = reign.players.includes(id);
+      const box = h('input', { type: 'checkbox', checked: on || undefined });
+      const label = h('label', { class: on ? 'on' : '', title: why }, box, id);
+      box.addEventListener('change', () => {
+        reign.players = box.checked
+          ? [...reign.players, id]
+          : reign.players.filter((p) => p !== id);
+        render();
+      });
+      return label;
+    }),
+  );
+
+  const field = (title, el) => h('label', { class: 'field' }, h('span', { text: title }), el);
+  const num = (key, step, min, max) => {
+    const el = h('input', {
+      class: 'f', type: 'number', step, min, max, value: String(reign[key]),
+    });
+    el.addEventListener('change', () => {
+      reign[key] = Number(el.value);
+    });
+    return el;
+  };
+  const seeds = h('input', { class: 'f', type: 'text', value: reign.seeds, size: 8 });
+  seeds.addEventListener('change', () => {
+    reign.seeds = seeds.value.trim();
+  });
+  const moments = h(
+    'select',
+    { class: 'f' },
+    [['', 'each profile default'], ['all', 'all'], ['half', 'half'], ['none', 'none']].map(
+      ([v, t]) => h('option', { value: v, selected: reign.moments === v || undefined }, t),
+    ),
+  );
+  moments.addEventListener('change', () => {
+    reign.moments = moments.value;
+  });
+  const timeline = h('input', { type: 'checkbox', checked: reign.timeline || undefined });
+  timeline.addEventListener('change', () => {
+    reign.timeline = timeline.checked;
+  });
+
+  const go = h('button', { class: 'btn primary' }, reign.busy ? 'playing...' : 'Play these reigns');
+  go.addEventListener('click', runReign);
+  if (reign.busy) go.setAttribute('disabled', '');
+
+  return h(
+    'div',
+    { class: 'panel' },
+    h('h2', { text: 'Play whole reigns' }),
+    h('p', {
+      class: 'hint',
+      text:
+        'Every reign below is played through the real engine, the same reducer the ' +
+        'game runs on. Nothing is written. Run it before a balance edit and again ' +
+        'after, and the two tables say what the edit did.',
+    }),
+    pills,
+    h(
+      'div',
+      { class: 'reign-bar', style: 'margin-top:12px' },
+      field('seeds (n or a-b)', seeds),
+      field('small things on the map', moments),
+      field('human mistake', num('mistake', 0.05, 0, 1)),
+      field('wheel speed', num('speed', 1, 1, 4)),
+      field('reading x', num('read', 0.1, 0.1, 4)),
+      h('label', { class: 'field' }, h('span', { text: 'timelines' }), timeline),
+      go,
+    ),
+  );
+}
+
+function reignSummary(data) {
+  const cols = [
+    { title: 'player', get: (r) => r.player, cell: (r) => r.player },
+    { title: 'small things', get: (r) => r.moments, cell: (r) => r.moments },
+    { title: 'runs', num: true, get: (r) => r.runs, cell: (r) => String(r.runs) },
+    { title: 'years', num: true, get: (r) => r.years, cell: (r) => r.years.toFixed(1) },
+    { title: 'laws', num: true, get: (r) => r.laws, cell: (r) => r.laws.toFixed(1) },
+    { title: 'cases', num: true, get: (r) => r.cases, cell: (r) => r.cases.toFixed(1) },
+    { title: 'heavy', num: true, get: (r) => r.heavy, cell: (r) => r.heavy.toFixed(1) },
+    { title: 'warm', num: true, get: (r) => r.warm, cell: (r) => r.warm.toFixed(1) },
+    { title: 'empty years', num: true, get: (r) => r.empty, cell: (r) => r.empty.toFixed(1) },
+    {
+      title: 'small taken', num: true, get: (r) => r.momentsTaken,
+      cell: (r) => r.momentsTaken.toFixed(1) + ' (+' + r.momentPoints.toFixed(1) + ')',
+    },
+    { title: 'minutes', num: true, get: (r) => r.minutes, cell: (r) => r.minutes.toFixed(0) },
+    { title: 'endings', get: (r) => r.endings, cell: (r) => r.endings },
+    { title: 'lowest board', get: (r) => r.lowest, cell: (r) => r.lowest },
+    {
+      title: 'final C M H E', get: (r) => r.final.mood,
+      cell: (r) =>
+        Math.round(r.final.crownSanity) + ' ' + Math.round(r.final.mood) + ' ' +
+        Math.round(r.final.health) + ' ' + Math.round(r.final.economy),
+    },
+  ];
+  return h(
+    'div',
+    { class: 'panel' },
+    h('h2', { text: 'What each player did with the same content' }),
+    table(cols, data.summary),
+    h('p', {
+      class: 'reign-note',
+      text:
+        'heavy = a scene the scheduler files at or under the urgent line; warm = one ' +
+        'it files at 12 or above; minutes = the season wheel at the chosen speed plus ' +
+        'a reading budget per card, so it is an estimate of time at the table.',
+    }),
+    data.never.length > 0
+      ? h('p', {
+          class: 'reign-note',
+          text: 'never reached in any of these reigns: ' + data.never.join(', '),
+        })
+      : null,
+  );
+}
+
+function statsCell(stats, boards, population) {
+  const parts = boards.map(
+    (b) => STAT_SHORT[b] + String(Math.round(stats[b])).padStart(2, ' '),
+  );
+  return parts.join(' ') + '  P' + population;
+}
+
+function reignTimeline(run) {
+  const key = run.player + '/' + run.seed;
+  const head = h(
+    'button',
+    { class: 'btn ghost', style: 'text-align:left' },
+    'seed ' + run.seed + ' - ' + run.player + ' - ' + run.years.length + ' years, ' +
+      run.cases + ' cases (' + run.heavy + ' heavy, ' + run.warm + ' warm), ' +
+      run.emptyYears + ' empty, ' + run.ending + ', ~' + run.minutes.toFixed(0) + ' min',
+  );
+  head.addEventListener('click', () => {
+    if (reign.open.has(key)) reign.open.delete(key);
+    else reign.open.add(key);
+    render();
+  });
+  const body = reign.open.has(key)
+    ? h(
+        'div',
+        { class: 'reign-timeline' },
+        run.years.map((y) => {
+          const cls =
+            y.events.length === 0 ? 'y-empty' : y.heavy > 0 ? 'y-heavy' : y.warm > 0 ? 'y-warm' : '';
+          const ev = y.events.length ? y.events.join('   ') : '(nobody at the door)';
+          const mo = y.moments.length ? '   +' + y.moments.join(' +') : '';
+          return h('div', {
+            class: cls,
+            text:
+              'y' + String(y.turn).padStart(2, ' ') + '  ' +
+              statsCell(y.stats, y.boards, y.population) + '   ' + ev +
+              '   WORK ' + (y.work || '-') + mo,
+          });
+        }),
+        h('div', {
+          class: 'reign-note',
+          text:
+            'lowest: ' + run.lowest.stat + ' ' + run.lowest.value + ' in year ' +
+            run.lowest.turn + '.  final: ' +
+            statsCell(run.finalStats, run.finalBoards, run.finalPopulation),
+        }),
+      )
+    : null;
+  return h('div', { class: 'panel' }, head, body);
+}
+
+function reignTab() {
+  const out = h('div', {}, reignControls());
+  if (reign.error) {
+    out.append(h('div', { class: 'panel' }, h('pre', { text: reign.error })));
+    return out;
+  }
+  if (!reign.data) {
+    out.append(
+      h('div', { class: 'panel' }, h('p', {
+        class: 'hint',
+        text:
+          'Nothing played yet. The same thing on the command line is ' +
+          'npm run reign, and it takes the same flags.',
+      })),
+    );
+    return out;
+  }
+  out.append(reignSummary(reign.data));
+  if (reign.data.args.timeline) {
+    out.append(
+      h('h2', { style: 'margin:18px 4px 6px', text: 'Year by year' }),
+      ...reign.data.runs.map(reignTimeline),
+    );
+  }
+  return out;
+}

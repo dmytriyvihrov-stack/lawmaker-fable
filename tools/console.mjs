@@ -69,6 +69,73 @@ function runScript(script) {
   });
 }
 
+/**
+ * The reign simulator, run as a child process and handed back as JSON.
+ *
+ * It is spawned rather than imported because it is TypeScript that imports the
+ * game engine, so it needs vite-node to run at all, and because a simulator
+ * that hangs must not take the console down with it. Only the flags below are
+ * ever passed on, each one checked here, so nothing a page sends can turn into
+ * an argument this file did not write.
+ */
+const NEWLINE = String.fromCharCode(10);
+const VITE_NODE = join(projectRoot, 'node_modules', 'vite-node', 'vite-node.mjs');
+const PLAYER_IDS = ['best', 'comfortable', 'human', 'random', 'first', 'middle', 'last'];
+
+function reignArgs(body) {
+  const out = ['--json'];
+  const players = Array.isArray(body.players)
+    ? body.players.filter((p) => PLAYER_IDS.includes(p))
+    : [];
+  if (players.length > 0) out.push('--player', players.join(','));
+  const seeds = String(body.seeds ?? '').trim();
+  if (/^[0-9]{1,6}$/.test(seeds)) out.push('--seeds', seeds);
+  else if (/^[0-9]{1,6}-[0-9]{1,6}$/.test(seeds)) out.push('--seeds', seeds);
+  if (['all', 'half', 'none'].includes(body.moments)) out.push('--moments', body.moments);
+  for (const [name, min, max] of [['mistake', 0, 1], ['speed', 1, 4], ['read', 0.1, 4]]) {
+    const value = Number(body[name]);
+    if (Number.isFinite(value) && value >= min && value <= max) {
+      out.push('--' + name, String(value));
+    }
+  }
+  out.push(body.timeline === false ? '--no-timeline' : '--timeline');
+  return out;
+}
+
+function runReign(body) {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [VITE_NODE, 'tools/reign.ts', ...reignArgs(body)], {
+      cwd: projectRoot,
+    });
+    let out = '';
+    let err = '';
+    const stop = setTimeout(() => child.kill(), 120000);
+    child.stdout.on('data', (c) => {
+      out += c;
+    });
+    child.stderr.on('data', (c) => {
+      err += c;
+    });
+    child.on('error', (e) => {
+      clearTimeout(stop);
+      resolve({ error: String(e) });
+    });
+    child.on('close', () => {
+      clearTimeout(stop);
+      // vite prints its own lines first; the report is the last one that parses
+      const line = out.split(NEWLINE).reverse().find((l) => l.trim().startsWith('{'));
+      if (!line) {
+        return resolve({ error: (err || out || 'the simulator said nothing').slice(-4000) });
+      }
+      try {
+        resolve(JSON.parse(line));
+      } catch (e) {
+        resolve({ error: 'could not read the report: ' + String(e) });
+      }
+    });
+  });
+}
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   try {
@@ -102,6 +169,13 @@ const server = createServer(async (req, res) => {
       return send(res, 200, JSON.stringify(result));
     }
 
+    if (req.method === 'POST' && url.pathname === '/api/reign') {
+      const body = JSON.parse(await readBody(req));
+      const result = await runReign(body);
+      if (result.error) return send(res, 500, JSON.stringify({ error: result.error }));
+      return send(res, 200, JSON.stringify(result));
+    }
+
     return send(res, 404, JSON.stringify({ error: 'not found' }));
   } catch (err) {
     return send(res, 500, JSON.stringify({ error: String(err && err.message ? err.message : err) }));
@@ -112,6 +186,7 @@ server.listen(PORT, () => {
   const url = 'http://localhost:' + PORT + '/';
   console.log('Lawmaker design console on ' + url);
   console.log('Reads and writes: src/content/*, src/engine/config.ts. Backups in tools/.backups.');
+  console.log('The Reign tab plays whole reigns through the engine and changes nothing.');
   if (OPEN) {
     if (process.platform === 'win32') spawn('cmd', ['/c', 'start', '', url], { detached: true });
     else if (process.platform === 'darwin') spawn('open', [url], { detached: true });

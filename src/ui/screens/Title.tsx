@@ -1,12 +1,19 @@
 import { UI } from '../../content/ui-strings';
+import type { Stage } from '../../engine/types';
+
+const CHAPTERS: Stage[] = ['village', 'town', 'kingdom'];
 
 interface Props {
   hasSave: boolean;
   onNew: () => void;
   onContinue: () => void;
+  /** The dev switch in the corner, which is the gate on the row below. */
+  dev?: boolean;
+  /** Open a fabricated reign at a chapter, for looking at a later stage. */
+  onBeginAt?: (chapter: Stage) => void;
 }
 
-export function Title({ hasSave, onNew, onContinue }: Props) {
+export function Title({ hasSave, onNew, onContinue, dev = false, onBeginAt }: Props) {
   return (
     <div className="flex min-h-[70vh] flex-col items-center justify-center gap-8 px-6 text-center">
       <div>
@@ -32,6 +39,25 @@ export function Title({ hasSave, onNew, onContinue }: Props) {
           >
             {UI.title.continueGame}
           </button>
+        )}
+
+        {/* The three stages are ten years apart from each other, which is right
+            for a player and useless for anybody who has to look at the last one
+            twice in an afternoon. Behind the dev switch, and nowhere else. */}
+        {dev && onBeginAt && (
+          <div className="flex items-baseline justify-center gap-3 text-[11px] uppercase tracking-[0.18em] text-parchment-dim">
+            <span>{UI.title.beginAt}</span>
+            {CHAPTERS.map((chapter) => (
+              <button
+                key={chapter}
+                type="button"
+                onClick={() => onBeginAt(chapter)}
+                className="underline decoration-dotted underline-offset-4 hover:text-parchment"
+              >
+                {UI.world.chapters[chapter]}
+              </button>
+            ))}
+          </div>
         )}
       </div>
     </div>
