@@ -95,18 +95,31 @@ User-agent: *
 Disallow: /
 '@
 $page = Join-Path $site 'index.html'
-$html = Get-Content -LiteralPath $page -Raw -Encoding utf8
+$html = [System.IO.File]::ReadAllText($page)
 if ($html -notmatch 'name="robots"') {
-  $html = $html -replace '(?i)<head>', "<head>`r`n    <meta name=`"robots`" content=`"noindex, nofollow`" />"
-  Set-Content -LiteralPath $page -Value $html -Encoding utf8 -NoNewline
+  # AFTER the charset line, never before it: a charset declaration only counts
+  # when it is the first thing in the head. And written back through
+  # UTF8Encoding($false), because PowerShell 5.1's -Encoding utf8 puts a BOM in
+  # front of the doctype.
+  $meta = '<meta name="robots" content="noindex, nofollow" />'
+  if ($html -match '(?i)<meta\s+charset[^>]*>') {
+    $html = $html -replace '(?i)(<meta\s+charset[^>]*>)', ("`$1`r`n    " + $meta)
+  } elseif ($html -match '(?i)</head>') {
+    $html = $html -replace '(?i)</head>', ("  " + $meta + "`r`n  </head>")
+  } else {
+    Die "docs\index.html has neither a charset meta nor a </head>. There is nowhere to put the noindex line."
+  }
+  [System.IO.File]::WriteAllText($page, $html, (New-Object System.Text.UTF8Encoding($false)))
 }
 
 # ---- 4. the guard ----------------------------------------------------------
 # Read the built site back and count what is actually in it. Asserting on the
 # thing that ships, not on the thing that was meant to ship, is the point.
 Step 4 "checking the built page"
-$html = Get-Content -LiteralPath $page -Raw -Encoding utf8
+$html = [System.IO.File]::ReadAllText($page)
 if ($html -notmatch 'id="root"') { Die "docs\index.html has no #root. React would have nothing to mount to." }
+if ($html -notmatch 'name="robots"') { Die "docs\index.html lost the noindex line. The page would be indexable." }
+if ($html[0] -eq [char]0xFEFF) { Die "docs\index.html starts with a byte order mark. Write it with UTF8Encoding(`$false)." }
 $bundles = @(Get-ChildItem -LiteralPath (Join-Path $site 'assets') -Filter *.js -ErrorAction SilentlyContinue)
 if ($bundles.Count -eq 0) { Die "no javascript bundle under docs\assets. The page would be blank." }
 $js = ($bundles | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw -Encoding utf8 }) -join "`n"
