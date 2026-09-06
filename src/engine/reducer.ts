@@ -46,6 +46,8 @@ import {
 import { UI } from '../content/ui-strings';
 import { DEFEAT_STATS } from '../content/defeat';
 import { OWN_ROPE_SCENE, OWN_ROPE_SCENES } from '../content/own-rope';
+import { MOMENT_SOURCE } from '../content/moments';
+import { getMoment, momentTaken } from './moments';
 import type {
   CityFlag,
   Effects,
@@ -565,6 +567,26 @@ export function continueYear(s: GameState): GameState {
 
   draft.current = null;
   draft.phase = 'works';
+  return draft;
+}
+
+/**
+ * A minute of your day, spent on something that is not a ruling.
+ *
+ * The one action in this game that does not move the year, does not open a
+ * card and cannot go wrong. It applies one point, writes the line that says it
+ * happened, and hands the state straight back: the phase, the turn, the
+ * pending events and everything else are exactly as they were, which is the
+ * whole point of it.
+ *
+ * Taking the same one twice in one year does nothing, and the ledger is what
+ * says so, so a save reloaded mid year cannot be farmed for it either.
+ */
+export function takeMoment(s: GameState, id: string): GameState {
+  const moment = getMoment(id);
+  if (!moment || momentTaken(s, id)) return s;
+  const draft = clone(s);
+  applyEffects(draft, moment.effect, `${MOMENT_SOURCE}: ${id}`, false);
   return draft;
 }
 

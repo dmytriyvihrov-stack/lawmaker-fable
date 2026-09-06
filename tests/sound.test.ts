@@ -10,6 +10,7 @@ function audioMock() {
     exponentialRampToValueAtTime: vi.fn(), setTargetAtTime: vi.fn(), cancelScheduledValues: vi.fn() });
   function node() {
     const value = { gain: param(), frequency: param(), Q: param(), threshold: param(), ratio: param(),
+      playbackRate: param(), loop: false, buffer: null as unknown, type: '' as string,
       connect: vi.fn((next: unknown) => next), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn(),
       onended: (() => {}) as () => void };
     return value;
@@ -129,8 +130,9 @@ describe('settlement audio', () => {
     // a place with people in it, in the season with the most going on
     sound.environment('summer', false, true);
 
-    for (let beat = 0; beat < 30; beat++) {
-      context.currentTime = beat * 3;
+    // six minutes of a place being a place
+    for (let t = 0; t < 360; t += 2) {
+      context.currentTime = t;
       vi.advanceTimersByTime(400);
     }
 
@@ -139,8 +141,33 @@ describe('settlement audio', () => {
       (source) => source.frequency.setValueAtTime.mock.calls[0]?.[0] === 310,
     );
     expect(taps.length, 'the ambience is knocking on something').toBe(0);
-    // and it is not silent either: the wind and the birds are still out there
-    expect(sources.length).toBeGreaterThan(0);
+
+    // No voice in the bed. A hushed murmur is three descending tones and that
+    // is a hall clock on the hour, which is exactly how it was heard.
+    expect(
+      sources.some((source) => source.type === 'sawtooth'),
+      'the ambience is talking to itself',
+    ).toBe(false);
+
+    // The wind starts once and never restarts, so it has no attack to count.
+    const loops = sources.filter((source) => source.loop === true);
+    expect(loops.length, 'the wind is not one continuous thing').toBe(2);
+    for (const loop of loops) expect(loop.start).toHaveBeenCalledOnce();
+
+    // and everything else is rare, and never twice at the same distance
+    const events = sources
+      .filter((source) => source.loop !== true)
+      .map((source) => source.start.mock.calls[0][0] as number)
+      .sort((a, b) => a - b);
+    expect(events.length, 'six minutes of this is not a soundtrack').toBeLessThan(24);
+    const gaps = events.slice(1).map((at, i) => Math.round((at - events[i]) * 10) / 10);
+    // A fixed period has one gap and no spread. This has neither. (The gaps
+    // read here are quantised by how coarsely the test moves the clock, so the
+    // shape is what is asserted, not the individual numbers.)
+    const wide = gaps.filter((g) => g > 5);
+    expect(wide.length, 'nothing happened at all').toBeGreaterThan(2);
+    expect(new Set(wide).size, 'the bed is on a period').toBeGreaterThan(2);
+    expect(Math.max(...wide) - Math.min(...wide), 'the gaps barely differ').toBeGreaterThan(8);
     detach();
   });
 

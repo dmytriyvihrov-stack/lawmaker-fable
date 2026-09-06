@@ -656,3 +656,62 @@ button:disabled {
   .city-knock { animation: none; opacity: 1; }
   .drift-in { animation: none; }
 }
+
+
+/* ============================================================================
+   The four small things on the map.
+
+   Not decisions: a dog to scratch, a basket to help up off the road, a rod to
+   take an end of, a kid to put back through the hurdle. Every one of them is a
+   yes, so the only job the drawing has is to say "this can be touched" without
+   ever looking like a case that has to be answered.
+
+   So they are gold rather than seal red, they breathe slower than the case
+   marker does, and the pointer changes over them, which is the part that does
+   the actual telling: a hand knows before a head does.
+   ========================================================================== */
+@keyframes moment-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.95; }
+}
+
+.city-moment {
+  animation: moment-glow 3.8s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.city-moment-hit { cursor: pointer; }
+.city-moment-hit:hover .city-moment,
+.city-moment-hit:focus-visible .city-moment { animation: none; opacity: 1; }
+
+/* Two layers in every cursor, a dark stroke under a gold one, because this map
+   is dark in winter and pale in summer and one colour disappears into one of
+   them. 28 pixels, hot spot in the middle of the hand.
+
+   Compound selectors on purpose. `.city-moment-hit` above sets `cursor:
+   pointer` as the floor for anything that has not got a hand of its own, and
+   one class against one class is a tie that source order decides, which is not
+   something a stylesheet should be relying on. Two classes wins outright. */
+.city-moment-hit.hand-pet   { cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2228%22%20height%3D%2228%22%20viewBox%3D%220%200%2028%2028%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%2314110d%22%20stroke-width%3D%223.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%229%22%20r%3D%222.1%22%2F%3E%3Ccircle%20cx%3D%2214%22%20cy%3D%227.4%22%20r%3D%222.1%22%2F%3E%3Ccircle%20cx%3D%2219%22%20cy%3D%229%22%20r%3D%222.1%22%2F%3E%3Ccircle%20cx%3D%2222%22%20cy%3D%2213.4%22%20r%3D%222%22%2F%3E%3Cpath%20d%3D%22M9.5%2015%20q4.5%20-3.4%209%200%20q3%202.6%200.6%205.4%20q-4.6%203.4%20-10.2%200%20q-2.4%20-2.8%200.6%20-5.4%20z%22%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23e8c877%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%229%22%20r%3D%222.1%22%2F%3E%3Ccircle%20cx%3D%2214%22%20cy%3D%227.4%22%20r%3D%222.1%22%2F%3E%3Ccircle%20cx%3D%2219%22%20cy%3D%229%22%20r%3D%222.1%22%2F%3E%3Ccircle%20cx%3D%2222%22%20cy%3D%2213.4%22%20r%3D%222%22%2F%3E%3Cpath%20d%3D%22M9.5%2015%20q4.5%20-3.4%209%200%20q3%202.6%200.6%205.4%20q-4.6%203.4%20-10.2%200%20q-2.4%20-2.8%200.6%20-5.4%20z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 14 14, pointer; }
+.city-moment-hit.hand-lift  { cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2228%22%20height%3D%2228%22%20viewBox%3D%220%200%2028%2028%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%2314110d%22%20stroke-width%3D%223.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%2017%20h16%22%2F%3E%3Cpath%20d%3D%22M8.5%2017%20v-5.5%22%2F%3E%3Cpath%20d%3D%22M13%2017%20v-8.5%22%2F%3E%3Cpath%20d%3D%22M17.5%2017%20v-6.5%22%2F%3E%3Cpath%20d%3D%22M6%2017%20q8%207%2016%200%22%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23e8c877%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%2017%20h16%22%2F%3E%3Cpath%20d%3D%22M8.5%2017%20v-5.5%22%2F%3E%3Cpath%20d%3D%22M13%2017%20v-8.5%22%2F%3E%3Cpath%20d%3D%22M17.5%2017%20v-6.5%22%2F%3E%3Cpath%20d%3D%22M6%2017%20q8%207%2016%200%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 14 14, pointer; }
+.city-moment-hit.hand-pull  { cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2228%22%20height%3D%2228%22%20viewBox%3D%220%200%2028%2028%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%2314110d%22%20stroke-width%3D%223.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%206%20L13%2013%22%2F%3E%3Cpath%20d%3D%22M13%2011.5%20q5%20-1.5%206.5%202.5%20q1.5%204.5%20-3%206%20q-5%201.5%20-6.8%20-2.4%20q-1.2%20-3.4%203.3%20-6.1%20z%22%2F%3E%3Cpath%20d%3D%22M21%2021%20l3.5%203%22%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23e8c877%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%206%20L13%2013%22%2F%3E%3Cpath%20d%3D%22M13%2011.5%20q5%20-1.5%206.5%202.5%20q1.5%204.5%20-3%206%20q-5%201.5%20-6.8%20-2.4%20q-1.2%20-3.4%203.3%20-6.1%20z%22%2F%3E%3Cpath%20d%3D%22M21%2021%20l3.5%203%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 14 14, pointer; }
+.city-moment-hit.hand-catch { cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2228%22%20height%3D%2228%22%20viewBox%3D%220%200%2028%2028%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%2314110d%22%20stroke-width%3D%223.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%2021%20q-3%20-5%200.5%20-8.5%22%2F%3E%3Cpath%20d%3D%22M8.5%2012.5%20v-6.5%22%2F%3E%3Cpath%20d%3D%22M13%2012%20v-8%22%2F%3E%3Cpath%20d%3D%22M17.5%2012.5%20v-6%22%2F%3E%3Cpath%20d%3D%22M21.5%2014%20q2.5%205%20-1.5%208%20q-5%203.5%20-12%20-1%22%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23e8c877%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%2021%20q-3%20-5%200.5%20-8.5%22%2F%3E%3Cpath%20d%3D%22M8.5%2012.5%20v-6.5%22%2F%3E%3Cpath%20d%3D%22M13%2012%20v-8%22%2F%3E%3Cpath%20d%3D%22M17.5%2012.5%20v-6%22%2F%3E%3Cpath%20d%3D%22M21.5%2014%20q2.5%205%20-1.5%208%20q-5%203.5%20-12%20-1%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 14 14, pointer; }
+
+/* what you did, said once and then got out of the way */
+@keyframes moment-said {
+  0% { opacity: 0; transform: translateY(6px); }
+  12% { opacity: 1; transform: translateY(0); }
+  78% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+
+.moment-said {
+  animation: moment-said 7s ease-in-out forwards;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .city-moment { animation: none; opacity: 0.9; }
+  .moment-said { animation: none; opacity: 1; }
+}

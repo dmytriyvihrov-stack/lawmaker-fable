@@ -8,6 +8,7 @@ import type { FolkPin } from '../../engine/folk';
 import { PAINT } from './town/paint';
 import type { TownPaint } from './town/paint';
 import { GroundWashes, MeadowDetails, River } from './town/atmosphere';
+import type { Moment } from '../../content/moments';
 import {
   BreadBoard,
   Bridge,
@@ -115,6 +116,13 @@ interface Props {
    * where you find out what became of them.
    */
   folk?: FolkPin[];
+  /**
+   * The small things out there this year that are not decisions. Empty
+   * whenever a card is open: a dog is not an answer to a dilemma, and offering
+   * one while somebody is waiting at the door reads as though it were.
+   */
+  moments?: Moment[];
+  onMomentTake?: (id: string) => void;
 }
 
 const SEAL = '#a3352c';
@@ -213,6 +221,8 @@ export function CityScape({
   plots = [],
   plotOn = null,
   onPlotPick,
+  moments = [],
+  onMomentTake,
   onPlotHover,
   preview = null,
   raising = null,
@@ -1475,6 +1485,40 @@ export function CityScape({
       {/* the curtain a card is looked at through */}
       {veil && <rect width={MAP.w} height={MAP.h} fill="#14110d" opacity=".24" />}
 
+      {/* The four small things.
+
+          Drawn over the curtain like the pegs are, because in the year they
+          exist they are meant to be findable, and under nothing else: a case
+          marker and one of these never share a spot, because a card is open in
+          one and not in the other. The whole gold shape is the target and the
+          drawing inside it is a hint, not a picture: what tells a player is
+          the ring lighting up and the pointer turning into a hand. */}
+      {moments.map((moment) => (
+        <g
+          key={moment.id}
+          transform={`translate(${moment.x} ${moment.y})`}
+          role="button"
+          tabIndex={0}
+          aria-label={moment.label}
+          className={`city-moment-hit hand-${moment.hand}`}
+          onClick={() => onMomentTake?.(moment.id)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              onMomentTake?.(moment.id);
+            }
+          }}
+        >
+          <title>{moment.label}</title>
+          <circle r="26" fill="transparent" />
+          <g className="city-moment">
+            <circle r="17" fill="#e8c877" opacity=".12" />
+            <circle r="11.5" fill="none" stroke="#e8c877" strokeWidth="1.6" opacity=".85" />
+            <MomentMark hand={moment.hand} />
+          </g>
+        </g>
+      ))}
+
       {/* The ground that is open this year.
 
           Drawn over the curtain rather than under it, because in the one year
@@ -1743,4 +1787,64 @@ function Birds({ n, tint }: { n: number; tint: string }) {
       })}
     </g>
   );
+}
+
+/**
+ * What is inside the gold ring, at eleven units across.
+ *
+ * Four scratches each, and no more. At this size on this map anything with
+ * detail in it turns into a blot, and the ring plus the pointer is what is
+ * actually doing the telling: this only has to be different enough from the
+ * other three that a player who has seen it before knows which one it is.
+ */
+function MomentMark({ hand }: { hand: Moment['hand'] }) {
+  const gold = '#e8c877';
+  const line = {
+    fill: 'none',
+    stroke: gold,
+    strokeWidth: 1.5,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  };
+  switch (hand) {
+    case 'pet':
+      // a dog sitting, seen from the side: back, head, one ear, a tail
+      return (
+        <g {...line}>
+          <path d="M-5 4 q1.5 -6 4.5 -6.5 q3 -0.5 3.5 -3.5" />
+          <path d="M3 -6 q2.5 -0.6 3 2 q0.4 2.2 -2 2.6" />
+          <path d="M4.6 -6.4 l1.6 -2.2" />
+          <path d="M-5 4 q-3 -1.5 -2 -5" />
+        </g>
+      );
+    case 'lift':
+      // a basket on its side, and what came out of it
+      return (
+        <g {...line}>
+          <path d="M-6 2 l2.5 -6 h7 l2.5 6 z" />
+          <path d="M-3.5 -4 q3.5 -3 7 0" />
+          <circle cx="5.5" cy="4.5" r="1.6" />
+          <circle cx="-6" cy="5" r="1.3" />
+        </g>
+      );
+    case 'pull':
+      // a rod bent double, and the water under the end of it
+      return (
+        <g {...line}>
+          <path d="M-6 -7 q7 3 9 11" />
+          <path d="M3 4 v3.5" />
+          <path d="M-6 6 q3 -2 6 0 q3 2 6 0" />
+        </g>
+      );
+    default:
+      // a kid: too much leg, and horns that have not decided yet
+      return (
+        <g {...line}>
+          <path d="M-5 5 v-4 q0 -3 4 -3 h3" />
+          <path d="M2 -2 q3 0 3 -3" />
+          <path d="M4 -5.5 l-1.5 -2.5 M5.6 -5.5 l1.6 -2.5" />
+          <path d="M-3.5 5 v-3 M0.5 5 v-3" />
+        </g>
+      );
+  }
 }

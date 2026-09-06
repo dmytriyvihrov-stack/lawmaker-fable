@@ -13,8 +13,10 @@ import {
   newGame,
   reopenLaw,
   takeLover,
+  takeMoment,
 } from '../engine/reducer';
 import { freePlots, needsPlacement } from '../engine/plots';
+import { getMoment, momentsNow } from '../engine/moments';
 import { clearSave, loadGame, saveGame } from '../engine/save';
 import type {
   GameState,
@@ -82,6 +84,7 @@ type Action =
   | { type: 'nameTown'; name: string }
   | { type: 'openBoard'; board: StatId }
   | { type: 'reopen'; proposalId: string }
+  | { type: 'moment'; id: string }
   | { type: 'advance' }
   | { type: 'reset' };
 
@@ -94,6 +97,8 @@ function appReducer(game: GameState | null, action: Action): GameState | null {
   switch (action.type) {
     case 'declare':
       return chooseDeclared(game, action.tag);
+    case 'moment':
+      return takeMoment(game, action.id);
     case 'law':
       return chooseLaw(game, action.proposalId, action.optionIdx, action.label);
     case 'case':
@@ -212,6 +217,8 @@ export function App() {
   /** The box the town fills, and the card floating over the bottom of it. */
   const mapRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
+  /** The small thing most recently done, and the year it was done in. */
+  const [said, setSaid] = useState<{ id: string; turn: number } | null>(null);
   const fit = useMapFit(mapRef);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
 
@@ -696,6 +703,28 @@ export function App() {
     return null;
   })();
 
+  /**
+   * The small things, and when the map is allowed to have them on it.
+   *
+   * Never while something is being asked. A dog offered to somebody halfway
+   * through a dilemma is a third button on a two button question, and the same
+   * goes for a law being drafted and for ground being picked.
+   *
+   * What is left is the year of work and the drift between seasons, which is
+   * where a player actually sits and looks at the place. The card floats over
+   * the near meadow and every one of these stands above it, so they are never
+   * behind anything either.
+   */
+  const townIsPokeable =
+    !hand.zoomed &&
+    !waiting &&
+    openPlots.length === 0 &&
+    (idling || (game.phase !== 'case' && game.phase !== 'aftermath' && game.phase !== 'composer'));
+  const moments = townIsPokeable ? momentsNow(game, season) : [];
+  /** What the last one turned out to be. The year clears it, not a timer. */
+  const saidNow = said && said.turn === game.turn ? getMoment(said.id) : null;
+  const saidAt = saidNow ? fitToScreen(fit, saidNow.x, saidNow.y) : null;
+
   return (
     <div className="flex h-dvh w-full flex-col overflow-hidden bg-ink">
       <div className="relative z-30 shrink-0">
@@ -758,7 +787,27 @@ export function App() {
              that follows, which is the year the player watches go past. */
           raising={game.turn - game.lastWorkTurn <= 1 ? game.lastWork : null}
           folk={folk}
+          moments={moments}
+          onMomentTake={(id) => {
+            dispatch({ type: 'moment', id });
+            setSaid({ id, turn: game.turn });
+          }}
         />
+
+        {/* What came of stopping, said over the spot it happened at and then
+            gone. It is not a card: there is nothing to answer and nothing to
+            dismiss, so it fades on its own and never takes a click. */}
+        {saidNow && saidAt && (
+          <div
+            key={`${saidNow.id}:${game.turn}`}
+            className="moment-said absolute z-20 w-[260px] -translate-x-1/2 -translate-y-full"
+            style={{ left: saidAt.x, top: saidAt.y - 26 }}
+          >
+            <p className="rounded-lg border border-seal/40 bg-ink/95 px-3 py-2 text-[13px] leading-relaxed text-parchment shadow-lg">
+              {saidNow.line}
+            </p>
+          </div>
+        )}
       </div>
       {hand.overlay}
       </div>

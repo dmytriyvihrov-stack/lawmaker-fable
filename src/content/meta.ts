@@ -188,6 +188,8 @@ export const CASE_SPOTS: Record<string, { x: number; y: number }> = {
   s1_worms: { x: 738, y: 430 },
   s2_ballad: { x: 806, y: 412 },
   w_race: { x: 966, y: 420 },
+  /* the top of the common, above the goats and clear of the beeches */
+  w_goats: { x: 170, y: 436 },
   w_bees: { x: 248, y: 452 },
   w_honey: { x: 248, y: 452 },
   w_pot: { x: 548, y: 428 },

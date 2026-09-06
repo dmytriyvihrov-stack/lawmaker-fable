@@ -1,12 +1,39 @@
+import { rand01 } from '../../engine/rng';
 import type { Season } from '../../engine/types';
 import { brush, cue, murmur, texture } from './synthesis';
 import type { Cue } from './synthesis';
+
+/**
+ * The bed is not on a clock.
+ *
+ * Twice now this file has been heard as a clock striking, and both times for
+ * the same reason: something with a shape to it was fired on a fixed period.
+ * First a pair of wooden taps every ten seconds. Then, worse, a hushed crowd
+ * murmur every eight, which is three descending tones at 165 Hz and is what a
+ * hall clock does on the hour.
+ *
+ * So there is now no periodic event of any kind. The wind is one continuous
+ * pair of loops that start once and never restart, running at rates whose
+ * ratio is irrational enough that the two-second texture underneath them never
+ * lines up with itself. Everything else is rare: one sound every half minute
+ * or so, at a gap that is different every time, and never a voice. Voices in
+ * this game belong to people who are talking to you.
+ */
+/** Not the reign's. The weather is not something a seed should decide. */
+const BED_SEED = 90210;
 
 const KEY = 'lawmaker_sound_v1';
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let ambience: GainNode | null = null;
 let buffer: AudioBuffer | null = null;
+type WindVoice = {
+  source: AudioBufferSourceNode;
+  gain: GainNode;
+  filter: BiquadFilterNode;
+  tilt: number;
+};
+let wind: WindVoice[] = [];
 let timer: number | null = null;
 let wanted = true;
 let volume = .55;
@@ -44,26 +71,87 @@ function mix(): void {
   master.gain.setTargetAtTime(mounted && wanted && !document.hidden ? volume * .45 : 0, at, .035);
   ambience.gain.cancelScheduledValues(at);
   ambience.gain.setTargetAtTime(quiet ? .24 : .65, at, .25);
+  weather();
 }
 
+/**
+ * The wind. Started once, on the first gesture, and never started again.
+ *
+ * Two loops of the same two second texture at rates that do not divide into
+ * each other, so the pattern underneath takes about three minutes to come
+ * round and by then it has drifted anyway. Nothing here has an attack, so
+ * there is nothing for an ear to count.
+ */
+function buildWind(): void {
+  if (!ctx || !ambience || !buffer || wind.length) return;
+  for (const [rate, tilt] of [[1, 1], [0.6187, 1.9]] as const) {
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    source.playbackRate.value = rate;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 800 * tilt;
+    filter.Q.value = .45;
+    const gain = ctx.createGain();
+    gain.gain.value = 0;
+    source.connect(filter).connect(gain).connect(ambience);
+    source.start();
+    wind.push({ source, gain, filter, tilt });
+  }
+  weather();
+}
+
+/** What the wind is doing this season, moved into over seconds, never cut. */
+function weather(): void {
+  if (!ctx || !wind.length) return;
+  const at = ctx.currentTime;
+  const winter = season === 'winter';
+  // The whole bed is quieter than the old one by about half. It is a floor for
+  // the room to sit on, not something anybody should be able to point at.
+  // and a place with roofs on it is a place standing out of the wind
+  const shelter = settled ? .82 : 1;
+  const level = (quiet ? .012 : winter ? .05 : season === 'autumn' ? .042 : .032) * shelter;
+  const hz = winter ? 430 : season === 'autumn' ? 1150 : 900;
+  for (const voice of wind) {
+    voice.gain.gain.setTargetAtTime(level / voice.tilt, at, 4);
+    voice.filter.frequency.setTargetAtTime(hz * voice.tilt, at, 5);
+  }
+}
+
+/**
+ * One rare thing, at a gap that is never the same twice.
+ *
+ * Half a minute is the floor and a minute is the ceiling, which for a scene
+ * somebody reads in twenty seconds means most cards go by in nothing but wind.
+ * That is the point: this is a place, not a soundtrack.
+ */
 function schedule(): void {
   if (!audible() || !ctx || !ambience || !buffer) return;
   if (ctx.currentTime < nextAt) return;
   const at = ctx.currentTime + .02;
-  // A short overlapping wind bed; no queue is accumulated while a tab is hidden.
-  brush(ctx, ambience, buffer, at, 3.8, season === 'winter' ? .12 : .065, season === 'winter' ? 480 : 800);
-  if (season !== 'winter') brush(ctx, ambience, buffer, at, 3.8, .07, 2600);
-  if (!quiet) {
-    if ((season === 'spring' || season === 'summer') && beat % 3 === 1) cue(ctx, ambience, buffer, 'bird', at + .4, .55);
-    if (season === 'autumn') brush(ctx, ambience, buffer, at, 3.5, .09, 3500);
-    // A settled place used to knock twice on a fixed beat, which is a clock and
-    // not a village: two dry wooden taps every ten seconds is the one sound a
-    // room notices and cannot stop noticing. What is left is voices, which
-    // wander, and the wind, which does not repeat.
-    if (settled && beat % 3 === 2) murmur(ctx, ambience, 'crowd', true, at + .3);
+
+  // The first pass only starts the wind and sets the next gap; a sound the
+  // instant somebody clicks anything is a sound they will attribute to the click.
+  if (beat > 0 && !quiet) {
+    const roll = rand01(BED_SEED, 'cue', beat);
+    if (season === 'spring' || season === 'summer') {
+      if (roll > .34) {
+        cue(ctx, ambience, buffer, 'bird', at, .34);
+        if (roll > .82) cue(ctx, ambience, buffer, 'bird', at + .6 + roll * .7, .2);
+      }
+    } else if (season === 'autumn') {
+      // a gust going through what is left on the trees, and no attack on it
+      if (roll > .5) brush(ctx, ambience, buffer, at, 6.5, .035, 3200);
+    } else if (roll > .72) {
+      // winter: a long way off, and only now and then
+      cue(ctx, ambience, buffer, 'wood', at, .1);
+    }
   }
+
   beat++;
-  nextAt = at + 2.6;
+  // 30 to 62 seconds, and the gap itself never repeats
+  nextAt = at + 30 + rand01(BED_SEED, 'gap', beat) * 32;
 }
 
 /** Called only from a pointer or keyboard gesture. Failure never affects play. */
@@ -83,6 +171,7 @@ export function wake(): void {
       ambience = ctx.createGain();
       ambience.connect(master);
       buffer = texture(ctx);
+      buildWind();
     }
     mix();
     void ctx.resume().then(() => { mix(); schedule(); }).catch(() => { /* Try the next gesture. */ });
@@ -150,6 +239,12 @@ export function attach(): () => void {
 function dispose(): void {
   if (timer !== null) window.clearInterval(timer);
   timer = null;
+  for (const voice of wind) {
+    try { voice.source.stop(); } catch { /* already stopped with the context */ }
+    voice.source.disconnect();
+  }
+  wind = [];
+  beat = 0;
   if (ctx) void ctx.close().catch(() => {});
   ctx = null;
   master = null;

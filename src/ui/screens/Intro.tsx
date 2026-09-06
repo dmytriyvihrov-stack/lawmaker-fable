@@ -6,6 +6,7 @@ import { DevEditTrigger, DevText } from '../components/DevText';
 import { MonarchPortrait } from '../components/MonarchPortrait';
 import { FoundingPortrait } from '../components/PersonPortrait';
 import { useDevEdit } from '../dev/useDevEdit';
+import { TYPE } from '../type';
 
 interface Props {
   seed: number;
@@ -57,20 +58,20 @@ export function Intro({ seed, dev = false, onDeclare }: Props) {
       {/* the five of you, on the day, before anything is decided */}
       <section className="text-center">
         <FoundingPortrait seed={seed} size={92} />
-        <h1 className="mt-4 text-[26px] leading-tight tracking-wide text-parchment">
+        <h1 className={`mt-4 ${TYPE.display} leading-tight text-parchment`}>
           {brief.heading}
         </h1>
-        <p className="mt-1 text-[10px] uppercase tracking-[0.22em] text-parchment-dim">
+        <p className={`mt-1 ${TYPE.label} text-parchment-dim`}>
           {brief.kicker}
         </p>
         {/* two sentences about the people in the picture, and no more */}
-        <p className="mx-auto mt-3 max-w-xl text-[14px] italic leading-relaxed text-hair">
+        <p className={`mx-auto mt-3 max-w-xl ${TYPE.body} leading-relaxed text-parchment-dim`}>
           <DevText id="intro:brief:caption" text={brief.caption} dev={dev} />
         </p>
       </section>
 
       {/* what the whole reign is for, said once, before anybody talks */}
-      <p className="mt-5 rounded-lg border border-seal/50 bg-seal/[0.12] px-4 py-3 text-[15px] leading-relaxed text-parchment">
+      <p className={`mt-5 rounded-lg border border-seal/50 bg-seal/[0.12] px-4 py-3 ${TYPE.body} leading-relaxed text-parchment`}>
         <DevText id="intro:brief:charge" text={brief.charge} dev={dev} />
       </p>
 
@@ -84,26 +85,26 @@ export function Intro({ seed, dev = false, onDeclare }: Props) {
               without, and five monarchs read as one. */}
           <MonarchPortrait monarch={monarch} mood={72} size={48} />
           <div className="min-w-0">
-            <div className="text-[11px] uppercase tracking-[0.15em] text-parchment-dim">
+            <div className={`${TYPE.label} text-parchment-dim`}>
               {UI.intro.speaker}
             </div>
-            <div className="text-[15px] leading-tight">{monarch.name}</div>
+            <div className={`${TYPE.title} leading-tight text-parchment`}>{monarch.name}</div>
           </div>
         </header>
         <div className="space-y-3">
           {UI.intro.lead.map((p, i) => (
-            <p key={i} className="text-[15px] leading-relaxed text-parchment/90">
+            <p key={i} className={`${TYPE.body} leading-relaxed text-parchment/90`}>
               <DevText id={`intro:lead:${i}`} text={p} dev={dev} />
             </p>
           ))}
         </div>
-        <p className="mt-3 rounded-md border border-ink-line bg-ink/50 p-3 text-[13px] leading-relaxed text-parchment-dim">
+        <p className={`mt-3 rounded-md border border-ink-line bg-ink/50 p-3 ${TYPE.body} leading-relaxed text-parchment-dim`}>
           <span className="text-seal">{monarch.traitName}. </span>
           <DevText id={`monarch:${monarch.id}:traitLine`} text={monarch.traitLine} dev={dev} />
         </p>
       </section>
 
-      <h2 className="mt-6 text-center text-xl leading-snug">
+      <h2 className={`mt-6 text-center ${TYPE.title} leading-snug`}>
         <DevText id="intro:question" text={UI.intro.question} dev={dev} />
       </h2>
 
@@ -119,7 +120,7 @@ export function Intro({ seed, dev = false, onDeclare }: Props) {
         ))}
       </div>
 
-      <p className="mt-4 text-center text-[13px] leading-relaxed text-parchment-dim italic">
+      <p className={`mt-4 text-center ${TYPE.note} leading-relaxed text-parchment-dim`}>
         <DevText id="intro:footnote" text={UI.intro.footnote} dev={dev} />
       </p>
     </div>

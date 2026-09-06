@@ -12,6 +12,7 @@ import { renderTemplate } from '../../engine/format';
 import { MovedBoards } from '../components/MovedBoards';
 import { DevEffects } from '../components/DevCorner';
 import { DevText } from '../components/DevText';
+import { TYPE } from '../type';
 import type { ActionId, GameState, Proposal, Season, SubjectId } from '../../engine/types';
 
 interface Props {
@@ -89,8 +90,8 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
     setAction(action === id ? null : id);
   };
 
-  const chip = 'answer min-h-[34px] rounded-lg border px-3 py-1.5 text-[13px] tracking-wide';
-  const row = 'answer min-h-[38px] w-full rounded-lg border px-3.5 py-2 text-left text-[13px] tracking-wide';
+  const chip = `answer min-h-[34px] rounded-lg border px-3 py-1.5 ${TYPE.note} tracking-wide`;
+  const row = `answer min-h-[38px] w-full rounded-lg border px-3.5 py-2 text-left ${TYPE.note} tracking-wide`;
   const open = 'border-ink-line bg-ink-soft text-parchment';
   const chosen = 'border-seal bg-seal/25 text-parchment';
   const held = 'border-seal/50 bg-ink-soft text-parchment';
@@ -107,10 +108,10 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
             actually made of, so it gets the width and the matter that raised
             it stands in the margin beside it rather than in front of it. */}
         <section className="min-w-0 rounded-xl border border-ink-line bg-ink/60 p-4">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-parchment-dim">
-            {UI.popup.lawWillRead}
-          </div>
-          <p className="mt-2 text-[17px] leading-snug tracking-[0.03em]">
+          <div className={`${TYPE.label} text-parchment-dim`}>{UI.popup.lawWillRead}</div>
+          {/* The document. It is the point of this screen, so it is the one
+              thing on it set at display size. */}
+          <p className={`mt-2 ${TYPE.display} leading-tight`}>
             <span className={subject ? 'text-parchment' : 'text-hair'}>
               {subject ? SUBJECT_WORDS[subject] : UI.composer.blankSubject}{' '}
             </span>
@@ -152,7 +153,7 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
                   >
                     {predicateFor(subject, a.id)}
                     {isStanding && (
-                      <span className="ml-1.5 text-[10px] uppercase tracking-wide text-seal">
+                      <span className={`ml-1.5 ${TYPE.label} text-seal`}>
                         {UI.composer.standing}
                       </span>
                     )}
@@ -168,9 +169,7 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
           <div className="min-h-[52px] min-w-0 flex-1">
             {picked ? (
               <>
-                <div className="text-[9px] uppercase tracking-[0.2em] text-parchment-dim">
-                  {UI.popup.whatItDoes}
-                </div>
+                <div className={`${TYPE.label} text-parchment-dim`}>{UI.popup.whatItDoes}</div>
                 <MovedBoards
                   className="mt-1"
                   once={onceRaw}
@@ -179,7 +178,7 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
                   emptyLine={UI.story.movesNothing}
                 />
                 {growth !== null && (
-                  <div className="mt-1 flex items-baseline gap-2 text-[12px]">
+                  <div className={`mt-1 flex items-baseline gap-2 ${TYPE.note}`}>
                     <span aria-hidden className="w-4">
                       🚶
                     </span>
@@ -191,11 +190,11 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
                       +{growth}%
                     </span>
                     <span className="flex-1 text-parchment/85">{UI.story.whoComes}</span>
-                    <span className="text-[10px] text-seal">{UI.seal.everyYear}</span>
+                    <span className={`${TYPE.label} text-seal`}>{UI.seal.everyYear}</span>
                   </div>
                 )}
                 {picked.o.perTurnWatch && (
-                  <p className="mt-1.5 text-[11px] leading-snug text-parchment-dim">
+                  <p className={`mt-1.5 ${TYPE.note} leading-snug text-parchment-dim`}>
                     {UI.story.watchNote}
                   </p>
                 )}
@@ -208,7 +207,7 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
                 )}
               </>
             ) : (
-              <p className="text-[12px] text-parchment-dim">{UI.composer.pickPrompt}</p>
+              <p className={`${TYPE.note} text-parchment-dim`}>{UI.composer.pickPrompt}</p>
             )}
           </div>
 
@@ -216,13 +215,13 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
             type="button"
             disabled={!picked || label === null}
             onClick={() => picked && label !== null && onSeal(picked.p.id, picked.i, label)}
-            className="min-h-[40px] shrink-0 rounded-lg bg-seal px-7 text-[14px] tracking-[0.25em] text-parchment disabled:opacity-30"
+            className={`min-h-[40px] shrink-0 rounded-lg bg-seal px-7 ${TYPE.body} tracking-[0.18em] text-parchment disabled:opacity-30`}
           >
             {UI.composer.seal}
           </button>
           </div>
           {reopening && (
-            <p className="mt-2 text-center text-[11px] text-parchment-dim">
+            <p className={`mt-2 text-center ${TYPE.note} text-parchment-dim`}>
               {UI.composer.reopenCost
                 .replace('{crown}', String(Math.abs(CONFIG.reopen.crownSanity)))
                 .replace('{mood}', String(Math.abs(CONFIG.reopen.mood)))}
@@ -232,14 +231,14 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
         {/* the matter, and the advisor in the margin of it */}
         <section className="order-first min-w-0 lg:order-last">
           {reopening && (
-            <p className="mb-3 border-l-4 border-seal bg-seal/10 px-3 py-2 text-[13px] leading-snug text-parchment">
+            <p className={`mb-3 border-l-4 border-seal bg-seal/10 px-3 py-2 ${TYPE.note} leading-snug text-parchment`}>
               {UI.composer.reopenLine}
             </p>
           )}
-          <h2 className="text-[22px] leading-tight">{proposal.title}</h2>
+          <h2 className={`${TYPE.title} leading-tight`}>{proposal.title}</h2>
           <div className="mt-2 space-y-1.5">
             {proposal.problem.map((p, i) => (
-              <p key={i} className="text-[13px] leading-relaxed text-parchment-dim">
+              <p key={i} className={`${TYPE.note} leading-relaxed text-parchment-dim`}>
                 <DevText
                   id={`proposal:${proposal.id}:problem:${i}`}
                   text={renderTemplate(p, state)}
@@ -255,10 +254,10 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
                 <PersonPortrait character={proposal.advisor} size={54} />
               </span>
               <div className="min-w-0">
-                <div className="text-[9px] uppercase tracking-[0.2em] text-seal">
+                <div className={`${TYPE.label} text-seal`}>
                   {UI.popup.inTheMargin}
                 </div>
-                <p className="mt-1 text-[13px] italic leading-relaxed text-parchment">
+                <p className={`mt-1 ${TYPE.note} italic leading-relaxed text-parchment`}>
                   <DevText
                     id={`proposal:${proposal.id}:advice`}
                     text={advice.line}
@@ -270,7 +269,7 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
           )}
 
           {proposals.length > 1 && (
-            <p className="mt-3 text-[11px] italic leading-snug text-hair">{UI.composer.manyLaws}</p>
+            <p className={`mt-3 ${TYPE.note} leading-snug text-hair`}>{UI.composer.manyLaws}</p>
           )}
         </section>
 
