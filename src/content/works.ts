@@ -5,6 +5,40 @@ import type { WorkDef } from '../engine/types';
  * reign: a law says what the place believes, a building says what it can do.
  */
 export const WORKS: WorkDef[] = [
+  /**
+   * The first year, and the two things a place with no law can do about
+   * itself.
+   *
+   * Nobody writes a rule in the first spring. Five people who have just walked
+   * out of somewhere put up a roof or they put up somewhere to work, and which
+   * of the two they pick is the first thing about this reign that is true. The
+   * one not picked is not gone: it goes back on the list with everything else,
+   * and most reigns build both eventually.
+   */
+  {
+    id: 'house',
+    stage: 'village',
+    name: 'Raise a house',
+    line: 'A roof with a hearth under it. People sleep warm, and somebody sick has somewhere to be sick.',
+    cost: 10,
+    maxLevel: 3,
+    trend: { mood: 2, health: 1 },
+  },
+  {
+    /**
+     * Not the wood: a place to work the wood. The trees were always there and
+     * anybody could go and cut one, which is exactly why the cabin is worth a
+     * year: it is the difference between a man with an axe and a place that
+     * expects wood on a Tuesday.
+     */
+    id: 'woodcutter',
+    stage: 'village',
+    name: "Put up a woodcutter's cabin",
+    line: 'A saw pit and a store at the edge of the trees. The wood comes in steadily instead of when somebody thinks of it.',
+    cost: 10,
+    maxLevel: 3,
+    trend: { economy: 1.5 },
+  },
   {
     id: 'fields',
     stage: 'village',

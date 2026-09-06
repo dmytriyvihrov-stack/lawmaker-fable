@@ -232,6 +232,8 @@ export function newGame(seed: number): GameState {
     townName: null,
     boards: [],
     buildings: {
+      house: 0,
+      woodcutter: 0,
       fields: 0,
       well: 0,
       fence: 0,

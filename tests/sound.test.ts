@@ -108,11 +108,12 @@ describe('settlement audio', () => {
   });
 
   /**
-   * The settlement bed used to knock twice on a fixed beat, and a room hears
-   * that as a clock. Nothing in the ambience may be percussive and periodic:
-   * the wind overlaps and the voices wander, and neither of them repeats.
+   * There is no bed. Three versions of one were written and every one of them
+   * was heard as something wrong with the room, so the rule now is the strong
+   * one and this is what holds it: left alone, this module makes no sound of
+   * any kind, for as long as you leave it alone.
    */
-  it('never strikes a fixed beat while it is just being a place', async () => {
+  it('makes no sound at all until somebody does something', async () => {
     vi.useFakeTimers();
     vi.resetModules();
     const { context, sources } = audioMock();
@@ -127,47 +128,20 @@ describe('settlement audio', () => {
     const detach = sound.attach();
     win.dispatchEvent(new Event('pointerdown'));
     await Promise.resolve();
-    // a place with people in it, in the season with the most going on
     sound.environment('summer', false, true);
 
-    // six minutes of a place being a place
-    for (let t = 0; t < 360; t += 2) {
+    // ten minutes of a player reading a card
+    for (let t = 0; t < 600; t += 2) {
       context.currentTime = t;
-      vi.advanceTimersByTime(400);
+      vi.advanceTimersByTime(1000);
     }
+    expect(sources.length, 'the room is making noise on its own').toBe(0);
+    // and nothing is left running that could start
+    expect(vi.getTimerCount(), 'something is still on a clock').toBe(0);
 
-    // 310 is the wood note, and a wood note is a tap on a table
-    const taps = sources.filter(
-      (source) => source.frequency.setValueAtTime.mock.calls[0]?.[0] === 310,
-    );
-    expect(taps.length, 'the ambience is knocking on something').toBe(0);
-
-    // No voice in the bed. A hushed murmur is three descending tones and that
-    // is a hall clock on the hour, which is exactly how it was heard.
-    expect(
-      sources.some((source) => source.type === 'sawtooth'),
-      'the ambience is talking to itself',
-    ).toBe(false);
-
-    // The wind starts once and never restarts, so it has no attack to count.
-    const loops = sources.filter((source) => source.loop === true);
-    expect(loops.length, 'the wind is not one continuous thing').toBe(2);
-    for (const loop of loops) expect(loop.start).toHaveBeenCalledOnce();
-
-    // and everything else is rare, and never twice at the same distance
-    const events = sources
-      .filter((source) => source.loop !== true)
-      .map((source) => source.start.mock.calls[0][0] as number)
-      .sort((a, b) => a - b);
-    expect(events.length, 'six minutes of this is not a soundtrack').toBeLessThan(24);
-    const gaps = events.slice(1).map((at, i) => Math.round((at - events[i]) * 10) / 10);
-    // A fixed period has one gap and no spread. This has neither. (The gaps
-    // read here are quantised by how coarsely the test moves the clock, so the
-    // shape is what is asserted, not the individual numbers.)
-    const wide = gaps.filter((g) => g > 5);
-    expect(wide.length, 'nothing happened at all').toBeGreaterThan(2);
-    expect(new Set(wide).size, 'the bed is on a period').toBeGreaterThan(2);
-    expect(Math.max(...wide) - Math.min(...wide), 'the gaps barely differ').toBeGreaterThan(8);
+    // but the answer to a thing the player did still arrives
+    sound.play('seal');
+    expect(sources.length).toBeGreaterThan(0);
     detach();
   });
 

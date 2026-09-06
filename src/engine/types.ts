@@ -38,6 +38,8 @@ export type Stage = 'village' | 'town';
  * on nothing, on purpose.
  */
 export type WorkId =
+  /** The two a first year chooses between, before there is any law at all. */
+  | 'house' | 'woodcutter'
   | 'fields' | 'well' | 'fence' | 'mine'
   | 'granary' | 'watch_house' | 'long_room' | 'hall'
   | 'road' | 'bridge'

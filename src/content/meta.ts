@@ -229,6 +229,8 @@ export const CASE_SPOTS: Record<string, { x: number; y: number }> = {
  * bridge or the bell first and only then asks what it costs.
  */
 export const WORK_ICONS: Record<WorkId, string> = {
+  house: '🏠',
+  woodcutter: '🪓',
   fields: '🌾',
   well: '💧',
   fence: '🚧',

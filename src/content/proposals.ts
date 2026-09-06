@@ -15,6 +15,16 @@ export const PROPOSALS: Proposal[] = [
     id: 'pv1_work',
     act: 1,
     advisor: 'fool',
+    /**
+     * Not in the first spring.
+     *
+     * Nobody who has just walked out of somewhere writes a rule about the work
+     * on the first morning; they put a roof up, or somewhere to work, and find
+     * out what the place is like. So the first year is the place living and
+     * one year of work spent on a house or a cabin, and the seal comes out in
+     * the second spring, by which time there is something for it to be about.
+     */
+    unlockedBy: { kind: 'turn', op: 'gte', value: 2 },
     title: 'Five Pairs of Hands',
     advice: {
       option: 0,

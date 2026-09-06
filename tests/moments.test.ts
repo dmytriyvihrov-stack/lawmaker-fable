@@ -28,14 +28,19 @@ describe('the four small things', () => {
       // and none of them is worth playing for
       expect(Math.max(...moves), `${moment.id} is a lever`).toBeLessThanOrEqual(1);
       expect(moment.line.length, `${moment.id} says nothing`).toBeGreaterThan(40);
+      // a short word, so the pointer says what it is and gets out of the way
       expect(moment.label.length, `${moment.id} has no name`).toBeGreaterThan(4);
+      expect(moment.label.length, `${moment.id} is a sentence, not a name`).toBeLessThan(16);
     }
   });
 
   it('stands where a card cannot float over it, and off every case marker', () => {
     for (const moment of MOMENTS) {
-      // the card owns the near meadow, which is everything past about 500
-      expect(moment.y, `${moment.id} is under the card`).toBeLessThan(470);
+      // The card floats over the middle of the near meadow, so anything past
+      // about 470 has to be well out to one side of it to be seen at all.
+      const clearOfTheCard = moment.y < 470 || moment.x < 330 || moment.x > 1120;
+      expect(clearOfTheCard, `${moment.id} is behind the card`).toBe(true);
+      expect(moment.y, `${moment.id} is off the bottom`).toBeLessThan(700);
       expect(moment.y, `${moment.id} is in the sky`).toBeGreaterThan(200);
       expect(moment.x, `${moment.id} is off the side`).toBeGreaterThan(20);
       expect(moment.x, `${moment.id} is off the side`).toBeLessThan(1420);

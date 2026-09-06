@@ -215,9 +215,9 @@ describe('the year of work', () => {
     expect(after.buildings.fields).toBe(1);
     // half the price, the surplus leaves the store on top of it, and the new
     // field is already earning by the end of the same year
-    const earns = worksFor(s).find((w) => w.id === 'fields')!.trend.economy ?? 0;
+    const earns = worksFor({ ...s, turn: 5 }).find((w) => w.id === 'fields')!.trend.economy ?? 0;
     // the two granaries holding the surplus up are themselves a trend
-    const held = (worksFor(s).find((w) => w.id === 'granary')!.trend.economy ?? 0) * 2;
+    const held = (worksFor({ ...s, turn: 5 }).find((w) => w.id === 'granary')!.trend.economy ?? 0) * 2;
     expect(after.stats.economy).toBe(
       CONFIG.works.freeAbove + 5 - half - CONFIG.works.surplusSpend + earns + held,
     );
@@ -228,7 +228,7 @@ describe('the year of work', () => {
   it('every floor after the first costs more than the one under it', () => {
     const s = at(5);
     s.stats.economy = 60; // under freeAbove, so nothing is subsidised
-    const fields = worksFor(s).find((w) => w.id === 'fields')!;
+    const fields = worksFor({ ...s, turn: 5 }).find((w) => w.id === 'fields')!;
     const first = workCost(s, fields);
     s.buildings.fields = 1;
     const second = workCost(s, fields);

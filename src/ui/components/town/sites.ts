@@ -54,6 +54,12 @@ export const WORK_SITES: Partial<
   fence: { x: 560, y: 250, scale: 1, label: { x: 220, y: -18 } },
   fields: { x: 300, y: 300, scale: 1, label: { x: 160, y: -12 } },
   mine: { x: 114, y: 344, scale: 1, label: { x: 0, y: 44 } },
+  /* At the trees, because that is the whole idea of it: the cabin stands
+     where the wood is, clear of the front rank the cutters work. */
+  woodcutter: { x: 1216, y: 322, scale: 0.9, label: { x: 34, y: -16 }, frame: { x: 34, y: 46, s: 1.1 } },
+  /* A house goes up among the other roofs and not on its own. This is the
+     ground for the first one; the rest arrive as roofs with the count. */
+  house: { x: 610, y: 402, scale: 0.92, label: { x: 28, y: -14 }, frame: { x: 28, y: 44, s: 1 } },
 };
 
 /**
@@ -177,6 +183,8 @@ export type CrowdJob =
   | 'fish'
   | 'road'
   | 'square'
+  /** With the animals on the near meadow, which is the one job a hamlet has. */
+  | 'pen'
   | 'yard'
   | 'water'
   | 'site';
@@ -190,7 +198,15 @@ export const CROWD_SPOTS: Record<CrowdJob, { x: number; y: number; w: number; h:
   fish: { x: 0, y: 0, w: 10, h: 10 },
   road: { x: 800, y: 330, w: 250, h: 96 },
   square: { x: SQUARE.x - 140, y: SQUARE.y - 48, w: 280, h: 96 },
-  yard: { x: 560, y: 396, w: 380, h: 120 },
+  /* Yards, not meadow. This box used to be 380 by 120 of open grass in front
+     of the huts, so in a hamlet with nothing built the people posted to it
+     stood about in a field bowing at nothing, which is exactly what it looked
+     like. A yard is the ground beside somebody's house, so the box now sits
+     over the hut cluster and a bent back in it is a bent back at a door. */
+  yard: { x: 592, y: 300, w: 372, h: 176 },
+  /* The animals are drawn on the near meadow in every season but winter, and
+     from here on somebody is with them. */
+  pen: { x: 344, y: 590, w: 118, h: 36 },
   water: { x: 762, y: 424, w: 58, h: 34 },
   site: { x: 0, y: 0, w: 60, h: 34 },
 };

@@ -749,6 +749,114 @@ export function Goat({ paint }: { paint: TownPaint }) {
   );
 }
 
+/**
+ * An apple tree, and then some apples.
+ *
+ * The place had a wood, a meadow and a field and nothing anybody had planted
+ * on purpose, so a basket of apples in the road came from nowhere. Three of
+ * these stand above the field now: a shorter, rounder head than the wood has,
+ * a trunk that forks, and fruit in it, because a tree with nothing on it is
+ * just a small tree.
+ */
+export function AppleTree({ paint, fruit = true }: { paint: TownPaint; fruit?: boolean }) {
+  return (
+    <g>
+      <Shade paint={paint} cy={2} rx={13} ry={4} />
+      <path d="M-1.6 2 v-13 M-1 -7 l-5 -5 M-1 -9 l5 -6" stroke="#6b573f" strokeWidth="2.4"
+        fill="none" strokeLinecap="round" />
+      <g fill={paint.crownNear}>
+        <circle cx="-8" cy="-17" r="8.5" />
+        <circle cx="7" cy="-19" r="9.5" />
+        <circle cx="0" cy="-25" r="8" />
+        <circle cx="-2" cy="-13" r="8" />
+      </g>
+      <g fill={paint.crownFar} opacity=".45">
+        <circle cx="6" cy="-14" r="6" />
+        <circle cx="-9" cy="-21" r="5" />
+      </g>
+      {fruit && (
+        <g fill="#c1503f">
+          <circle cx="-9" cy="-13" r="1.7" />
+          <circle cx="4" cy="-11" r="1.6" />
+          <circle cx="10" cy="-21" r="1.7" />
+          <circle cx="-4" cy="-24" r="1.5" />
+          <circle cx="-13" cy="-19" r="1.5" />
+        </g>
+      )}
+    </g>
+  );
+}
+
+/**
+ * The dog. Not the wolf, and the difference has to read at this size: it is
+ * shorter in the body, the head is up rather than carried out in front, and
+ * the tail is the whole argument, because it is the only thing in the picture
+ * that is up and moving.
+ */
+export function TownDog({ paint }: { paint: TownPaint }) {
+  const coat = '#8a7a5e';
+  const back = '#6f6149';
+  return (
+    <g>
+      <Shade paint={paint} cy={6} rx={8} ry={2.4} />
+      <g stroke={back} strokeWidth="1.6" strokeLinecap="round">
+        <line x1="-4" y1="2" x2="-4.6" y2="6" />
+        <line x1="5" y1="2" x2="5.6" y2="6" />
+      </g>
+      {/* up, and not still */}
+      <path d="M-5.6 -1 q-5 -1 -5.6 -6" stroke={coat} strokeWidth="2.2" fill="none"
+        strokeLinecap="round" className="city-tail" />
+      <ellipse rx="7" ry="3.4" fill={coat} />
+      <g transform="translate(7 -4.6)">
+        <ellipse rx="3.4" ry="3" fill={coat} />
+        <path d="M-3 -2 L-3.6 -6 L0 -3.6 Z" fill={back} />
+        <path d="M1.6 -2.4 L2.4 -6 L4 -2.6 Z" fill={back} />
+        <path d="M2.4 0.6 q3.4 0 4 1.6 q-3.4 1.4 -4.6 0 z" fill={back} />
+        <circle cx="1.6" cy="-0.6" r="0.8" fill="#2b241b" />
+      </g>
+    </g>
+  );
+}
+
+/**
+ * The woodcutter's cabin: a low shed, a lean-to over a saw pit and a stack of
+ * cut lengths beside it. Everything about it is horizontal, because the wood
+ * is what it is for and the wood is lying down.
+ */
+export function Woodcutter({ paint, level = 1 }: { paint: TownPaint; level?: number }) {
+  return (
+    <g>
+      <Shade paint={paint} cy={40} rx={44} ry={9} />
+      {/* the stack, which grows with the floors */}
+      <g>
+        {Array.from({ length: Math.min(3, level) }, (_, i) => (
+          <g key={i} transform={`translate(${52 + i * 3} ${30 - i * 7})`}>
+            <rect x="-6" y="0" width="26" height="6" rx="3" fill="#8a7256" />
+            <ellipse cx="-6" cy="3" rx="2.6" ry="3" fill={TIMBER_DARK} />
+            <ellipse cx="20" cy="3" rx="2.6" ry="3" fill={TIMBER_DARK} />
+          </g>
+        ))}
+      </g>
+      {/* the shed */}
+      <path d="M4 8 h48 l10 14 h-68 z" fill={paint.roofSnow ? '#dae5df' : '#7d6448'} />
+      <rect x="-6" y="22" width="68" height="20" rx="2" fill={TIMBER} stroke={OUTLINE} strokeWidth="1.1" />
+      <rect x="-6" y="22" width="68" height="20" rx="2" fill="#000" opacity=".07" />
+      <rect x="16" y="27" width="13" height="15" rx="1.5" fill="#4a3d2c" />
+      {/* the lean-to over the saw pit, and the saw in it */}
+      <path d="M62 24 h20 l-2 10 h-18 z" fill={paint.roofSnow ? '#dae5df' : '#6f5a41'} />
+      <line x1="64" y1="34" x2="64" y2="42" stroke="#6b573f" strokeWidth="2" />
+      <line x1="80" y1="34" x2="80" y2="42" stroke="#6b573f" strokeWidth="2" />
+      <line x1="64" y1="38" x2="80" y2="38" stroke={IRON} strokeWidth="1.6" />
+      {/* the chips, which is what a place like this leaves on the ground */}
+      <g fill="#a58f6c" opacity=".7">
+        <ellipse cx="34" cy="44" rx="3" ry="1.2" />
+        <ellipse cx="46" cy="46" rx="2.4" ry="1" />
+        <ellipse cx="22" cy="47" rx="2.6" ry="1.1" />
+      </g>
+    </g>
+  );
+}
+
 /** A year that came in, stacked where it grew. */
 export function Hay({ paint }: { paint: TownPaint }) {
   return (

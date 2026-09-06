@@ -715,3 +715,20 @@ button:disabled {
   .city-moment { animation: none; opacity: 0.9; }
   .moment-said { animation: none; opacity: 1; }
 }
+
+/* The one thing in this picture that is up and moving. A dog at eight units
+   across is a shape; a dog with a tail going is a dog. */
+@keyframes town-tail {
+  0%, 100% { transform: rotate(-14deg); }
+  50% { transform: rotate(16deg); }
+}
+
+.city-tail {
+  animation: town-tail 0.5s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: 100% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .city-tail { animation: none; }
+}

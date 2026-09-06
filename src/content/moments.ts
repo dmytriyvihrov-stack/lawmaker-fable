@@ -38,7 +38,8 @@ export interface Moment {
 export const MOMENTS: Moment[] = [
   {
     id: 'dog',
-    label: 'A dog, leaning',
+    label: 'The dog',
+    // it comes and stands in the yards, where the people are
     x: 560,
     y: 356,
     hand: 'pet',
@@ -47,18 +48,20 @@ export const MOMENTS: Moment[] = [
   },
   {
     id: 'spill',
-    label: 'A basket, and everything that was in it',
-    x: 868,
-    y: 262,
+    label: 'The apples',
+    // under the orchard above the field, which is where the apples came from
+    x: 388,
+    y: 250,
     hand: 'lift',
-    line: 'You get down and pick apples out of the ruts with her for a minute. She talks about her sister the entire time and neither of you mentions who you are.',
+    line: 'You get down and pick them out of the grass with her for a minute. She talks about her sister the entire time and neither of you mentions who you are.',
     effect: { mood: 1 },
   },
   {
     id: 'bite',
-    label: 'A rod bent double',
-    x: 1246,
-    y: 404,
+    label: 'The rod',
+    // the first seat on the bank, where somebody is fishing anyway
+    x: 1128,
+    y: 392,
     hand: 'pull',
     line: 'Two of you on one rod, and the thing comes up like a boot with fins on it. It is enormous. He will tell it wrong by Sunday and you will let him.',
     effect: { economy: 1 },
@@ -67,9 +70,10 @@ export const MOMENTS: Moment[] = [
   },
   {
     id: 'kid',
-    label: 'A kid, in the young corn',
-    x: 444,
-    y: 300,
+    label: 'The kid',
+    // out on the near meadow with the rest of them, by the hay
+    x: 258,
+    y: 604,
     hand: 'catch',
     line: 'It is a great deal faster than you and a great deal less clever, so it takes both of you and a hurdle. It goes back the way it came, and then looks at you.',
     effect: { mood: 1 },

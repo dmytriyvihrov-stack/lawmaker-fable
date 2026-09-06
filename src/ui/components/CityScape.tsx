@@ -8,6 +8,7 @@ import type { FolkPin } from '../../engine/folk';
 import { PAINT } from './town/paint';
 import type { TownPaint } from './town/paint';
 import { GroundWashes, MeadowDetails, River } from './town/atmosphere';
+import { TownDog } from './town/parts';
 import type { Moment } from '../../content/moments';
 import {
   BreadBoard,
@@ -19,12 +20,14 @@ import {
   FenceWorks,
   Fields,
   Ghost,
+  AppleTree,
   Goat,
   Granary,
   Hall,
   Hay,
   Hurdle,
   Hut,
+  Woodcutter,
   LongRoom,
   MineMouth,
   MineWorks,
@@ -246,7 +249,13 @@ export function CityScape({
    * of the list, and after that the roofs stop and the street fills up
    * instead, because a crowd is what a town looks like from up here.
    */
-  const huts = Math.max(1, Math.min(HUT_SITES.length, 1 + Math.floor((population - 5) / 12)));
+  /* Roofs come with the count, and with the years spent on putting one up:
+     a house is the one work whose whole point is that there is one more of
+     them, so every floor of it is another roof standing here. */
+  const huts = Math.max(
+    1,
+    Math.min(HUT_SITES.length, 1 + level('house') + Math.floor((population - 5) / 12)),
+  );
 
   /**
    * One figure is one person while a person can still be picked out.
@@ -317,16 +326,23 @@ export function CityScape({
   };
   if (working) {
     if (fieldLevel > 0) post('field', 5 + fieldLevel * 2);
-    post('square', town ? 5 : 3);
+    /* A square is a thing a town has. Before there is one, the people posted
+       here were standing in open grass in the middle of the valley, which is
+       what "these people are doing something unclear" looks like from the
+       other side of the screen. In a hamlet they are on the lane instead,
+       which is a real line between real doors, and there are fewer of them. */
+    post('square', town ? 5 : 2);
     post('wood', 3);
-    post('yard', 3);
+    post('yard', town ? 3 : 2);
+    // somebody is always with the animals, and the animals are always there
+    post('pen', 2);
     // nobody stands at a river that is a lid
     if (!paint.ice) post('fish', 2);
     post('haul', 2);
     if (roadLevel > 0) post('road', 2 + roadLevel);
     if (wellLevel > 0) post('water', 2);
   } else {
-    post('yard', 6);
+    post('yard', 5);
     post('square', 3);
     post('wood', 2);
     post('haul', 1);
@@ -374,6 +390,7 @@ export function CityScape({
   };
   const POSE: Record<CrowdJob, Pose> = {
     field: 'sow',
+    pen: 'tend',
     wood: 'chop',
     haul: 'haul',
     fish: 'fish',
@@ -433,7 +450,7 @@ export function CityScape({
     } else if (job === 'site' && siteAnchor) {
       x = siteAnchor.x + 8 + ((i * 23) % 70);
       y = siteAnchor.y + 46 + ((i * 13) % 22);
-    } else if (job === 'square' && !working) {
+    } else if (job === 'square' && (!working || !town)) {
       const lane = LANE[nth % LANE.length];
       x = lane.x + ((i * 23) % 60) - 30;
       y = lane.y + ((i * 17) % 26) - 13;
@@ -590,6 +607,17 @@ export function CityScape({
   workNode('long_room', (l) => <LongRoom paint={paint} level={l} />, [
     <path key="r" d="M6 0 h120 l8 22 h-136 z" />,
     <rect key="w" x="-2" y="22" width="136" height="26" rx="2" />,
+  ]);
+  workNode('woodcutter', (l) => <Woodcutter paint={paint} level={l} />, [
+    <path key="r" d="M4 8 h48 l10 14 h-68 z" />,
+    <rect key="w" x="-6" y="22" width="68" height="20" rx="2" />,
+  ]);
+  /* The house's own outline. What it actually leaves standing is a roof in the
+     hut cluster (see `huts` above), so this is the ghost of the first one
+     while the year is still being thought about. */
+  workNode('house', () => null, [
+    <path key="r" d="M2 6 h42 l8 14 h-58 z" />,
+    <rect key="w" x="-6" y="20" width="58" height="20" rx="2" />,
   ]);
   workNode('granary', (l) => <Granary paint={paint} level={l} />, [
     <path key="r" d="M8 0 h100 l8 26 h-120 z" />,
@@ -879,7 +907,7 @@ export function CityScape({
             the whole animal. It does not come out: the year it does is an
             event, and until that year this is only a wood with a wolf in it. */}
         <g className="city-prowl" style={{ '--prowl': '88px' } as CSSProperties} opacity=".88">
-          <g transform="translate(1066 262) scale(0.6)">
+          <g transform="translate(1066 262) scale(0.42)">
             <Wolf paint={paint} walking />
           </g>
         </g>
@@ -1319,7 +1347,11 @@ export function CityScape({
           them, which is the only difference the flag makes. */}
       <Layer on={on('wolf_at_the_edge')}>
         <g className="city-prowl" style={{ '--prowl': '70px' } as CSSProperties}>
-          <g transform="translate(1046 424) scale(1.35)">
+          {/* A wolf is about as long as a person is tall, not twice it. The
+              body here is 22 units nose to tail and a townsman at scale 2 is
+              16 units from foot to hat, so 0.72 puts them right. It was at
+              1.35, which drew a pony. */}
+          <g transform="translate(1046 424) scale(0.72)">
             <Wolf paint={paint} walking />
           </g>
         </g>
@@ -1433,6 +1465,24 @@ export function CityScape({
         ))}
       </g>
 
+      {/* The orchard.
+
+          Somebody planted this, which is the point of it: everything else
+          growing in this valley grew there on its own. Three trees above the
+          field, in fruit from spring to autumn and bare through the winter,
+          and the reason there is ever a basket of apples in the grass. */}
+      <g>
+        {[
+          [352, 250, 1],
+          [400, 238, 0.86],
+          [438, 258, 0.94],
+        ].map(([x, y, k]) => (
+          <g key={x} transform={`translate(${x} ${y}) scale(${k})`}>
+            <AppleTree paint={paint} fruit={season !== 'winter'} />
+          </g>
+        ))}
+      </g>
+
       {/* THE NEAR MEADOW, which is what the popup floats over */}
       <g transform="translate(210 668)">
         <Hay paint={paint} />
@@ -1493,6 +1543,48 @@ export function CityScape({
           one and not in the other. The whole gold shape is the target and the
           drawing inside it is a hint, not a picture: what tells a player is
           the ring lighting up and the pointer turning into a hand. */}
+      {/* What each of them actually is.
+
+          A gold ring over empty grass is a button. The ring has to be round
+          something, so the thing is drawn first and the ring goes over it: a
+          dog in the yards, a basket down in the orchard grass, a rod bent
+          double on the bank, a kid loose on the meadow. All four are only here
+          while the moment is, which is why they are drawn here and not with
+          the rest of the picture: they are what is happening today. */}
+      {moments.map((moment) => (
+        <g key={`${moment.id}-thing`} transform={`translate(${moment.x} ${moment.y})`}>
+          {moment.id === 'dog' && <TownDog paint={paint} />}
+          {moment.id === 'kid' && (
+            <g transform="scale(0.72)">
+              <Goat paint={paint} />
+            </g>
+          )}
+          {moment.id === 'spill' && (
+            <g>
+              {/* the basket over on its side, and what rolled out of it */}
+              <path d="M-8 2 l2 -7 h9 l2 7 z" fill="#c9b184" opacity=".95" />
+              <path d="M-6 -5 q4.5 -3.5 9 0" fill="none" stroke="#c9b184" strokeWidth="1.4" />
+              <g fill="#c1503f">
+                <circle cx="7" cy="2" r="2" />
+                <circle cx="12" cy="4" r="1.7" />
+                <circle cx="-11" cy="4" r="1.8" />
+                <circle cx="16" cy="0" r="1.5" />
+              </g>
+            </g>
+          )}
+          {moment.id === 'bite' && (
+            <g>
+              {/* the rod, bent the wrong way, and the line going into the water */}
+              <path d="M-4 -6 q11 3 15 14" fill="none" stroke="#6b573f" strokeWidth="1.7"
+                strokeLinecap="round" />
+              <path d="M11 8 v9" fill="none" stroke="#e8dcc0" strokeWidth="0.9" opacity=".8" />
+              <path d="M4 18 q7 -3 14 0" fill="none" stroke="#dfe9ea" strokeWidth="1.1"
+                opacity=".7" />
+            </g>
+          )}
+        </g>
+      ))}
+
       {moments.map((moment) => (
         <g
           key={moment.id}

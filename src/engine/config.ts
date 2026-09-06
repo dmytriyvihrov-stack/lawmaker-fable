@@ -10,7 +10,11 @@ export const CONFIG = {
    *  store is a shelf, and the medicine is somebody's aunt. There is nowhere to
    *  go from here but up, slowly, or down, quickly. Economy starts well under
    *  its own shelf, same as every other board starts well under its own end. */
-  start: { crownSanity: 66, health: 24, economy: 6, mood: 50, army: 18, culture: 8 },
+  /* The store starts with one building in it and not two. That is the whole
+     first year: five people, a shelf holding twelve of a possible fifteen, and
+     a roof or a cabin to spend it on. Whichever they pick, the store is down
+     to two by summer and the other one waits for a better year. */
+  start: { crownSanity: 66, health: 18, economy: 12, mood: 50, army: 18, culture: 8 },
 
   /**
    * The store is the one board that is a store. The others are how the place
@@ -220,10 +224,20 @@ export const CONFIG = {
    * knock is the end of the timing, never an interruption of it.
    */
   idle: {
-    seasonMs: 5200,
+    /**
+     * How long a season sits there before the next one comes.
+     *
+     * This is the game's only pure watching, and it was too short: a player
+     * asked for at least five seconds between one decision and the next, and
+     * at 5200 plus 3400 the drift was over before the eye had found what had
+     * changed. The season alone is now over six seconds and the beat before
+     * somebody knocks is another five and a half, so nothing arrives while the
+     * last thing is still being read.
+     */
+    seasonMs: 6400,
     /** The beat between the last season and the knock, long enough to see the
      *  mark arrive on the town rather than only to see that it has. */
-    holdMs: 3400,
+    holdMs: 5600,
   },
 
   /**

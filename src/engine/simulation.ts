@@ -605,10 +605,22 @@ export function workSubsidised(s: GameState): boolean {
   return s.stats.economy >= CONFIG.works.freeAbove;
 }
 
+/**
+ * The first year is a choice of two, and it is the only year that is.
+ *
+ * Five people who walked out of somewhere last month are not choosing between
+ * a granary, a bridge and a fair. They are deciding whether the first thing
+ * they put up is somewhere to sleep or somewhere to work, and the store holds
+ * exactly one of them. Everything else arrives in the second spring along with
+ * the seal, and whichever of these two was not picked is on that list.
+ */
+export const FIRST_YEAR_WORKS: WorkId[] = ['house', 'woodcutter', 'rest'];
+
 /** The works this place can build at all, in content order. */
 export function worksFor(s: GameState): WorkDef[] {
   const lawStands = (subject: SubjectId): boolean =>
     s.laws.some((l) => l.status === 'active' && l.subject === subject);
+  if (s.turn <= 1) return allWorks().filter((w) => FIRST_YEAR_WORKS.includes(w.id));
   return allWorks().filter((w) => {
     // a year that is a permission rather than a building is not on the list
     // until the permission is written down and still standing

@@ -32,6 +32,10 @@ describe('smoke', () => {
 
   it('a hamlet is offered hamlet work, a town is offered town work', () => {
     const s = newGame(1);
+    // The first spring is a choice of two and nothing else; the list proper
+    // opens in the second, along with the seal.
+    expect(worksFor(s).map((w) => w.id).sort()).toEqual(['house', 'rest', 'woodcutter']);
+    s.turn = 2;
     const village = worksFor(s).map((w) => w.id);
     expect(village).toContain('fields');
     // the granary is the lid on the store, and a hamlet is the place that most
