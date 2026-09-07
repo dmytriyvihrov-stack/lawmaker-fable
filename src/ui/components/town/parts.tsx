@@ -1,3 +1,4 @@
+import type { WorkId } from '../../../engine/types';
 import type { CSSProperties, ReactNode } from 'react';
 import type { TownPaint } from './paint';
 
@@ -244,7 +245,7 @@ export function Person({
       <Shade paint={paint} cy={10} rx={5.5} ry={2.5} />
       <g className="city-breathe">
         <VillagerBody cloth={cloth} />
-        <path d="M-3 0 l-1.1 4 M3 0 l1 3.4" fill="none" stroke={cloth} strokeWidth="1.8" strokeLinecap="round" />
+        <g fill="none" stroke={cloth} strokeWidth="1.8" strokeLinecap="round"><path className="villager-arm villager-arm-left" d="M-3 0 l-1.1 4" /><path className="villager-arm villager-arm-right" d="M3 0 l1 3.4" /></g>
       </g>
     </g>
   );
@@ -254,7 +255,7 @@ export function Person({
 function VillagerBody({ cloth }: { cloth: string }) {
   return (
     <g>
-      <path d="M-3 8.8 l-.5 1.3 h3 M1 8.8 l.2 1.3 h2.5" stroke={DOOR} strokeWidth="1.2" fill="none" strokeLinecap="round" />
+      <g stroke={DOOR} strokeWidth="1.2" fill="none" strokeLinecap="round"><path className="villager-foot villager-foot-left" d="M-3 8.8 l-.5 1.3 h3" /><path className="villager-foot villager-foot-right" d="M1 8.8 l.2 1.3 h2.5" /></g>
       <path d="M-3.6 8.5 L-3 -1 Q0 -3.5 3 -1 L3.6 8.5 Q0 10 -3.6 8.5Z" fill={cloth} />
       <path d="M.5 -1 L1 8.6 Q2.4 9 3.6 8.5 L3 -1Z" fill={OUTLINE} opacity=".24" />
       <path d="M-2.2 -.6 L-2.7 6.8" stroke={GLOW} strokeWidth=".75" opacity=".25" strokeLinecap="round" />
@@ -319,7 +320,7 @@ export function Worker({
     pose === 'reap' ? 30 : pose === 'dig' ? 22 : pose === 'carry' ? 16 : pose === 'tend' ? 13 : 0;
 
   return (
-    <g transform={facing === -1 ? 'scale(-1 1)' : undefined}>
+    <g className={`life-worker life-${pose}`} transform={facing === -1 ? 'scale(-1 1)' : undefined}>
       <Shade paint={paint} cy={10} rx={6} ry={2.5} />
 
       {/* what the hands are working at, which stays on the ground while the
@@ -338,7 +339,7 @@ export function Worker({
         </g>
       )}
 
-      <g transform={lean === 0 ? undefined : `rotate(${lean} 0 9)`}>
+      <g transform={lean === 0 ? undefined : `rotate(${lean} 0 9)`}><g className="life-posture">
         {/* the sack rides on the back, so it goes on before the back does */}
         {pose === 'carry' && (
           <path
@@ -358,7 +359,7 @@ export function Worker({
 
         {/* the spade, with a blade wide enough to be a blade */}
         {pose === 'dig' && (
-          <g>
+          <g className="life-tool">
             <line
               x1="1"
               y1="-3"
@@ -374,7 +375,7 @@ export function Worker({
 
         {/* the arm out, the basket at the hip, and what leaves the hand */}
         {pose === 'sow' && (
-          <g>
+          <g className="life-tool">
             <ellipse
               cx="-4.6"
               cy="2"
@@ -403,7 +404,7 @@ export function Worker({
 
         {/* the sickle: the one tool in the place with a curve in it */}
         {pose === 'reap' && (
-          <g fill="none" strokeLinecap="round">
+          <g className="life-tool" fill="none" strokeLinecap="round">
             <line x1="1" y1="-2" x2="3.6" y2="0.4" stroke={HAFT} strokeWidth="1.5" />
             <path d="M3.4 0 q6 1.4 6.4 7" stroke={IRON} strokeWidth="1.4" />
           </g>
@@ -411,7 +412,7 @@ export function Worker({
 
         {/* the hoe, which is a rake at this size and is meant to be */}
         {pose === 'tend' && (
-          <g strokeLinecap="round">
+          <g className="life-tool" strokeLinecap="round">
             <line x1="1" y1="-2" x2="8.4" y2="5.4" stroke={HAFT} strokeWidth="1.3" />
             <g stroke={IRON} strokeWidth="0.9">
               <line x1="6.6" y1="5.6" x2="10.6" y2="7.4" />
@@ -445,8 +446,8 @@ export function Worker({
               strokeWidth="0.6"
               opacity="0.85"
             />
-            <circle cx="22" cy="15.4" r="1.1" fill="#e2cb86" />
-            <ellipse cx="22" cy="16" rx="3.6" ry="1.1" fill="none" stroke="#d7e9df" strokeWidth=".65" className="city-water-glint" />
+            <circle className="life-float" cx="22" cy="15.4" r="1.1" fill="#e2cb86" />
+            <ellipse cx="22" cy="16" rx="3.6" ry="1.1" fill="none" stroke="#d7e9df" strokeWidth=".65" className="life-fishing-ring" />
           </g>
         )}
 
@@ -482,6 +483,8 @@ export function Worker({
             />
           </g>
         )}
+      </g>
+
       </g>
 
       {/* the two jobs that are a swing, which is a thing the arm does and not
@@ -529,6 +532,9 @@ export function Worker({
           />
         </g>
       )}
+      {(pose === 'chop' || pose === 'build' || pose === 'dig') && <g className="life-chips" pointerEvents="none" fill={pose === 'dig' ? '#998363' : '#dac194'}>
+        <path d="M7 7 l2 -1 l1 1 l-2 1Z M12 8 l2 -2 l1 1 l-2 2Z M9 11 l2 -1 l1 1 l-2 1Z" />
+      </g>}
     </g>
   );
 }
@@ -960,6 +966,11 @@ export function Hall({ paint, level }: { paint: TownPaint; level: number }) {
       <rect x="46" y="64" width="40" height="5" rx="2.5" fill="#c2b9ab" />
       <rect x="42" y="69" width="48" height="5" rx="2.5" fill="#b0a698" />
       {paint.roofSnow && <path d={roofCap(-4, 66, 136, 28, 0)} fill={SNOW} opacity="0.9" />}
+      <g stroke="#9d824e" strokeWidth="1">
+        {[19,104].map((x) => <g key={x} transform={`translate(${x} 18)`}><path d="M-5 0 H5 V20 L0 25 L-5 20Z" fill="#d4b86b" /><path d="M-2 5 L0 2 L2 5 L0 8Z" fill="#793b32" /></g>)}
+        {level >= 2 && <path d="M16 72 H116 L108 78 H23Z" fill="#b59f7a" />}
+        {level >= 3 && <path d="M49 64 H83 L92 83 H40Z" fill="#9f4f44" />}
+      </g>
     </g>
   );
 }
@@ -984,6 +995,10 @@ export function Granary({ paint, level }: { paint: TownPaint; level: number }) {
         </g>
       )}
       {paint.roofSnow && <path d={roofCap(-4, 56, 116, 26, 0)} fill={SNOW} opacity="0.9" />}
+      <g transform="translate(117 36)" stroke={OUTLINE} strokeWidth="1.1">
+        {level >= 2 && <><rect x="-2" y="-43" width="30" height="66" rx="9" fill="#c9b38a" /><path d="M-5 -38 Q13 -67 31 -38Z" fill="#87674b" /><path d="M0 -22 H26 M0 -7 H26 M0 9 H26" fill="none" opacity=".5" /></>}
+        {Array.from({length: level + 1}, (_, i) => <g key={i} transform={`translate(${(i % 2) * 13} ${22 - Math.floor(i / 2) * 10})`}><path d="M-5 -5 Q-9 7 0 8 Q9 7 5 -5 L3 -9 H-3Z" fill="#dfc47e" /><path d="M-3 -5 H3" /></g>)}
+      </g>
     </g>
   );
 }
@@ -1011,6 +1026,12 @@ export function LongRoom({ paint, level }: { paint: TownPaint; level: number }) 
       />
       <line x1="6" y1="0" x2={w - 10} y2="0" stroke={TIMBER_DARK} strokeWidth="1.6" />
       {paint.roofSnow && <path d={roofCap(-2, w / 2, w - 2, 22, 0)} fill={SNOW} opacity="0.9" />}
+      <g transform={`translate(${w - 28} 44)`} stroke={OUTLINE} strokeWidth="1">
+        <path d="M-7 0 V18 M31 0 V18 M-10 9 H34" strokeWidth="2" />
+        {Array.from({length: level + 1}, (_, i) => <g key={i} transform={`translate(${i * 9} 3)`}><path d="M-3 1 L-2 7 H3 L4 1Z" fill="#b78460" /><path d="M0 1 V-9 M0 -3 Q-9 -10 -6 -3 M0 -5 Q8 -13 6 -5" fill="#93a078" /></g>)}
+      </g>
+      <path d="M10 28 H23 V45 L16 51 L10 45Z" fill="#e8e1bd" stroke={OUTLINE} strokeWidth=".8" />
+      <path d="M16 32 V42 M12 37 H20" stroke="#64837b" strokeWidth="2" />
     </g>
   );
 }
@@ -1037,6 +1058,10 @@ export function WatchHouse({ paint, level }: { paint: TownPaint; level: number }
         </g>
       )}
       {paint.roofSnow && <path d={roofCap(-2, 30, 62, 24, 0)} fill={SNOW} opacity="0.9" />}
+      <g transform="translate(-17 45)" stroke={OUTLINE} strokeWidth="1.2">
+        <path d="M-6 12 V-20 H9 V12" fill="none" />
+        {Array.from({length: level}, (_, i) => <g key={i} transform={`translate(${i * 11} 0)`}><path d="M-5 -11 H5 V-1 Q4 6 0 8 Q-4 6 -5 -1Z" fill="#647c83" /><path d="M0 -9 V4" stroke="#d7c896" /></g>)}
+      </g>
     </g>
   );
 }
@@ -1057,6 +1082,7 @@ export function Well({ paint, level }: { paint: TownPaint; level: number }) {
         </>
       )}
       {paint.roofSnow && <ellipse cy="-29" rx="24" ry="3" fill={SNOW} opacity="0.85" />}
+      {level >= 3 && <g stroke={OUTLINE} strokeWidth="1.2"><path d="M-28 -29 L0 -49 L28 -29Z" fill="#7c918e" /><path d="M-22 13 Q0 23 27 13" fill="none" stroke="#bdbba5" strokeWidth="5" /><path d="M21 6 H36 V19 Q28 24 21 19Z" fill="#aaa383" /><ellipse cx="28.5" cy="7" rx="7.5" ry="3" fill={paint.waterLight} /></g>}
     </g>
   );
 }
@@ -1494,4 +1520,18 @@ export function Raising({
       </g>
     </g>
   );
+}
+
+/** The work shelf uses the same silhouettes as the ground. */
+export function WorkModel({ id, paint, level = 1 }: { id: WorkId; paint: TownPaint; level?: number }) {
+  switch (id) {
+    case 'house': return <Hut paint={paint} kind={0} />;
+    case 'woodcutter': return <Woodcutter paint={paint} level={level} />;
+    case 'granary': return <Granary paint={paint} level={level} />;
+    case 'hall': return <Hall paint={paint} level={level} />;
+    case 'long_room': return <LongRoom paint={paint} level={level} />;
+    case 'watch_house': return <WatchHouse paint={paint} level={level} />;
+    case 'well': return <g transform="translate(48 38)"><Well paint={paint} level={level} /></g>;
+    default: return null;
+  }
 }

@@ -3,6 +3,7 @@ import { BOND_UI, bondWord } from '../../content/bonds';
 import { bondLevel, isLover, isPerson } from '../../engine/bonds';
 import { characterMeta } from '../../content/meta';
 import { UI } from '../../content/ui-strings';
+import { TYPE } from '../type';
 import { AGES } from '../../content/folk';
 import { OWN_ROPE_WARNING } from '../../content/own-rope';
 import { VERDICT_VERBS } from '../../content/verdict-words';
@@ -16,6 +17,8 @@ import { ChoiceButton } from '../components/ChoiceButton';
 import { ConsequenceHint } from '../components/ConsequenceHint';
 import { DevEffects } from '../components/DevCorner';
 import { DevEditTrigger, DevText } from '../components/DevText';
+import { CardFoot } from '../components/Popup';
+import { lawNumber } from '../../engine/format';
 import { useDevEdit } from '../dev/useDevEdit';
 import { PersonPortrait } from '../components/PersonPortrait';
 import { CaseVignette } from '../components/CaseVignette';
@@ -28,7 +31,9 @@ import type { CaseChoice, Effects } from '../../engine/types';
 interface Props {
   state: GameState;
   dev?: boolean;
-  season: Season;
+  /** Kept on the props: the caller passes it, and nothing on this card reads it
+      any more now that the year has come off the head. */
+  season?: Season;
   onChoose: (choiceId: string, ruling?: string) => void;
 }
 
@@ -86,7 +91,7 @@ function ChoiceRow({
             somebody, and a lawmaker weighing it already knows that, so the
             card is not allowed to pretend otherwise. */}
         {beloved && (
-          <span className="flex items-center gap-1 text-[11px] leading-none text-seal">
+          <span className={`flex items-center gap-1 ${TYPE.note} leading-none text-seal`}>
             <span aria-hidden>{BOND_UI.loverMark}</span>
             {BOND_UI.loverChoice}
           </span>
@@ -141,24 +146,24 @@ function WhoStands({
       <div className="flex justify-center">
         <PersonPortrait character={character} size={104} />
       </div>
-      <div className="mt-2 text-[17px] leading-tight text-parchment">{who.label}</div>
+      <div className={`mt-2 ${TYPE.title} leading-tight text-parchment`}>{who.label}</div>
       {/* What they thought of you before you opened your mouth. */}
       {feeling && (
-        <div className="mt-1 text-[11px] leading-snug text-parchment-dim" title={feeling.line}>
+        <div className={`mt-1 ${TYPE.note} leading-snug text-parchment-dim`} title={feeling.line}>
           <span aria-hidden>{feeling.mark}</span> {feeling.word}
         </div>
       )}
       {mine && (
-        <p className="mt-1.5 rounded-sm border border-seal/50 bg-seal/10 px-2 py-1 text-[11px] leading-snug text-seal">
+        <p className={`mt-1.5 rounded-sm border border-seal/50 bg-seal/10 px-2 py-1 ${TYPE.note} leading-snug text-seal`}>
           <span aria-hidden>{BOND_UI.loverMark}</span> {BOND_UI.loverAtTheDoor}
         </p>
       )}
       {age !== undefined && age > 0 && (
-        <div className="text-[10px] uppercase tracking-[0.15em] text-parchment-dim">
+        <div className={`${TYPE.label} text-parchment-dim`}>
           {UI.popup.aged.replace('{n}', String(age))}
         </div>
       )}
-      <div className="mt-2 text-[11px] italic text-hair">
+      <div className={`mt-2 ${TYPE.note} italic text-hair`}>
         {before === null
           ? UI.popup.firstTime
           : UI.popup.seenBefore.replace('{n}', String(before))}
@@ -181,7 +186,7 @@ function WhoStands({
  * the words are always there; the rest are on the table only because a law of
  * yours is standing, and the mark on the tile says which one.
  */
-export function Case({ state, dev = false, season, onChoose }: Props) {
+export function Case({ state, dev = false, onChoose }: Props) {
   /**
    * The whole bill, not the part content wrote. Bending your own law costs the
    * crown on top of whatever the answer itself does, and under a monarch who
@@ -219,7 +224,7 @@ export function Case({ state, dev = false, season, onChoose }: Props) {
       : null;
 
   const tile =
-    'answer answer-bench min-h-[38px] rounded-lg border px-2.5 py-1.5 text-[12px] tracking-wide';
+    `answer answer-bench min-h-[38px] rounded-lg border px-2.5 py-1.5 ${TYPE.note} tracking-wide`;
   const tileOpen = 'border-bench/70 bg-ink-soft text-parchment';
   const tileOn = 'border-bench bg-bench/25 text-parchment';
   /* A word that crosses a standing law wears it on the tile: red for a breach,
@@ -231,26 +236,24 @@ export function Case({ state, dev = false, season, onChoose }: Props) {
   const verbs = grammar ? availableVerbs(event.id, state) : [];
 
   return (
-    <div className="ruler-case grid gap-4 p-4 lg:grid-cols-[142px_minmax(0,1fr)_360px]">
+    <div className="ruler-case-body p-4">
+    <div className="ruler-case grid gap-4 lg:grid-cols-[142px_minmax(0,1fr)_360px]">
       <WhoStands state={state} character={event.character} caseId={event.id} />
 
       {/* what happened */}
       <section className="min-w-0">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-parchment-dim">
-          {UI.popup.aCase} &middot;{' '}
-          {UI.popup.ofYear
-            .replace('{season}', UI.seasons[season])
-            .replace('{n}', String(state.turn))}
-        </div>
-        <h2 className="mt-1 text-[22px] leading-tight">{event.title}</h2>
+        {/* No "A case, spring, year 2" over the title. The season and the year
+            are both in the top bar, all the time, and the person standing in
+            front of you is what this card is. */}
+        <h2 className={`${TYPE.display} leading-tight`}>{event.title}</h2>
         {event.question && (
-          <p className="mt-3 border-l-4 border-bench bg-bench/10 px-3 py-2 text-[15px] leading-snug text-parchment">
+          <p className={`mt-3 border-l-4 border-bench bg-bench/10 px-3 py-2 ${TYPE.body} leading-snug text-parchment`}>
             <DevText id={`case:${event.id}:question`} text={event.question} dev={dev} />
           </p>
         )}
         <div className="mt-2 space-y-1.5">
           {event.scene.map((p, i) => (
-            <p key={i} className="text-[13px] leading-relaxed text-parchment-dim">
+            <p key={i} className={`${TYPE.note} leading-relaxed text-parchment-dim`}>
               <DevText
                 id={`case:${event.id}:scene:${i}`}
                 text={renderTemplate(p, state)}
@@ -291,7 +294,7 @@ export function Case({ state, dev = false, season, onChoose }: Props) {
         ) : (
           <>
             {/* the ruling as it currently reads */}
-            <p className="text-[19px] leading-snug tracking-wide">
+            <p className={`${TYPE.title} leading-snug tracking-wide`}>
               <span className="text-bench">{grammar.subject} </span>
               <span className={verb ? 'text-parchment' : 'text-hair'}>
                 {verb ? VERDICT_VERBS.find((v) => v.id === verb)?.text : UI.bench.blankVerb}
@@ -318,14 +321,14 @@ export function Case({ state, dev = false, season, onChoose }: Props) {
                 >
                   {v.text}
                   {v.grantedBy && (
-                    <span className="ml-1.5 rounded-sm bg-seal/40 px-1 text-[9px] tracking-normal text-parchment">
+                    <span className={`ml-1.5 rounded-sm bg-seal/40 px-1 ${TYPE.tag} tracking-normal text-parchment`}>
                       {v.grantedBy.index}
                     </span>
                   )}
                   {/* the law it crosses, by number, and how hard */}
                   {v.against && (
                     <span
-                      className={`ml-1.5 rounded-sm px-1 text-[9px] tracking-normal ${
+                      className={`ml-1.5 rounded-sm px-1 ${TYPE.tag} tracking-normal ${
                         v.against.how === 'breaks'
                           ? 'bg-bad/40 text-parchment'
                           : 'bg-cloth-rich/30 text-parchment'
@@ -343,28 +346,33 @@ export function Case({ state, dev = false, season, onChoose }: Props) {
             <div className="mt-3 min-h-[44px] rounded-lg border border-ink-line bg-ink-soft/70 px-3 py-2">
               {choice ? (
                 <>
-                  <p className="text-[13px] leading-snug text-parchment/90">
+                  <p className={`${TYPE.note} leading-snug text-parchment/90`}>
                     <DevText
                       id={`case:${event.id}:choice:${choice.id}:text`}
                       text={choice.text}
                       dev={dev}
                     />
                   </p>
+                  {/* Which law it crosses, by number, and not the law itself:
+                      the sentence stands in the Standing panel to the right of
+                      this card and in the Codex behind one click, and quoting
+                      it here in capitals took three lines of a card that had
+                      run out of them. */}
                   {crossed && (
                     <p
-                      className={`mt-1 text-[11px] leading-snug ${
+                      className={`mt-1 ${TYPE.note} leading-snug ${
                         crossed.how === 'breaks' ? 'text-seal' : 'text-cloth-rich'
                       }`}
                     >
-                      {crossed.how === 'breaks' ? UI.caseScreen.breaks : UI.caseScreen.bends}{' '}
-                      {renderTemplate(`{{law:${crossed.law}}}`, state)}
+                      {(crossed.how === 'breaks' ? UI.caseScreen.breaksShort : UI.caseScreen.bendsShort)
+                        .replace('{law}', lawNumber(state, crossed.law) ?? UI.caseScreen.aLaw)}
                     </p>
                   )}
                   {/* Every other breach in the game costs a number. This one
                       costs the reign, and a consequence that big is not allowed
                       to be a surprise. */}
                   {crossed?.law === 'crime_hanged' && crossed.how === 'breaks' && (
-                    <p className="mt-1.5 rounded-sm border border-bad/60 bg-bad/10 px-2 py-1.5 text-[11px] leading-snug text-bad">
+                    <p className={`mt-1.5 rounded-sm border border-bad/60 bg-bad/10 px-2 py-1.5 ${TYPE.note} leading-snug text-bad`}>
                       {OWN_ROPE_WARNING}
                     </p>
                   )}
@@ -376,7 +384,7 @@ export function Case({ state, dev = false, season, onChoose }: Props) {
                     />
                     <ConsequenceHint choice={choice} against={parsed?.against?.how} />
                     {isLover(state, event.character) && (
-                      <span className="flex items-center gap-1 text-[11px] leading-none text-seal">
+                      <span className={`flex items-center gap-1 ${TYPE.note} leading-none text-seal`}>
                         <span aria-hidden>{BOND_UI.loverMark}</span>
                         {BOND_UI.loverChoice}
                       </span>
@@ -386,7 +394,7 @@ export function Case({ state, dev = false, season, onChoose }: Props) {
                       ruling does not. The weight lands at the aftermath. */}
                   {dev && (
                     <div className="mt-2 border-t border-ink-line pt-1.5">
-                      <div className="text-[9px] uppercase tracking-[0.18em] text-parchment-dim">
+                      <div className={`${TYPE.label} text-parchment-dim`}>
                         {UI.caseScreen.moves}
                       </div>
                       <MovedBoards
@@ -397,7 +405,7 @@ export function Case({ state, dev = false, season, onChoose }: Props) {
                         emptyLine={UI.caseScreen.movesNothing}
                       />
                       {crossed && (
-                        <p className="mt-1 text-[10px] leading-snug text-parchment-dim">
+                        <p className={`mt-1 ${TYPE.note} leading-snug text-parchment-dim`}>
                           {UI.caseScreen.exceptionCost}
                         </p>
                       )}
@@ -405,7 +413,7 @@ export function Case({ state, dev = false, season, onChoose }: Props) {
                   )}
                 </>
               ) : (
-                <p className="text-[12px] text-parchment-dim">
+                <p className={`${TYPE.note} text-parchment-dim`}>
                   {verb ? UI.bench.notWritable : UI.bench.pickPrompt}
                 </p>
               )}
@@ -422,17 +430,26 @@ export function Case({ state, dev = false, season, onChoose }: Props) {
               />
             )}
 
-            <button
-              type="button"
-              disabled={!parsed}
-              onClick={() => parsed && onChoose(parsed.choiceId, `"${parsed.sentence}."`)}
-              className="mt-3 min-h-[44px] w-full rounded-lg bg-bench px-5 py-2 text-[16px] tracking-[0.2em] text-ink disabled:opacity-30"
-            >
-              {UI.bench.pronounce}
-            </button>
           </>
         )}
       </section>
+      </div>
+
+      {/* The one button, on the bottom edge of the card. A word marked
+          "breaks" grows the card to 661px inside a box capped at 378, which
+          put PRONOUNCE IT at y=1089 in a 900px window. */}
+      {grammar && (
+        <CardFoot>
+          <button
+            type="button"
+            disabled={!parsed}
+            onClick={() => parsed && onChoose(parsed.choiceId, `"${parsed.sentence}."`)}
+            className="min-h-[48px] w-full rounded-lg bg-bench px-5 py-2 text-[16px] tracking-[0.2em] text-ink disabled:opacity-30"
+          >
+            {UI.bench.pronounce}
+          </button>
+        </CardFoot>
+      )}
     </div>
   );
 }

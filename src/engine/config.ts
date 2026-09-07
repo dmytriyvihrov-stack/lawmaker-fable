@@ -11,10 +11,19 @@ export const CONFIG = {
    *  go from here but up, slowly, or down, quickly. Economy starts well under
    *  its own shelf, same as every other board starts well under its own end. */
   /* The store starts with one building in it and not two. That is the whole
-     first year: five people, a shelf holding twelve of a possible fifteen, and
-     a roof or a cabin to spend it on. Whichever they pick, the store is down
-     to two by summer and the other one waits for a better year. */
-  start: { crownSanity: 66, health: 18, economy: 12, mood: 50, army: 18, culture: 8 },
+     first year: five people, a shelf holding fourteen of a possible fifteen,
+     and a roof or a cabin to spend it on. Whichever they pick, the store still
+     has something in it in the spring, and the other one waits for a better
+     year.
+
+     It held twelve, and the first year of a reign left it on nothing. Twelve,
+     less what the crown spends on itself over the winter, is ten, and a roof
+     cost ten: every reign in the game opened by emptying its own store to the
+     last point and then watching a year go by with nothing to spend and
+     nothing to spend it on. A first roof is a week of five people and a
+     first year should not be a hole, so the shelf starts fuller and the two
+     things that year can buy are priced at what they actually are. */
+  start: { crownSanity: 66, health: 18, economy: 14, mood: 50, army: 18, culture: 8 },
 
   /**
    * The store is the one board that is a store. The others are how the place
@@ -24,7 +33,18 @@ export const CONFIG = {
    * itself, not what is on it: it is not a trend, it is the lid coming off.
    * Two of them and the shelf is most of the board.
    */
-  store: { cap: 15, perGranary: 35 },
+  /* The shelf a hamlet has before anybody builds a lid for it.
+     It was 15, and `works.perLevel` is 7, so the second floor of anything cost
+     17: over the shelf, in every year of every hamlet reign, which is a shelf
+     that says no rather than a price that is dear. A playthrough found eight
+     years in a row where the only two things a year could be spent on were
+     resting and a fair, and the reign table agrees - `economy` was the lowest
+     board for all seven players and killed `best` in five reigns of twelve. At
+     20 a second floor is holdable and the store has room to save toward one;
+     nothing got cheaper. Table after: `best` 27.6 to 29.0 years with
+     `defeat:economy` 5 to 2, `human` 27.5 to 27.9, `random` walked out 3 to 1,
+     `comfortable` and `last` unchanged in kind. */
+  store: { cap: 20, perGranary: 35 },
 
   /**
    * The two boards a place decides to grow. Neither is free and neither is
@@ -41,7 +61,30 @@ export const CONFIG = {
    * many souls, at every stage, forever. A well, a long room and a physician
    * push back. Nothing else does.
    */
-  crowdHealthEvery: 30,
+  /**
+   * What a crowd is, and what answers one.
+   *
+   * The old rule was one point of health a year for every thirty souls, on the
+   * whole count, forever. At nine hundred souls that is minus thirty a year
+   * against a long room at its top floor paying six, which is not a difficulty
+   * curve, it is a wall: a reign that did the thing the game asks for - keep
+   * the square happy, and it fills up - died of health in nine reigns of
+   * twelve, and the winning move was to keep everybody miserable.
+   *
+   * Two changes, and both of them are the same idea. A roof answers for the
+   * people under it, so what is felt is the count the place has *not* housed;
+   * and past `bendsAt` the line bends, because the difference between four
+   * hundred and five hundred strangers is not the difference between four and
+   * a hundred and four.
+   */
+  crowd: {
+    /** Souls per point of health a year, on the part of the count nothing answers for. */
+    healthEvery: 30,
+    /** Past this many unanswered souls, the next ones cost half as much. */
+    bendsAt: 240,
+    /** And what a floor of each of these answers for, in souls. */
+    answers: { house: 40, well: 60, long_room: 90 },
+  },
 
   /** Bending your own law costs the square's trust; in a hamlet, the crown's. */
   exceptionCost: 8,
@@ -78,6 +121,15 @@ export const CONFIG = {
   year: {
     lawEvery: 2,          // a decree at most this often, in years
     dilemmasPerYear: 2,   // at most this many people in front of you a year
+    /**
+     * And how long one of the scenes that come round stays away before it can
+     * be asked again. Four of those against two slots a year gives roughly two
+     * full years and then two quiet ones, which is the shape a place actually
+     * has: a run of years with somebody at the door most springs, and then a
+     * couple where nothing in particular happens. What it stops is the six
+     * years running of nothing that a thirty year reign used to end on.
+     */
+    recurAfter: 5,
   },
 
   /**
@@ -149,6 +201,24 @@ export const CONFIG = {
      *  worth a year. */
     deathFrom: 45, deathPerPoint: 0.002,
     /**
+     * How many people the valley can actually feed and put up.
+     *
+     * Growth used to be a bare multiplier with nothing on the other end of it:
+     * at a mood of ninety seven the count doubled every four and a half years
+     * and went on doubling, which is how a reign arrived at nine hundred souls
+     * in a place with three fields. Ground fed by nobody feeds nobody. Growth
+     * slows as the count comes up on this number and stops at it, and the only
+     * way to raise it is to build: cleared ground, roofs, somewhere to keep a
+     * good year, a road, and the bridge that turns the far bank from a day
+     * away into the far bank.
+     *
+     * The base is a valley nobody has improved: enough to reach the charter at
+     * a hundred and become a town, and nowhere near the three hundred a crown
+     * needs. A reign that spends every year resting can still be a town. It
+     * cannot be a kingdom, and it can see exactly why on the ladder.
+     */
+    room: { base: 150, fields: 50, house: 30, well: 36, granary: 40, road: 24, bridge: 48 },
+    /**
      * A place people want to live in grows faster than one they endure, and it
      * empties when they stop wanting to. This used to be a rounding error next
      * to the ground rate; it is a driver now, because how the square feels is
@@ -169,7 +239,10 @@ export const CONFIG = {
    * anybody outside your own head is using. If nothing has stuck by the last
    * of these years, the Fool has nothing to report and says nothing.
    */
-  epithet: { fromYear: 6, toYear: 8 },
+  /* `rest` is how many years must pass before the place is allowed to change
+     its mind about what to call you. It was nothing, and the Fool arrived in
+     year seven with one name and year eight with another. */
+  epithet: { fromYear: 6, toYear: 8, rest: 3 },
 
   winter: {
     every: 10,            // years 10, 20, ...
@@ -211,9 +284,30 @@ export const CONFIG = {
   works: {
     costVillage: 10,
     costTown: 14,
+    /**
+     * And the first year, which is the one year the place is choosing between
+     * two things it could raise with its own hands. A hut and a saw pit are
+     * not a granary: they cost the store less than a full year of work does,
+     * and what is left over is the difference between a reign that starts and
+     * a reign that starts broke.
+     */
+    costFirstYear: 8,
     /** And every floor after the first costs this much more than the last. */
     perLevel: 7,
-    freeAbove: 70,        // economy at or above this: the surplus pays half the year
+    /**
+     * Economy at or above this: the surplus pays half the year.
+     *
+     * This was a dead rule and is not one any more, and nothing about it was
+     * changed to fix that. It never fired in nine hundred years of played
+     * reign because the granary - the one thing that lifts the lid off the
+     * store - carried a trend of minus one and was therefore the last thing
+     * anybody bought, and because a reign that grew unchecked died of health
+     * before a store could fill. With the granary earning its keep and the
+     * count answerable, the store now sits at or above this in about one
+     * played year in eleven across best, human and comfortable, and peaks at
+     * the two-granary lid of eighty five. Left where it was, on purpose.
+     */
+    freeAbove: 70,
     surplusSpend: 10,     // and the surplus leaves the store anyway
   },
 

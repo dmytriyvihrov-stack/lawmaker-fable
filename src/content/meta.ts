@@ -199,7 +199,16 @@ export const CASE_SPOTS: Record<string, { x: number; y: number }> = {
   w_brother_easel: { x: 736, y: 440 },
   /* the strip at the edge, which is the ground that will not break */
   v5_winter_ground: { x: 318, y: 448 },
-  v6_road_dead: { x: 872, y: 376 },
+  /* Down the road from the first roof, not on it. The scene draws a man at a
+     gatepost with a chaplain, a rider and a horse round him, and at 872,376
+     every one of them stood on the roof of the oldest hut in the place. */
+  v6_road_dead: { x: 936, y: 392 },
+  /* The four that come round, out where the ordinary happens: the corner of
+     two strips, the bench at the mill, the gate on the lane, and the store. */
+  rr_stone: { x: 420, y: 448 },
+  rr_apprentice: { x: 866, y: 300 },
+  rr_gate: { x: 596, y: 300 },
+  rr_bottom: { x: 972, y: 330 },
   v7_beeches: { x: 1306, y: 512 },
   v8_long_night: { x: 704, y: 440 },
   w_corner: { x: 500, y: 430 },

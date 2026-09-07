@@ -1,6 +1,5 @@
 import { UI } from '../../content/ui-strings';
 import { roman } from '../../engine/format';
-import { monarchAge, monarchOf } from '../../engine/monarch';
 import { epithetOf } from '../../engine/epithet';
 import { chronicle } from '../../engine/story';
 import { characterMeta } from '../../content/meta';
@@ -13,8 +12,6 @@ interface Props {
 }
 
 export function Codex({ state, onClose }: Props) {
-  const monarch = monarchOf(state.seed);
-  const age = monarchAge(state.seed, state.turn);
   const epithet = epithetOf(state);
   const chain = chronicle(state);
   return (
@@ -44,31 +41,19 @@ export function Codex({ state, onClose }: Props) {
           </button>
         </header>
 
-        <section className="mb-4 rounded-md border border-ink-line bg-ink-soft p-3">
-          <div className="text-[11px] uppercase tracking-[0.15em] text-parchment-dim">
-            {UI.monarch.heading}
-          </div>
-          <div className="mt-1 flex items-center gap-2">
-            <span aria-hidden className="text-xl leading-none">
-              {monarch.emoji}
-            </span>
-            <span className="text-[15px]">{monarch.name}</span>
-            <span className="text-[12px] text-parchment-dim">
-              {UI.monarch.age.replace('{n}', String(age))}
-            </span>
-          </div>
-          <p className="mt-2 text-[13px] leading-relaxed text-parchment-dim">
-            <span className="text-seal">{monarch.traitName}. </span>
-            {monarch.traitLine}
+        {/* No monarch block in here.
+
+            The face upstairs, their age and what they are like are on the crown
+            card, in the corner of the map, all reign. Repeating the lot at the
+            top of the book of laws pushed the laws themselves below the fold
+            and said nothing the player had not already read. What stays is the
+            one line that is about this reign rather than about them: what the
+            place has settled on calling you. */}
+        {epithet && (
+          <p className="mb-4 rounded-md border border-ink-line bg-ink-soft p-3 text-[13px] leading-relaxed text-parchment/90">
+            {UI.epithet.calledYou.replace('{name}', epithet.name)}
           </p>
-          {/* and what the place has settled on calling you, which nobody upstairs
-              chose and nobody down here voted on */}
-          {epithet && (
-            <p className="mt-2 border-t border-ink-line pt-2 text-[13px] leading-relaxed text-parchment/90">
-              {UI.epithet.calledYou.replace('{name}', epithet.name)}
-            </p>
-          )}
-        </section>
+        )}
 
         {state.laws.length === 0 && <p className="text-[14px] text-parchment-dim">{UI.codex.empty}</p>}
 

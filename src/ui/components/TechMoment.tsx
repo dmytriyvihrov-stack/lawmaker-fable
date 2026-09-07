@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { UI } from '../../content/ui-strings';
 import type { TechDef } from '../../engine/types';
 import { MovedBoards } from './MovedBoards';
+import { reducedMotion } from '../motion';
 
 interface Props {
   tech: TechDef;
@@ -10,11 +11,6 @@ interface Props {
 
 /** Long enough to read and notice, short enough that it is not a screen. */
 const HOLD_MS = 4200;
-
-function reducedMotion(): boolean {
-  if (typeof window === 'undefined' || !window.matchMedia) return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 /**
  * Somebody in the place worked something out. You did not ask for it, you

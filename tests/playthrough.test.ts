@@ -114,7 +114,9 @@ describe('golden playthroughs', () => {
     for (const run of [open, closed]) {
       expect(run.events.slice(0, 2)).toEqual(['proposal:pv1_work', 'case:v1_idle_hand']);
       expect(run.events).toContain('proposal:pv2_strangers');
-      expect(run.events).toContain('case:v3_millwright');
+      /* Not the mill-wright: his year waits on a field to want, so which
+         year he walks in is a fact about what the reign has built. What is
+         true of every hamlet that writes a law on strangers is the hay. */
       expect(run.events).toContain('case:v4_hay');
     }
   });
@@ -128,6 +130,7 @@ describe('golden playthroughs', () => {
   it('a case about a building waits for the building', () => {
     const gated: [string, string][] = [
       ['case:v2_well', 'well'],
+      ['case:v3_millwright', 'fields'],
       ['case:d4_bridge', 'bridge'],
       ['case:d3_cart', 'mine'],
       ['case:d2_ashes', 'granary'],
@@ -180,17 +183,54 @@ describe('golden playthroughs', () => {
     expect(middling.works.length).toBeGreaterThanOrEqual(middling.state.turn - 2);
   });
 
+  /**
+   * Over every chain in the game, in all three reigns, rather than over three
+   * hand-picked pairs in one of them.
+   *
+   * The old version named `d3_cart` and asserted it turned up, which is not
+   * the invariant: that case waits on a mine as well as on the law, and
+   * whether the golden player ever builds a mine is an accident of what it
+   * could afford in a given year. One balance edit and the test failed for a
+   * reason that had nothing to do with the order of anything. What is actually
+   * true, and is worth holding, is the conditional: no case of a chain may
+   * walk in before the law of that chain is on the wall.
+   */
   it('the law is always on the wall before the case walks in', () => {
-    for (const run of [open, closed]) {
+    const chains: [string, string[]][] = [
+      ['pv1_work', ['v1_idle_hand', 'v2_well']],
+      ['pv2_strangers', ['v3_millwright', 'v4_hay']],
+      ['pv3_dead', ['v5_winter_ground', 'v6_road_dead']],
+      ['pv4_mushrooms', ['v7_beeches', 'v8_long_night']],
+      ['p1_trade', ['d1_pies', 'd2_ashes']],
+      ['p2_lives', ['d3_cart', 'd4_bridge']],
+      ['p3_truth', ['d5_deathbed', 'd6_door']],
+      ['p4_crime', ['c1_lark', 'c2_toll']],
+      ['p5_song', ['s1_worms', 's2_ballad']],
+    ];
+    let seen = 0;
+    for (const run of [open, closed, middling]) {
       const at = (id: string) => run.events.indexOf(id);
-      expect(at('proposal:pv1_work')).toBeLessThan(at('case:v1_idle_hand'));
-      expect(at('proposal:pv2_strangers')).toBeLessThan(at('case:v3_millwright'));
-      expect(at('case:v3_millwright')).toBeLessThan(at('case:v4_hay'));
+      for (const [law, cases] of chains) {
+        for (const id of cases) {
+          const walked = at(`case:${id}`);
+          if (walked < 0) continue;
+          seen += 1;
+          const sealed = at(`proposal:${law}`);
+          expect(sealed, `${id} walked in with no ${law} on the wall`).toBeGreaterThanOrEqual(0);
+          expect(sealed, `${id} walked in before ${law}`).toBeLessThan(walked);
+        }
+      }
     }
-    const at = (id: string) => open.events.indexOf(id);
-    expect(at('proposal:p1_trade')).toBeLessThan(at('case:d1_pies'));
-    expect(at('proposal:p2_lives')).toBeLessThan(at('case:d3_cart'));
-    expect(at('proposal:p3_truth')).toBeLessThan(at('case:d5_deathbed'));
+    // and the three reigns between them do actually reach a fair few of them
+    expect(seen, 'no chain case walked in at all').toBeGreaterThan(12);
+    /* The mill-wright used to be asserted as arriving before the hay, and he
+       no longer does: his year waits on a field, and the hay does not, so the
+       order between them is now whatever the reign built and when. What is
+       still true is that he arrives at all somewhere in the three. */
+    expect(
+      [open, closed, middling].some((run) => run.events.includes('case:v3_millwright')),
+      'the mill-wright never walked in at all',
+    ).toBe(true);
   });
 
   it('every year spends itself on something', () => {

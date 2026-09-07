@@ -1,7 +1,9 @@
 /** The ruler's small, ordinary day. These activities do not change a board. */
+/* Four strings went out with the panel in the top left corner: the eyebrow
+   over it, the note counting errands under it, and the two words it used when
+   the walk had arrived. What the ruler is doing is one line under the crown
+   now, and one line needs one string. */
 export const JOURNEY = {
-  you: 'You, out in the town',
-  changeWork: 'Spend a little time',
   jobs: {
     lanes: 'Walking the lanes',
     fields: 'Tending the field',
@@ -16,11 +18,8 @@ export const JOURNEY = {
   go: 'Show me the way',
   walking: 'On the way',
   arriving: 'You will decide when you get there.',
-  arrived: 'Here, where it happened',
   fetching: 'Going to lend a hand',
   doing: 'A minute of your day',
-  queue: '{n} small things to do',
-  queueOne: 'One small thing to do',
   reserved: 'You are on your way. This will wait for you.',
   queued: 'Next on your walk',
   devSkip: 'Skip this walk',

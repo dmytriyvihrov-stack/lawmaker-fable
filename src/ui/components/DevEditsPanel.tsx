@@ -8,11 +8,12 @@ import { useAllDevEdits } from '../dev/useDevEdit';
  * Nothing here reaches a content file: the button copies plain text, in the
  * shape a person pastes into a chat with whoever writes the content next.
  * "Clear" throws the pad away, on purpose, once a batch has actually been
- * sent — it is a scratch pad, not a second copy of the game's history.
+ * sent: it is a scratch pad, not a second copy of the game's history.
  */
 export function DevEditsPanel({ on }: { on: boolean }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [asking, setAsking] = useState(false);
   const edits = useAllDevEdits();
   const count = Object.keys(edits).length;
 
@@ -32,7 +33,7 @@ export function DevEditsPanel({ on }: { on: boolean }) {
   };
 
   return (
-    <div className="fixed bottom-11 right-2 z-40">
+    <div data-dev-chrome className="fixed bottom-11 right-2 z-40">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -55,16 +56,18 @@ export function DevEditsPanel({ on }: { on: boolean }) {
               >
                 {copied ? 'Copied' : 'Copy all'}
               </button>
+              {/* No `window.confirm`: the preview pane answers it false, so
+                  the button did nothing at all in the one place this panel is
+                  most used. It asks in place instead. */}
               <button
                 type="button"
-                onClick={() => {
-                  if (window.confirm('Clear every pending edit? This does not undo anything already sent.')) {
-                    clearAllDevEdits();
-                  }
-                }}
-                className="rounded border border-ink-line px-2 py-1 text-[11px] text-parchment-dim"
+                onClick={() => (asking ? clearAllDevEdits() : setAsking(true))}
+                onBlur={() => setAsking(false)}
+                className={`rounded border px-2 py-1 text-[11px] ${
+                  asking ? 'border-bad text-bad' : 'border-ink-line text-parchment-dim'
+                }`}
               >
-                Clear
+                {asking ? 'Sure?' : 'Clear'}
               </button>
             </span>
           </div>
@@ -74,13 +77,21 @@ export function DevEditsPanel({ on }: { on: boolean }) {
                 <div className="mb-1 truncate text-[9px] uppercase tracking-wide text-seal">
                   {e.id}
                 </div>
-                {e.text !== undefined && (
+                {e.removed && (
+                  <>
+                    <div className="text-parchment-dim/70 line-through">{e.original}</div>
+                    <div className="text-bad">cut from the game</div>
+                  </>
+                )}
+                {!e.removed && e.text !== undefined && (
                   <>
                     <div className="text-parchment-dim/70 line-through">{e.original}</div>
                     <div className="text-parchment">{e.text}</div>
                   </>
                 )}
-                {e.text === undefined && <div className="text-parchment/85">{e.original}</div>}
+                {!e.removed && e.text === undefined && (
+                  <div className="text-parchment/85">{e.original}</div>
+                )}
                 {e.note && <div className="mt-1 text-seal">note: {e.note}</div>}
               </li>
             ))}

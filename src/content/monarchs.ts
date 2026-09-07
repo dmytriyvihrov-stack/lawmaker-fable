@@ -1,4 +1,11 @@
-import type { Effects, StatId } from '../engine/types';
+import type { Effects, StatId, Stage } from '../engine/types';
+
+export const DEFAULT_MONARCH_ID = 'vaelis';
+export const ROYAL_WARDROBE: Record<Stage, { cloth: string; cloak: string; trim: string }> = {
+  village: { cloth: '#4c85a0', cloak: '#376078', trim: '#b8c9cd' },
+  town: { cloth: '#37424c', cloak: '#692f39', trim: '#c7ced1' },
+  kingdom: { cloth: '#eee8dc', cloak: '#bcb8ad', trim: '#e0ba65' },
+};
 
 /**
  * The monarch on the throne while you hold the seal.
@@ -107,13 +114,13 @@ export const MONARCHS: MonarchDef[] = [
      * year, which is also why nobody comes near a place that hunts them.
      */
     id: 'vaelis',
-    name: 'Queen Vaelis',
+    name: 'Daenerys Targaryen',
     emoji: '🐉',
     traitName: 'Dreaming',
     traitLine:
       'She is certain there are dragons and funds the search out of the store. Nobody comes near a place that goes looking.',
     portraitLine:
-      'Queen Vaelis never found one. She is still certain, still not from here, and the fourth expedition leaves in the spring.',
+      'Daenerys never found one. She is still certain, still not from here, and the fourth expedition leaves in the spring.',
     trait: { yearly: { army: 2, economy: -2 } },
     touches: 'army',
     age: 21,

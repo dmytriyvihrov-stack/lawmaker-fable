@@ -18,15 +18,16 @@ export function useDevEdit(
 ): {
   value: string;
   edit: DevEdit | undefined;
-  save: (text: string, note: string) => void;
+  save: (text: string, note: string, removed?: boolean) => void;
   reset: () => void;
 } {
   const store = useSyncExternalStore(subscribeDevEdits, getDevEditsSnapshot, getDevEditsSnapshot);
   const edit = store[id];
   return {
-    value: edit?.text ?? original,
+    value: edit?.removed ? '' : (edit?.text ?? original),
     edit,
-    save: (text: string, note: string) => saveDevEdit(id, original, text, note),
+    save: (text: string, note: string, removed = false) =>
+      saveDevEdit(id, original, text, note, removed),
     reset: () => resetDevEdit(id),
   };
 }

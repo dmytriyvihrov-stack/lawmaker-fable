@@ -143,11 +143,22 @@ describe('the years', () => {
     expect(isWinter(1)).toBe(false);
   });
 
-  it('the seasons turn with the phases of a year', () => {
-    expect(seasonOf('case', 3)).toBe('spring');
+  it('the seasons turn with the phases of a year, and never twice', () => {
+    expect(seasonOf('composer', 3)).toBe('spring');
+    /* The bench used to be spring as well, which left the wheel between a law
+       and the man who came to test it with nowhere to go but all the way round
+       to spring again: four seasons of drift and the same season line twice in
+       one year, to arrive back where it started. */
+    expect(seasonOf('case', 3)).toBe('summer');
     expect(seasonOf('aftermath', 3)).toBe('summer');
     expect(seasonOf('works', 3)).toBe('autumn');
     expect(seasonOf('case', 10)).toBe('winter');
+    // and the four of them walk forward round the wheel, never back
+    const wheel = ['spring', 'summer', 'autumn', 'winter'];
+    const order = (['composer', 'case', 'aftermath', 'works'] as const).map((phase) =>
+      wheel.indexOf(seasonOf(phase, 3)),
+    );
+    for (let i = 1; i < order.length; i++) expect(order[i]).toBeGreaterThanOrEqual(order[i - 1]);
   });
 
   it('a hamlet that looks after its water fills up, a closed one never does', () => {

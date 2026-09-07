@@ -1,17 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { along, pathLength } from './routes';
-import { canAnswer, chooseJob, followVisitor, newJourney, queueErrand, requestVisit, skipJourney, tickJourney, WALK_SPEED } from './model';
+import { canAnswer, chooseJob, followVisitor, newJourney, queueErrand, requestVisit, setOpenJobs, skipJourney, tickJourney, WALK_SPEED } from './model';
 import type { Errand, Job, Journey, Visit } from './model';
 
-export function useJourney({ reign, visit, speed, paused, instant, onComplete }: {
+export function useJourney({ reign, visit, speed, paused, instant, jobs, onComplete }: {
   reign: number | null;
   visit: Visit | null;
   speed: number;
   paused: boolean;
   instant: boolean;
+  /** The jobs the valley has built, in the order they come round. */
+  jobs: Job[];
   onComplete: (errand: Errand) => void;
 }) {
-  const live = useRef(newJourney());
+  const live = useRef(newJourney(jobs));
   const [snapshot, setSnapshot] = useState(live.current);
   const rulerRef = useRef<SVGGElement>(null);
   const callerRef = useRef<SVGGElement>(null);
@@ -44,10 +46,21 @@ export function useJourney({ reign, visit, speed, paused, instant, onComplete }:
     }
   }, [paint]);
 
+  /* What the place has to work is a fact about the reign, so it arrives here
+     rather than being decided here. The round is keyed on the list itself and
+     not on its identity: a fresh array every render must not restart it. */
+  const open = useRef(jobs);
+  open.current = jobs;
+  const roster = jobs.join(',');
+
   useEffect(() => {
     delivered.current.clear();
-    update(newJourney(), true);
+    update(newJourney(open.current), true);
   }, [reign, update]);
+
+  useEffect(() => {
+    update(setOpenJobs(live.current, roster.split(',').filter(Boolean) as Job[]));
+  }, [roster, update]);
 
   useEffect(() => {
     update(requestVisit(live.current, visit));

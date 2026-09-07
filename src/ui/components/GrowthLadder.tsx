@@ -104,15 +104,20 @@ export function GrowthLadder({ state }: Props) {
         ? 'border-parchment-dim bg-ink-soft text-parchment'
         : 'border-ink-line bg-ink-soft/40 text-parchment-dim';
     return (
-      <li className={`flex w-[164px] shrink-0 flex-col rounded-lg border p-2 ${box}`}>
+      <li className={`flex w-[148px] shrink-0 flex-col rounded-lg border p-2 ${box}`}>
         <div className="flex items-baseline justify-between gap-1">
           <span className="text-[13px] tabular-nums">{step.at}</span>
           <span className="text-[9px] uppercase tracking-[0.12em] text-parchment-dim">
             {step.reached ? UI.techs.growthReached : here ? UI.techs.growthNext : ''}
           </span>
         </div>
-        <div className="mt-0.5 text-[12px] font-medium leading-tight">{step.title}</div>
-        <p className="mt-1 text-[10px] leading-snug text-parchment-dim">{step.line}</p>
+        {/* The name, and what the rung is like under the pointer. Five rungs
+            of two lines each, over a screen that also carries a row of four
+            facts, nine cards and a block of costs, is most of a window spent
+            on a ladder nobody is reading twice. */}
+        <div className="mt-0.5 text-[12px] font-medium leading-tight" title={step.line}>
+          {step.title}
+        </div>
 
         <div className="mt-auto space-y-1 pt-1.5">
           <Boards step={step} />
@@ -220,11 +225,10 @@ export function GrowthLadder({ state }: Props) {
           nobody could read. */}
       <div className="mt-2 rounded-md border border-bad/40 bg-bad/[0.06] px-2.5 py-2">
         <div className="text-[9px] uppercase tracking-[0.16em] text-bad">{GROWTH_COST.heading}</div>
-        <p className="mt-1 text-[11px] leading-snug text-parchment/85">
-          {GROWTH_COST.hamlet.replace('{n}', String(CONFIG.crowdHealthEvery))}
-        </p>
-        <p className="mt-0.5 text-[11px] leading-snug text-parchment/85">
-          {GROWTH_COST.town.replace('{n}', String(CONFIG.town.crowdEvery))}
+        <p className="mt-1 text-[11px] leading-snug text-parchment/85" title={GROWTH_COST.answered}>
+          {GROWTH_COST.line
+            .replace('{n}', String(CONFIG.crowd.healthEvery))
+            .replace('{town}', String(CONFIG.town.crowdEvery))}
         </p>
         <p className="mt-1 text-[11px] leading-snug text-bad">
           {crowdingOnHealth(state) === 0

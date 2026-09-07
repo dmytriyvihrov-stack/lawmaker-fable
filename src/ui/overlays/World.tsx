@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ACTIONS, STATS, SUBJECTS, moodFace } from '../../content/meta';
 import { TAG_LABEL } from '../../content/portrait-text';
 import { UI } from '../../content/ui-strings';
@@ -15,15 +15,15 @@ interface Props {
 }
 
 /** The board the map is drawn on. Fixed units, so a blob lands where it is put. */
-const BOARD_W = 1200;
-const BOARD_H = 720;
+const BOARD_W = 1000;
+const BOARD_H = 800;
 const REACH = 260;
 
 /** Warm parchment at a favour, cold stone at a grudge, plain in between. */
 function fillFor(stance: number): string {
-  if (stance >= 2) return '#c8a24a';
-  if (stance <= -2) return '#5c7f86';
-  return '#7d6a4f';
+  if (stance >= 2) return '#a9bb7d';
+  if (stance <= -2) return '#bb8171';
+  return '#b6aa86';
 }
 
 /**
@@ -100,7 +100,7 @@ function Card({
   ];
 
   return (
-    <div className="rounded-lg border border-ink-line bg-ink-soft p-3">
+    <div className="world-card">
       <div className="flex items-baseline justify-between gap-2">
         <span className={TYPE.title}>{them.name}</span>
         <span className={`${TYPE.label} text-parchment-dim`}>{stance}</span>
@@ -115,7 +115,7 @@ function Card({
         </div>
       )}
 
-      <div className={`mt-3 ${TYPE.label} text-parchment-dim`}>{UI.world.laws}</div>
+      <details className="world-laws"><summary>{UI.world.laws} <span>{them.laws.length}</span></summary>
       <ol className="mt-1 space-y-1">
         {them.laws.map((law, i) => (
           <li key={`${law.subject}-${law.turn}-${i}`} className="leading-tight" title={law.label}>
@@ -131,7 +131,7 @@ function Card({
         {them.laws.length === 0 && (
           <li className="text-[11px] text-parchment-dim">{UI.world.lawsNone}</li>
         )}
-      </ol>
+      </ol></details>
 
       <div className={`mt-3 ${TYPE.label} text-parchment-dim`}>{UI.world.boards}</div>
       <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1">
@@ -149,11 +149,11 @@ function Card({
                 type="button"
                 disabled={blocked !== null}
                 onClick={() => onAct(b.action, them.id)}
-                className="w-full rounded-md border border-ink-line px-3 py-2 text-left text-[13px] text-parchment hover:border-parchment-dim/60 disabled:cursor-default disabled:text-parchment-dim/50"
+                className="world-action"
               >
-                {b.label}
+                <span aria-hidden className="world-action-icon">{UI.world.actionIcons[b.action]}</span>{b.label}<span aria-hidden className="world-action-arrow">↗</span>
               </button>
-              <div className="mt-0.5 text-[11px] leading-snug text-parchment-dim">
+              <div className="world-action-cost">
                 {blocked ?? b.cost}
               </div>
             </div>
@@ -164,155 +164,97 @@ function Card({
   );
 }
 
-/**
- * Everything outside the walls, on one screen.
- *
- * A kingdom is the first stage of this game that is not alone, and this is the
- * whole of what that means: five places with names, each with its own seal and
- * its own laws, and three things a year of work can be spent on instead of a
- * building. The map is drawn as plainly as a map on a table gets: blobs, roads,
- * names. It is not a strategy board and there is nothing on it to solve.
- */
+/** A settlement carries its scale, stores and watch in its silhouette. */
+function Settlement({ stage, store, army, home = false }: { stage: ForeignState['stage']; store: number; army: number; home?: boolean }) {
+  const roof = home ? '#793c45' : '#526c70';
+  return <g pointerEvents="none">
+    <ellipse cy="32" rx="64" ry="15" fill="#4b5034" opacity=".18" />
+    <g fill="#e0cba3" stroke="#6f634a" strokeWidth="2" strokeLinejoin="round">
+      <path d="M-37 -2 H36 V33 H-37Z" />
+      <path d="M-45 -2 L-2 -33 L45 -2Z" fill={roof} />
+      <path d="M-8 33 V13 Q0 2 8 13 V33Z" fill="#64533e" />
+      <path d="M-27 9 H-17 V20 H-27Z M18 9 H28 V20 H18Z" fill="#f7dd98" />
+      {stage !== 'village' && <><path d="M-51 36 V-13 H-33 V36 M34 36 V-13 H52 V36" /><path d="M-56 -13 L-42 -34 L-28 -13Z M29 -13 L43 -34 L57 -13Z" fill={roof} /><path d="M-44 0 V9 M44 0 V9" stroke="#72644d" strokeWidth="4" /></>}
+      {stage === 'kingdom' && <><path d="M-15 -21 V-58 H15 V-21" /><path d="M-20 -58 L0 -81 L20 -58Z" fill={roof} /><path d="M0 -75 V-98" /><path d="M1 -98 Q15 -101 24 -94 L21 -83 Q13 -90 1 -86Z" fill={home ? '#d0a453' : roof} /><path d="M-4 -48 H4 V-36 H-4Z" fill="#f7dd98" /></>}
+      {Array.from({ length: Math.min(3, Math.floor(store / 25)) }, (_, i) => <g key={i} transform={`translate(${-53 + i * 12} 35)`}><ellipse cy="-4" rx="6" ry="9" fill="#d2b875" /><path d="M-3 -11 H3" /></g>)}
+      {army >= 50 && <><path d="M61 29 V-5" /><path d="M55 2 H67 V14 L61 20 L55 14Z" fill={roof} /><path d="M61 5 V15" stroke="#e5d8b9" /></>}
+    </g>
+  </g>;
+}
+
 export function World({ state, onAct, onClose }: Props) {
   const world = state.world;
   const [picked, setPicked] = useState<string | null>(world?.states[0]?.id ?? null);
+  const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    panel.current?.focus();
+    return () => previous?.focus();
+  }, []);
   if (!world) return null;
   const them = world.states.find((k) => k.id === picked) ?? null;
-
   return (
-    <div
-      className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-6"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[88vh] w-full max-w-5xl overflow-y-auto rounded-t-xl border border-ink-line bg-ink p-4 sm:rounded-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="mb-3 flex items-start justify-between gap-3">
-          <h2 className="text-lg tracking-wide">
-            {UI.world.icon} {UI.world.heading}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={UI.world.close}
-            className="min-h-[44px] min-w-[44px] shrink-0 rounded-md border border-ink-line text-parchment-dim"
-          >
-            ✕
-          </button>
+    <div className="world-backdrop" onClick={onClose}>
+      <div ref={panel} tabIndex={-1} role="dialog" aria-modal="true" aria-label={UI.world.heading} className="world-panel" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => {
+        if (e.key === 'Escape') { e.stopPropagation(); onClose(); }
+        if (e.key === 'Tab') {
+          const items = Array.from(panel.current?.querySelectorAll<HTMLElement>('button:not(:disabled), [tabindex="0"], summary') ?? []);
+          const visible = items.filter((el) => el.getClientRects().length > 0);
+          const first = visible[0], last = visible[visible.length - 1];
+          if (e.shiftKey && (document.activeElement === first || document.activeElement === panel.current)) { e.preventDefault(); last?.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+        }
+      }}>
+        <header className="world-header">
+          <div><p>{UI.world.atlas}</p><h2>{UI.world.heading}</h2></div>
+          <button type="button" onClick={onClose} aria-label={UI.world.close}>{UI.world.closeMark}</button>
         </header>
-
-        <div className="flex flex-col gap-4 lg:flex-row">
-          <div className="min-w-0 flex-1">
-            <svg
-              viewBox={`0 0 ${BOARD_W} ${BOARD_H}`}
-              className="w-full"
-              role="img"
-              aria-label={UI.world.heading}
-            >
-              {/* the roads out, drawn under everything they run to */}
-              {world.states.map((k) => (
-                <line
-                  key={`road-${k.id}`}
-                  x1={BOARD_W / 2}
-                  y1={BOARD_H / 2}
-                  x2={BOARD_W / 2 + k.position.x * REACH}
-                  y2={BOARD_H / 2 + k.position.y * REACH}
-                  stroke="#7a5c3a"
-                  strokeWidth={2}
-                  strokeDasharray="7 6"
-                  opacity={0.5}
-                />
-              ))}
-
-              {/* you, in the middle, in the colour of the seal */}
-              <g transform={`translate(${BOARD_W / 2} ${BOARD_H / 2})`}>
-                <path
-                  d={blobPath(state.seed, 78)}
-                  fill="#8c3b32"
-                  stroke="#7a5c3a"
-                  strokeWidth={3}
-                  strokeLinejoin="round"
-                />
-                <text
-                  y={104}
-                  textAnchor="middle"
-                  className="fill-parchment text-[11px] uppercase tracking-[0.18em]"
-                >
-                  {state.townName ?? UI.world.you}
-                </text>
+        <div className="world-layout">
+          <div className="world-cartography">
+            <svg viewBox={`0 0 ${BOARD_W} ${BOARD_H}`} className="world-map" role="group" aria-label={UI.world.heading}>
+              <defs>
+                <radialGradient id="atlas-paper"><stop stopColor="#e6d4a6" /><stop offset="1" stopColor="#bfae85" /></radialGradient>
+                <pattern id="atlas-grid" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M80 0H0V80" fill="none" stroke="#746d52" strokeWidth=".6" opacity=".14" /></pattern>
+              </defs>
+              <rect width={BOARD_W} height={BOARD_H} rx="22" fill="url(#atlas-paper)" />
+              <rect x="14" y="14" width="972" height="772" rx="14" fill="none" stroke="#756344" opacity=".45" />
+              <rect width={BOARD_W} height={BOARD_H} fill="url(#atlas-grid)" />
+              <g pointerEvents="none">
+                <path d="M-10 590 Q145 610 124 730 Q104 804 350 830 H-10Z M1000 0 H877 Q786 110 898 141 Q940 220 1000 224Z" fill="#83a6a3" opacity=".65" />
+                <path d="M70 800 Q228 669 188 571 Q145 485 230 423 T212 245 Q153 166 196 0" fill="none" stroke="#728f86" strokeWidth="13" opacity=".36" />
+                <path d="M70 800 Q228 669 188 571 Q145 485 230 423 T212 245 Q153 166 196 0" fill="none" stroke="#9bb5a7" strokeWidth="7" />
+                {[ [82,170],[116,196],[64,219],[887,555],[925,582],[871,599],[380,75],[423,68] ].map(([x,y],i) => <g key={i} transform={`translate(${x} ${y})`}><path d="M-22 15 L0 -24 L25 15 M-5 -15 L0 -24 L8 -12" fill="#9b9c7c" stroke="#777958" strokeWidth="2" opacity=".6" /></g>)}
+                {[ [90,380],[115,400],[82,414],[820,690],[846,678],[862,710],[650,78],[676,93] ].map(([x,y],i) => <g key={i} transform={`translate(${x} ${y})`}><path d="M0 15 V-12" stroke="#7c7754" strokeWidth="2" /><path d="M-13 8 L0 -21 L13 8Z" fill="#7e9168" opacity=".7" /></g>)}
+                <g transform="translate(900 700)" stroke="#7b6c4d" fill="none" opacity=".65"><circle r="29" /><path d="M0 -48 L9 0 L0 44 L-9 0Z M-41 0 H41" /><path d="M0 -48 L9 0 H0Z" fill="#7b6c4d" /></g>
               </g>
-
               {world.states.map((k) => {
-                const x = BOARD_W / 2 + k.position.x * REACH;
-                const y = BOARD_H / 2 + k.position.y * REACH;
+                const selected = picked === k.id;
+                return <g key={`road-${k.id}`} pointerEvents="none"><line x1="500" y1="400" x2={500 + k.position.x * REACH} y2={400 + k.position.y * REACH} stroke={k.stance < 0 ? '#a46658' : k.stance > 0 ? '#667c4e' : '#87785b'} strokeWidth={selected ? 5 : 2} strokeDasharray={k.stance < 0 ? '5 9' : k.stance > 0 ? undefined : '10 8'} opacity={selected ? .9 : .45} /></g>;
+              })}
+              <g transform="translate(500 400)">
+                <path d={blobPath(state.seed, 87)} fill="#b59862" stroke="#896c3f" strokeWidth="2" />
+                <Settlement stage="kingdom" store={state.stats.economy} army={state.stats.army} home />
+                <text y="68" textAnchor="middle" className="atlas-home">{state.townName ?? UI.world.you}</text>
+              </g>
+              {world.states.map((k) => {
                 const on = k.id === picked;
-                return (
-                  <g
-                    key={k.id}
-                    transform={`translate(${x} ${y})`}
-                    onClick={() => setPicked(k.id)}
-                    onMouseEnter={() => setPicked(k.id)}
-                    className="cursor-pointer"
-                  >
-                    <path
-                      d={blobPath(k.seed, k.stage === 'kingdom' ? 74 : 58)}
-                      fill={fillFor(k.stance)}
-                      stroke={on ? '#e8dcc0' : '#7a5c3a'}
-                      strokeWidth={on ? 4 : 3}
-                      strokeLinejoin="round"
-                    />
-                    {k.ask && (
-                      <text
-                        y={-84}
-                        textAnchor="middle"
-                        className="fill-seal text-[28px] font-bold"
-                        aria-hidden
-                      >
-                        {UI.world.askMark}
-                      </text>
-                    )}
-                    <text
-                      y={98}
-                      textAnchor="middle"
-                      className="fill-parchment text-[11px] uppercase tracking-[0.18em]"
-                    >
-                      {k.name}
-                    </text>
-                  </g>
-                );
+                const stance = UI.world.stance[String(k.stance) as keyof typeof UI.world.stance];
+                return <g key={k.id} transform={`translate(${500 + k.position.x * REACH} ${400 + k.position.y * REACH})`} role="button" tabIndex={0} aria-label={`${k.name}, ${stance}`} aria-pressed={on} onClick={() => setPicked(k.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPicked(k.id); } }} className="atlas-country">
+                  <title>{k.name}: {stance}</title>
+                  <path className="atlas-territory" d={blobPath(k.seed, 85)} fill={fillFor(k.stance)} stroke={on ? '#fff3cf' : '#8d8260'} strokeWidth={on ? 5 : 1.5} />
+                  <Settlement stage={k.stage} store={k.stats.economy} army={k.stats.army} />
+                  <rect x="-99" y="53" width="198" height="49" rx="7" fill={on ? '#36483d' : '#e4d4af'} stroke="#84785a" strokeWidth="1" />
+                  <text y="74" textAnchor="middle" className="atlas-name" fill={on ? '#fff0cc' : '#3e4834'}>{k.name}</text>
+                  <text y="92" textAnchor="middle" className="atlas-stance" fill={on ? '#cbd3b5' : '#666347'}>{stance}</text>
+                  {k.ask && <g transform="translate(57 -62)"><circle r="18" fill="#f7df9d" stroke="#9b7447" strokeWidth="2" /><text y="6" textAnchor="middle" fontSize="20">{UI.world.askMark}</text></g>}
+                </g>;
               })}
             </svg>
-
-            {/* who lives in your own kingdom, which is what a ruling on a group
-                would be about the day there is one */}
-            <div className="mt-2 rounded-lg border border-ink-line bg-ink-soft p-3">
-              <div className={`${TYPE.label} text-parchment-dim`}>{UI.world.peoples.heading}</div>
-              <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1">
-                {world.peoples.map((p) => (
-                  <div key={p.id} className="flex items-baseline gap-2 text-[12px]">
-                    <span aria-hidden className="text-[13px] leading-none">
-                      {moodFace(p.mood)}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-parchment/85">
-                      {UI.world.peoples[p.id]}
-                    </span>
-                    <span className="shrink-0 tabular-nums text-parchment-dim">
-                      {Math.round(p.share * 100)}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <div className="world-country-list">{world.states.map((k) => <button key={k.id} type="button" aria-pressed={picked === k.id} onClick={() => setPicked(k.id)}>{k.name}</button>)}</div>
+            <div className="world-legend"><span className="atlas-friendly">{UI.world.stance['2']}</span><span className="atlas-neutral">{UI.world.stance['0']}</span><span className="atlas-hostile">{UI.world.stance['-3']}</span></div>
+            <details className="world-peoples"><summary>{UI.world.peoples.heading}</summary><div>{world.peoples.map((p) => <span key={p.id}><span aria-hidden>{moodFace(p.mood)}</span> {UI.world.peoples[p.id]} <b>{Math.round(p.share * 100)}%</b></span>)}</div></details>
           </div>
-
-          <div className="w-full shrink-0 lg:w-[300px]">
-            {them ? (
-              <Card state={state} them={them} onAct={onAct} />
-            ) : (
-              <p className="text-[13px] text-parchment-dim">{UI.world.pick}</p>
-            )}
-          </div>
+          <aside className="world-dossier" aria-live="polite">{them ? <Card state={state} them={them} onAct={onAct} /> : <p>{UI.world.pick}</p>}</aside>
         </div>
       </div>
     </div>

@@ -1,7 +1,10 @@
+import { memo } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { CityFlag, PlotId, Season, Stage, StatId, WorkId } from '../../engine/types';
 import { WORKS } from '../../content/works';
 import { UI } from '../../content/ui-strings';
+import { STATS } from '../../content/meta';
+import { movePoints } from '../../engine/format';
 import { JOURNEY } from '../../content/journey';
 import { FolkFigure } from './Folk';
 import { folkLook } from '../../content/folk';
@@ -121,11 +124,17 @@ interface Props {
    */
   folk?: FolkPin[];
   /**
-   * The small things out there this year that are not decisions. Empty
-   * whenever a card is open: a dog is not an answer to a dilemma, and offering
-   * one while somebody is waiting at the door reads as though it were.
+   * The small things out there this year that are not decisions. They stay on
+   * the picture in every screen that still shows the town, because a dog that
+   * vanishes the moment a card opens was never in the place to begin with.
    */
   moments?: Moment[];
+  /**
+   * Somebody is at the door, so the ruler is not free to go and lend a hand.
+   * The thing is still there and still says what it is; it simply does not
+   * answer to a click until the card closes.
+   */
+  momentsQuiet?: boolean;
   onMomentTake?: (id: string) => void;
   reservedMoments?: string[];
   journeyLayer?: ReactNode;
@@ -171,7 +180,23 @@ function Layer({ on, children }: { on: boolean; children: ReactNode }) {
 }
 
 /** Trees where the drawing put them, each with the kind of head it was given. */
-function Stands({
+/**
+ * The wood, drawn once per season instead of once per render.
+ *
+ * There are 417 trees in this picture and the far bank used to be filtered out
+ * of the list three times on every render of the town - three new arrays of a
+ * few hundred entries each - and then every tree in all of them was rebuilt as
+ * React elements. Nothing about a tree depends on anything but the season: the
+ * lists are constants now, and the layers that take only `paint` are memoised,
+ * so a render that changed a dial does not redraw a forest. `paint` is
+ * `PAINT[season]`, one object per season, so the comparison is a reference
+ * check and the memo actually holds.
+ */
+const RIGHT_WOOD_BACK = RIGHT_WOOD.filter((t) => t[3] < 2);
+const RIGHT_WOOD_MID = RIGHT_WOOD.filter((t) => t[3] === 2);
+const RIGHT_WOOD_NEAR = RIGHT_WOOD.filter((t) => t[3] === 3);
+
+const Stands = memo(function Stands({
   paint,
   stands,
   conifer = false,
@@ -199,7 +224,7 @@ function Stands({
       })}
     </g>
   );
-}
+});
 
 /**
  * The place, from the fence to the far range, in one picture that fills the
@@ -229,6 +254,7 @@ export function CityScape({
   plotOn = null,
   onPlotPick,
   moments = [],
+  momentsQuiet = false,
   onMomentTake,
   reservedMoments = [],
   journeyLayer,
@@ -551,7 +577,9 @@ export function CityScape({
     put(
       id,
       s.y + 60,
-      <g transform={`translate(${s.x} ${s.y}) scale(${s.scale})`}>
+      <g className="town-landmark" tabIndex={isGhost || isRaising ? undefined : 0} role="img" aria-label={nameOf(id)} transform={`translate(${s.x} ${s.y}) scale(${s.scale})`}>
+        <title>{nameOf(id)}</title>
+        {!isGhost && <text className="landmark-name" pointerEvents="none" x={s.label.x} y={s.label.y} textAnchor="middle" fontSize="16" fill={GLOW}>{PLACE_NAMES[id] ?? nameOf(id)}</text>}
         {/* What was paid for last year is not standing yet: it is courses of
             wall climbing out of the ground inside a frame, and the level it is
             climbing to is the one being paid for. */}
@@ -913,7 +941,7 @@ export function CityScape({
         <Stands paint={paint} stands={HORIZON_WOOD} />
       </g>
       <g transform={`translate(${RIGHT_WOOD_SHIFT.x} ${RIGHT_WOOD_SHIFT.y})`}>
-        <Stands paint={paint} stands={RIGHT_WOOD.filter((t) => t[3] < 2)} />
+        <Stands paint={paint} stands={RIGHT_WOOD_BACK} />
         <path d={RIGHT_WOOD_FLOOR} fill={paint.woodFloor} opacity=".6" className="city-tint" filter="url(#wood-soft-edge)" />
         {/* Something lives in there. It walks its own line deep in the wood,
             behind the front crowns and in front of the middle ranks, so what
@@ -925,8 +953,8 @@ export function CityScape({
             <Wolf paint={paint} walking />
           </g>
         </g>
-        <Stands paint={paint} stands={RIGHT_WOOD.filter((t) => t[3] === 2)} />
-        <Stands paint={paint} stands={RIGHT_WOOD.filter((t) => t[3] === 3)} />
+        <Stands paint={paint} stands={RIGHT_WOOD_MID} />
+        <Stands paint={paint} stands={RIGHT_WOOD_NEAR} />
       </g>
       <Stands paint={paint} stands={LEFT_WOOD} />
       <Stands paint={paint} stands={LEFT_PINES} conifer />
@@ -1178,20 +1206,6 @@ export function CityScape({
           <g key={s.key}>{s.node}</g>
         ))}
 
-      {/* what the place calls what it has built, written beside it */}
-      <g fontSize="15" fill={GLOW} opacity=".8" textAnchor="middle">
-        {(Object.keys(PLACE_NAMES) as WorkId[])
-          .filter((id) => level(id) > 0 && ghostOf !== id && WORK_SITES[id])
-          .map((id) => {
-            const w = siteOf(id, shown)!;
-            return (
-              <text key={id} x={w.x + w.label.x * w.scale} y={w.y + w.label.y * w.scale}>
-                {PLACE_NAMES[id]}
-              </text>
-            );
-          })}
-      </g>
-
       {/* what the reign has done to the place: one flag, one layer.
           A fair is the one work that leaves no building: what it leaves is a
           square with bunting over it for the year that follows, which is the
@@ -1346,16 +1360,21 @@ export function CityScape({
           <rect x="-13" y="-24" width="26" height="20" rx="2" fill="#e9dcbe" stroke={OUTLINE} strokeWidth="1.2" />
         </g>
       </Layer>
+      {/* The litter, grown. They were three brown lozenges with a stick for a
+          tail, which read as something dead on the grass and had two people
+          ask what it was; they are the same drawing the small thing on the map
+          uses now, which is the one shape in this game a player has already
+          been taught to recognise. */}
       <Layer on={on('dogs_about')}>
-        <g fill="#8a7059">
-          {[0, 1, 2].map((i) => (
-            <g key={i} transform={`translate(${700 + i * 66} ${440 + ((i * 23) % 40)})`}>
-              <ellipse rx="6" ry="3" />
-              <circle cx="6" cy="-3" r="2.6" />
-              <path d="M-6 0 l-4 -4" stroke="#8a7059" strokeWidth="1.4" strokeLinecap="round" />
-            </g>
-          ))}
-        </g>
+        {[
+          { x: 704, y: 446, k: 0.9, flip: false },
+          { x: 770, y: 468, k: 1, flip: true },
+          { x: 838, y: 492, k: 0.86, flip: false },
+        ].map((d) => (
+          <g key={d.x} transform={`translate(${d.x} ${d.y}) scale(${d.flip ? -d.k : d.k} ${d.k})`}>
+            <TownDog paint={paint} />
+          </g>
+        ))}
       </Layer>
       {/* It was in the trees all along. This is the year it walked out of
           them, which is the only difference the flag makes. */}
@@ -1383,6 +1402,7 @@ export function CityScape({
       {/* the crowd, each of them at the work the year has for them */}
       <g>
         {crowd.map((c, i) => {
+          const life = { '--life-cycle': `${3.4 + (i % 7) * .31}s`, '--life-delay': `-${(i * 1.73) % 7}s`, '--gait-cycle': `${.82 + (i % 5) * .07}s` } as CSSProperties;
           const beat = { animationDuration: c.dur, animationDelay: c.delay } as CSSProperties;
           /* A tree that is felled and left where it fell is firewood for
              nobody. The walk down to the yards is half the job, so it is drawn:
@@ -1390,7 +1410,7 @@ export function CityScape({
              hands, and round again. */
           if (c.job === 'haul') {
             return (
-              <g key={i} transform={`translate(${c.x} ${c.y})`}>
+              <g key={i} className="town-resident" style={life} data-activity={c.pose} transform={`translate(${c.x} ${c.y})`}>
                 <g
                   className="city-haul"
                   style={
@@ -1403,14 +1423,14 @@ export function CityScape({
                 >
                   {/* nobody walks home backwards: the turn is at the far end */}
                   <g className="city-turn" style={beat}>
-                    <g transform={`scale(${c.scale})`}>
+                    <g transform={`scale(${c.scale})`}><g className="city-footfall">
                       <g className="city-load" style={beat}>
                         <Worker paint={paint} cloth={c.cloth} pose="haul" />
                       </g>
                       <g className="city-unload" opacity="0" style={beat}>
-                        <Worker paint={paint} cloth={c.cloth} pose="tend" />
+                        <Worker paint={paint} cloth={c.cloth} pose="stand" />
                       </g>
-                    </g>
+                    </g></g>
                   </g>
                 </g>
               </g>
@@ -1427,7 +1447,7 @@ export function CityScape({
             const toilBeat = { animationDuration: c.toilDur, animationDelay: c.delay } as CSSProperties;
             const outFacing: 1 | -1 = c.x >= c.door.x ? 1 : -1;
             return (
-              <g key={i} transform={`translate(${c.x} ${c.y})`}>
+              <g key={i} className="town-resident" style={life} data-activity={c.pose} transform={`translate(${c.x} ${c.y})`}>
                 <g
                   className="city-commute"
                   style={
@@ -1457,7 +1477,7 @@ export function CityScape({
             );
           }
           return (
-            <g key={i} transform={`translate(${c.x} ${c.y}) scale(${c.scale})`}>
+            <g key={i} className="town-resident" style={life} data-activity={c.pose} transform={`translate(${c.x} ${c.y}) scale(${c.scale})`}>
               <g
                 className={c.travels ? 'city-person' : c.pose === 'fish' ? undefined : 'city-toil'}
                 style={{ ...beat, '--stroll': `${c.span / c.scale}px` } as CSSProperties}
@@ -1587,6 +1607,23 @@ export function CityScape({
               </g>
             </g>
           )}
+          {moment.id === 'stack' && (
+            <g>
+              {/* a winter's firewood, down across the path, cut ends towards you */}
+              <g fill="#8a7059" stroke="#5f4c39" strokeWidth="0.7">
+                <ellipse cx="-9" cy="2" rx="3.4" ry="2.4" />
+                <ellipse cx="-2" cy="4" rx="3.4" ry="2.4" />
+                <ellipse cx="5" cy="2.6" rx="3.2" ry="2.2" />
+                <ellipse cx="-6" cy="-2" rx="3.2" ry="2.2" />
+                <ellipse cx="1" cy="-1" rx="3" ry="2.1" />
+              </g>
+              <g fill="#c0a97f" opacity=".9">
+                <ellipse cx="-9" cy="2" rx="1.5" ry="1.1" />
+                <ellipse cx="-2" cy="4" rx="1.5" ry="1.1" />
+                <ellipse cx="5" cy="2.6" rx="1.4" ry="1" />
+              </g>
+            </g>
+          )}
           {moment.id === 'bite' && (
             <g>
               {/* the rod, bent the wrong way, and the line going into the water */}
@@ -1600,38 +1637,51 @@ export function CityScape({
         </g>
       ))}
 
-      {moments.map((moment) => (
-        <g
-          key={moment.id}
-          transform={`translate(${moment.x} ${moment.y})`}
-          role="button"
-          tabIndex={reservedMoments.includes(moment.id) ? -1 : 0}
-          aria-label={moment.label}
-          aria-disabled={reservedMoments.includes(moment.id)}
-          data-moment={moment.id}
-          data-reserved={reservedMoments.includes(moment.id)}
-          className={`city-moment-hit hand-${moment.hand} ${reservedMoments.includes(moment.id) ? 'moment-reserved' : ''}`}
-          onClick={() => !reservedMoments.includes(moment.id) && onMomentTake?.(moment.id)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              if (!reservedMoments.includes(moment.id)) onMomentTake?.(moment.id);
-            }
-          }}
-        >
-          <title>{reservedMoments.includes(moment.id) ? JOURNEY.reserved : moment.label}</title>
-          <circle r="26" fill="transparent" />
-          <g className="city-moment">
-            <circle r="17" fill="#e8c877" opacity=".12" />
-            <circle r="11.5" fill="none" stroke="#e8c877" strokeWidth="1.6" opacity=".85" />
-            <MomentMark hand={moment.hand} />
+      {moments.map((moment) => {
+        const reserved = reservedMoments.includes(moment.id);
+        const quiet = momentsQuiet && !reserved;
+        /* What stopping is worth, on the ring itself. It is one point and it
+           was never a secret; leaving it off only meant a player found out
+           what a dog is worth by scratching one and reading the ledger. */
+        const worth = momentWorth(moment);
+        return (
+          <g
+            key={moment.id}
+            transform={`translate(${moment.x} ${moment.y})`}
+            role={quiet ? 'img' : 'button'}
+            tabIndex={reserved || quiet ? -1 : 0}
+            aria-label={moment.label}
+            aria-disabled={reserved || quiet}
+            data-moment={moment.id}
+            data-reserved={reserved}
+            data-quiet={quiet}
+            pointerEvents={quiet ? 'none' : undefined}
+            className={`city-moment-hit hand-${moment.hand} ${reserved ? 'moment-reserved' : ''} ${quiet ? 'moment-quiet' : ''}`}
+            onClick={() => !reserved && !quiet && onMomentTake?.(moment.id)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                if (!reserved && !quiet) onMomentTake?.(moment.id);
+              }
+            }}
+          >
+            <title>{reserved ? JOURNEY.reserved : moment.label}</title>
+            <circle r="26" fill="transparent" />
+            <g className="city-moment">
+              <circle r="17" fill="#e8c877" opacity=".12" />
+              <circle r="11.5" fill="none" stroke="#e8c877" strokeWidth="1.6" opacity=".85" />
+              <MomentMark hand={moment.hand} />
+            </g>
+            <g className="moment-name" transform="translate(0 29)" pointerEvents="none">
+              <rect x="-52" y="-11" width="104" height="20" rx="10" fill="#332e21" opacity=".9" />
+              <text textAnchor="middle" y="3" fill="#f2d792" fontSize="12">
+                {reserved ? JOURNEY.queued : moment.label}
+                {worth && <tspan fill="#a6c88a">{`  ${worth}`}</tspan>}
+              </text>
+            </g>
           </g>
-          <g className="moment-name" transform="translate(0 29)" pointerEvents="none">
-            <rect x="-46" y="-11" width="92" height="20" rx="10" fill="#332e21" opacity=".9" />
-            <text textAnchor="middle" y="3" fill="#f2d792" fontSize="12">{reservedMoments.includes(moment.id) ? JOURNEY.queued : moment.label}</text>
-          </g>
-        </g>
-      ))}
+        );
+      })}
 
       {/* The ground that is open this year.
 
@@ -1912,6 +1962,17 @@ function Birds({ n, tint }: { n: number; tint: string }) {
  * actually doing the telling: this only has to be different enough from the
  * other three that a player who has seen it before knows which one it is.
  */
+/**
+ * What a minute of your day is worth, in the units the boards are in. One
+ * point, in one place, which is the whole of it: it is written on the ring so
+ * nobody has to take one to find out whether it was worth taking.
+ */
+function momentWorth(moment: Moment): string | null {
+  const stat = STATS.find((s) => moment.effect[s.id] !== undefined && moment.effect[s.id] !== 0);
+  if (!stat) return null;
+  return `${stat.emoji} ${movePoints(moment.effect[stat.id] as number)}`;
+}
+
 function MomentMark({ hand }: { hand: Moment['hand'] }) {
   const gold = '#e8c877';
   const line = {

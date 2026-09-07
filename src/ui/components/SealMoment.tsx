@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
 import { STATS } from '../../content/meta';
 import { UI } from '../../content/ui-strings';
-import { findLawOption } from '../../engine/registry';
 import { hasSeenWiring, markWiringSeen } from '../../engine/save';
-import { lawTrend } from '../../engine/simulation';
-import type { GameState } from '../../engine/types';
-import { MovedBoards } from './MovedBoards';
+import { lawNumber } from '../../engine/format';
+import type { GameState, LawId } from '../../engine/types';
 
 interface Props {
   /** The state with the decree already sealed into it. */
@@ -15,24 +13,9 @@ interface Props {
 }
 
 /**
- * Long enough to read the sentence twice, which is the whole point of it.
- *
- * Three seconds was long enough to read it once and then be interrupted, and
- * there are two lists of numbers under the sentence to read as well. Nothing
- * is waiting on this: the whole overlay is a button, so anybody who has
- * finished reading is one click from the rest of the year.
- */
-const HOLD_MS = 4800;
-
-function reducedMotion(): boolean {
-  if (typeof window === 'undefined' || !window.matchMedia) return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-/**
- * The seal coming down, and then the law standing there for three seconds with
- * what it does written under it. This replaces a whole screen and a click: a
- * decree is not a scene with an outcome, it is a sentence that is now true.
+ * The seal coming down, and then the law standing there until it is dismissed.
+ * This replaces a whole screen and a click: a decree is not a scene with an
+ * outcome, it is a sentence that is now true.
  */
 export function SealMoment({ state, onDone }: Props) {
   /* The one moment the game explains itself, and a screen that explains
@@ -48,15 +31,14 @@ export function SealMoment({ state, onDone }: Props) {
     if (teaching) markWiringSeen();
   }, [teaching]);
 
-  useEffect(() => {
-    if (teaching) return;
-    const delay = reducedMotion() ? 0 : HOLD_MS;
-    const id = window.setTimeout(onDone, delay);
-    return () => window.clearTimeout(id);
-  }, [onDone, teaching]);
+  /* No timer. The first law waited for a click and every law after it took
+     itself away after four and a half seconds, so the one screen in the game
+     that says "click anywhere to carry on" said it once and then stopped
+     saying it, and a reader who had learned to wait was interrupted instead.
+     One behaviour: it stands until it is dismissed. */
 
   const law = [...state.laws].reverse().find((l) => l.status === 'active');
-  const option = law ? findLawOption(law.subject, law.action, law.label) : undefined;
+  const number = law ? lawNumber(state, `${law.subject}_${law.action}` as LawId) : null;
   const paragraphs = state.lastAftermath?.paragraphs ?? [];
 
   return (
@@ -68,7 +50,7 @@ export function SealMoment({ state, onDone }: Props) {
     >
       <div className="stamp-flash pointer-events-none fixed inset-0 bg-parchment" />
 
-      <div className="stamp-seal fixed left-1/2 top-[38%]">
+      <div className={`stamp-seal fixed left-1/2 ${teaching ? 'top-[24%]' : 'top-[38%]'}`}>
         <svg viewBox="0 0 120 120" className="h-32 w-32 opacity-90" aria-hidden>
           <circle cx="60" cy="60" r="52" fill="var(--color-seal)" />
           <circle
@@ -88,28 +70,26 @@ export function SealMoment({ state, onDone }: Props) {
         </svg>
       </div>
 
-      <div className="drift-in relative mt-[46vh] w-full max-w-md text-left">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-parchment-dim">
-          {UI.seal.reads}
+      {/* The lecture is four lines taller than the sentence it stands under,
+          so on its one showing the whole block starts higher up and the stamp
+          moves up out of its way. */}
+      <div
+        className={`drift-in relative mb-6 w-full max-w-md text-left ${
+          teaching ? 'mt-[32vh]' : 'mt-[46vh]'
+        }`}
+      >
+        {/* Its number, and then the sentence. The number is what the rest of
+            the reign will call it, and the ceremony line underneath now says
+            "it" rather than quoting the whole thing a second time. */}
+        <div className="text-[10px] uppercase tracking-[0.2em] text-seal">
+          {number ?? UI.seal.reads}
         </div>
         <p className="mt-1 text-[17px] leading-snug tracking-wide text-parchment">
           {law?.label ?? ''}
         </p>
 
-        {/* The same shape the drafting table used to promise it, three seconds
-            ago. Two lists in two hands is how a law came to say "dips a little"
-            while it was being written and "-2" the moment it was true. */}
-        <div className="mt-3 border-t border-ink-line pt-2">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-parchment-dim">
-            {UI.seal.andSo}
-          </div>
-          <MovedBoards
-            className="mt-1.5"
-            once={state.lastAftermath?.deltas}
-            every={option ? lawTrend(state, option) : undefined}
-            place={state}
-          />
-        </div>
+        {/* No list of what it does. The drafting table showed it on the
+            predicate a second ago, and the ledger has it for good. */}
 
         {paragraphs.length > 0 && (
           <div className="mt-3 space-y-2 border-t border-ink-line pt-2">
@@ -128,9 +108,6 @@ export function SealMoment({ state, onDone }: Props) {
             <div className="text-[10px] uppercase tracking-[0.18em] text-seal">
               {UI.wiring.heading}
             </div>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-parchment/90">
-              {UI.wiring.lead}
-            </p>
             <ul className="mt-2 space-y-1.5">
               {UI.wiring.boards.map((board) => {
                 const meta = STATS.find((s) => s.id === board.stat);
@@ -150,11 +127,15 @@ export function SealMoment({ state, onDone }: Props) {
             <p className="mt-2.5 border-t border-seal/40 pt-2 text-[13px] leading-relaxed text-bad">
               {UI.wiring.floor}
             </p>
-            <p className="mt-2 text-[11px] uppercase tracking-[0.15em] text-parchment-dim">
-              {UI.winter.dismiss}
-            </p>
           </div>
         )}
+
+        {/* Always in the window, whatever is above it. The lecture is the one
+            thing here tall enough to push the way out below the bottom edge,
+            and a screen that explains itself cannot also hide its own door. */}
+        <p className="sticky bottom-0 mt-3 border-t border-ink-line bg-ink py-2 text-[11px] uppercase tracking-[0.15em] text-parchment-dim">
+          {UI.winter.dismiss}
+        </p>
       </div>
     </button>
   );

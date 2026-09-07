@@ -51,6 +51,14 @@ export type Doing =
   | 'mourning'
   | 'resting'
   | 'mending'
+  /**
+   * Walking, slowly, with a stick, because the back that was the whole
+   * argument in the first spring is still the back he has. This is what a man
+   * who was told to dig actually does with a year: not the spade, which is
+   * what the town used to draw him with, and which read as a settled question
+   * that had gone the other way.
+   */
+  | 'limping'
   | 'running'
   | 'ferrying'
   | 'counting'
@@ -284,7 +292,7 @@ export const CASE_DOING: Record<string, Doing> = {
   // the ones who come back: the fence is Tam's whatever you said to him the
   // first time, and Marta is on whatever ground she has left
   r1_tam_fed: 'mending',
-  r1_tam_cut: 'digging',
+  r1_tam_cut: 'limping',
   r2_marta_kept: 'tending',
   r2_marta_moved: 'resting',
 };
@@ -298,13 +306,15 @@ export const CASE_DOING: Record<string, Doing> = {
 export const CHOICE_DOING: Record<string, Doing> = {
   // Tam is the first person anybody meets, and what he does for the rest of
   // the reign is the plainest example of the whole idea: fed, he mends the
-  // fence sitting down; given half a share, he works half days; cut off, he
-  // is out on the ground doing what a back that hurts should not
+  // fence sitting down; anything else and he is out on the lane on a stick,
+  // going wherever he has been told to go, slowly, on the back that was the
+  // argument. He was drawn over a spade for four versions, which said the
+  // back had been a lie, which is a thing the scene never says.
   'v1_idle_hand:feed_him': 'mending',
-  'v1_idle_hand:half_share': 'digging',
-  'v1_idle_hand:no_work_no_bread': 'digging',
-  'v1_idle_hand:cut_his_share': 'digging',
-  'v1_idle_hand:his_own_field': 'digging',
+  'v1_idle_hand:half_share': 'limping',
+  'v1_idle_hand:no_work_no_bread': 'limping',
+  'v1_idle_hand:cut_his_share': 'limping',
+  'v1_idle_hand:his_own_field': 'limping',
   // the one answer that gives him a job rather than a verdict
   'v1_idle_hand:headman_decides': 'building',
   // a goat in every yard is a goat in every yard, and the boy who walked them
@@ -358,6 +368,8 @@ export const WINTER_DOING: Partial<Record<Doing, Doing>> = {
   // the roads are shut, so the horse stays in and the gate gets watched
   riding: 'watching',
   running: 'hauling',
+  // a lane under ice is no place for a stick
+  limping: 'mending',
   // a market row in a blizzard is two boards and nobody
   trading: 'milling',
   // the goats are in, and somebody still has to carry fodder to them
@@ -422,6 +434,7 @@ export const DOING_LINES: Record<Doing, string> = {
   mourning: 'Out at the stones, most evenings.',
   resting: 'Sitting down, in the sun if there is any.',
   mending: 'Mending the fence, sitting down.',
+  limping: 'Out on the lane on a stick, getting there.',
   running: 'Running somewhere, as usual.',
   ferrying: 'Out on the water with the pole.',
   counting: 'Counting something that has been counted already.',
@@ -464,6 +477,8 @@ export const STATIONS: Record<Doing, { x: number; y: number; span: number }> = {
   mourning: { x: 430, y: 500, span: 10 },
   resting: { x: 596, y: 482, span: 0 },
   mending: { x: 592, y: 258, span: 0 },
+  // the lane between the yards and the field, walked slowly and end to end
+  limping: { x: 648, y: 424, span: 62 },
   running: { x: 962, y: 442, span: 116 },
   ferrying: { x: 1148, y: 508, span: 52 },
   counting: { x: 1030, y: 362, span: 8 },

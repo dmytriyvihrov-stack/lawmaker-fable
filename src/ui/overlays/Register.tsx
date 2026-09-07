@@ -45,6 +45,9 @@ export function Register({ state, season, onGift, onTake, onClose }: Props) {
   const doings = doingsNow(state, season);
   const ages = agesNow(state);
 
+  /** Whether the store can pay for a kindness at all this year. */
+  const storePoor = state.stats.economy < CONFIG.bond.giftCost;
+
   const act =
     'min-h-[30px] rounded-md border px-2 py-1 text-[11px] leading-tight disabled:opacity-40';
 
@@ -71,6 +74,16 @@ export function Register({ state, season, onGift, onTake, onClose }: Props) {
 
         {people.length === 0 && (
           <p className="text-[14px] text-parchment-dim">{UI.register.empty}</p>
+        )}
+
+        {/* An empty store is a fact about the store, and it used to be printed
+            under every single person on the page: "The store cannot spare it."
+            three times running, once per face, about the same store. Said once,
+            over the list, and the buttons under it are simply grey. */}
+        {storePoor && people.length > 0 && (
+          <p className="mb-3 rounded-md border border-bad/40 bg-bad/[0.07] px-3 py-2 text-[12px] leading-snug text-parchment-dim">
+            {BOND_UI.giftPoor}
+          </p>
         )}
 
         {/* Several to a page, portrait first, the way a register actually
@@ -200,9 +213,12 @@ export function Register({ state, season, onGift, onTake, onClose }: Props) {
                           {CONFIG.bond.loverCost}
                         </span>
                       </button>
-                      <span className="text-[10px] leading-snug text-hair">
-                        {mine ? takeWhy : giftWhy}
-                      </span>
+                      {/* and never the store line here: it is over the list */}
+                      {!(storePoor && !mine && gift === 'poor') && (
+                        <span className="text-[10px] leading-snug text-hair">
+                          {mine ? takeWhy : giftWhy}
+                        </span>
+                      )}
                     </div>
                   )}
 

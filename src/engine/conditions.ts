@@ -1,4 +1,4 @@
-﻿import { isActiveStat } from './simulation';
+import { isActiveStat } from './simulation';
 import type { ActionId, Condition, EnactedLaw, GameState, SubjectId } from './types';
 
 function matchesLaw(law: EnactedLaw, subject?: SubjectId, action?: ActionId): boolean {

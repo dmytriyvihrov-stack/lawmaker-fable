@@ -231,7 +231,7 @@ export function Portrait({ state, onBeginAnew }: Props) {
             has neither: the reading is the ending. */}
         {p.endingIcon && (
           <div className="mb-3 flex items-center gap-3">
-            <MonarchPortrait monarch={monarch} mood={0} size={56} />
+            <MonarchPortrait stage={state.stage} monarch={monarch} mood={0} size={56} />
             <span aria-hidden className="text-[34px] leading-none">
               {p.endingIcon}
             </span>

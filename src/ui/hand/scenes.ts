@@ -282,6 +282,15 @@ export interface Scene {
    * difference, and works in the scene's own coordinates from then on.
    */
   home: { x: number; y: number };
+  /**
+   * Where the spot sits in the frame while the hand is at work, top to bottom,
+   * 0 to 1. Half way for a scene that fits round its own spot, which is all
+   * of them but one: the road runs downhill out of this scene for eighty units
+   * past the man on it, and the ground it ends at - the crosses at the edge,
+   * the last marker, the pile - was under the strip that says what the hand is
+   * doing. A target a hand cannot reach is a scene that cannot be finished.
+   */
+  actFy?: number;
   build(parent: Element): void;
   reset(): void;
   setVisible(v: boolean): void;
@@ -754,6 +763,8 @@ function roadScene(): Scene {
 
   return {
     home: HOME,
+    // everything that happens in this one happens downhill of the man
+    actFy: 0.32,
     build(parent) {
       root = el('g', { style: 'display:none' }, parent);
       // the post the road goes past, with its lantern

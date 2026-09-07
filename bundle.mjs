@@ -15,6 +15,15 @@ const css = readFileSync(join(assets, files.find((f) => f.endsWith('.css'))), 'u
 const js = readFileSync(join(assets, files.find((f) => f.endsWith('.js'))), 'utf8');
 
 /**
+ * The build number, lifted out of the page vite just wrote rather than out of
+ * the script. It is in the page and not in the bundle on purpose: a timestamp
+ * inside a hashed chunk means an unchanged source tree builds a different file
+ * every time. See the note in `vite.config.ts`.
+ */
+const built = readFileSync(join(here, 'dist', 'index.html'), 'utf8');
+const buildTag = (built.match(/<meta name="lawmaker-build"[^>]*>/) ?? [''])[0];
+
+/**
  * The one tag this file cannot do without.
  *
  * Everything the chrome is made of is an emoji, and they go into this file as
@@ -24,6 +33,7 @@ const js = readFileSync(join(assets, files.find((f) => f.endsWith('.js'))), 'utf
  * line and it is not a guess after it.
  */
 const page = `<meta charset="utf-8">
+${buildTag}
 <title>Lawmaker Fable</title>
 <style>
 ${css}

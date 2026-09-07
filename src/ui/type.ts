@@ -15,6 +15,13 @@
  *   body     anything a person reads as a sentence
  *   note     a sentence that is beside the point rather than the point
  *   label    an overline naming the part of the screen under it
+ *   tag      a word stamped on something else: "bends", "breaks", a count
+ *
+ * `tag` is the same size as `label` on purpose. It is not a sixth step in the
+ * scale, it is `label` without the caps and the tracking, for the places where
+ * a word sits inside a line rather than over one. The screens that grew nine
+ * and ten steps did it by inventing a new size for exactly this, four times,
+ * at nine, ten, eleven and twelve pixels.
  *
  * Sizes only, on purpose: line height belongs to the block it is set on, and a
  * heading in a narrow margin does not want the leading a paragraph wants. Two
@@ -27,4 +34,5 @@ export const TYPE = {
   body: 'text-[15px]',
   note: 'text-[13px]',
   label: 'text-[11px] uppercase tracking-[0.18em]',
+  tag: 'text-[11px]',
 } as const;

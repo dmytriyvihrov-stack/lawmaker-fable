@@ -58,10 +58,13 @@ export const GROWTH_STATE = {
  */
 export const GROWTH_COST = {
   heading: 'And what every rung costs',
-  /** {n} is CONFIG.crowdHealthEvery. */
-  hamlet: 'Every {n} of you sharing one well is a point off the conditions, every year, for as long as they are here.',
-  /** {n} is CONFIG.town.crowdEvery, past CONFIG.town.at. */
-  town: 'Past the charter, every {n} more is a point off the square and a point off the conditions, every year, on top.',
+  /* One line. It was three, on the densest screen in the game, under a ladder
+     of five rungs that were two lines each. `{n}` is `CONFIG.crowd.healthEvery`
+     and `{town}` is `CONFIG.town.crowdEvery`; what a house, a well and the long
+     room answer for is under the pointer. */
+  line: 'Every {n} of you with no roof is a point off the conditions a year; past the charter, every {town} more is one off the square as well.',
+  /** The half of it that is under the pointer. */
+  answered: 'A house, a lined well and the long room each answer for a share of the count, so the part that is felt is the part nothing has been built for.',
   /** How much the crowd is already costing this year. {n} is a whole number of points. */
   now: 'This year the crowd costs the conditions {n}.',
   nowNothing: 'This year the crowd costs the conditions nothing yet.',

@@ -51,7 +51,7 @@ export function MonarchPanel({ state, variant, dev = false }: Props) {
     return (
       <div className="flex items-center gap-2.5">
         <span className="shrink-0">
-          <MonarchPortrait monarch={monarch} mood={mood} size={40} bracing={bracing} />
+          <MonarchPortrait stage={state.stage} monarch={monarch} mood={mood} size={40} bracing={bracing} />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-1.5" title={gaugeHover}>
@@ -92,7 +92,7 @@ export function MonarchPanel({ state, variant, dev = false }: Props) {
         }`}
       >
         <div className="flex justify-center">
-          <MonarchPortrait
+          <MonarchPortrait stage={state.stage}
             monarch={monarch}
             mood={mood}
             size={variant === 'card' ? 92 : 132}

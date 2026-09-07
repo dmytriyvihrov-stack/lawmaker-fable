@@ -5,11 +5,15 @@ import { CONFIG } from '../engine/config';
 import { townFolk } from '../engine/folk';
 import { chooseCase, chooseLaw, chooseWork, continueYear, reopenLaw } from '../engine/reducer';
 import { getCase } from '../engine/registry';
+import { forgetEverything } from '../engine/save';
 import { isWinter, seasonOf } from '../engine/simulation';
 import type { GameState, Season, WorkId } from '../engine/types';
 import { CityScape } from '../ui/components/CityScape';
 import { BuildBadge, DevBar, DevToggle } from '../ui/components/DevCorner';
 import { DevEditsPanel } from '../ui/components/DevEditsPanel';
+import { TextEditLayer } from '../ui/dev/TextEditLayer';
+import { clearAllDevEdits } from '../ui/dev/devEditsStore';
+import { setTextEditMode } from '../ui/dev/textEditMode';
 import { Interlude } from '../ui/components/Interlude';
 import { MonarchPanel } from '../ui/components/MonarchPanel';
 import { MusicToggle } from '../ui/components/MusicToggle';
@@ -70,6 +74,8 @@ export function MiniApp() {
   const skipDrift = useRef(false);
   const seen = useRef<{ turn: number; phase: string }>({ turn: -1, phase: '' });
   const [dev, setDev] = useState(false);
+  const [editText, setEditText] = useState(false);
+  useEffect(() => setTextEditMode(dev && editText), [dev, editText]);
   const [everyAnswer, setEveryAnswer] = useState(true);
   const [showActs, setShowActs] = useState(false);
   const [codexOpen, setCodexOpen] = useState(false);
@@ -323,7 +329,16 @@ export function MiniApp() {
         </div>
         {dev && (
           <div className="mx-auto w-full max-w-3xl px-4">
-            <DevBar state={game} />
+            <DevBar
+              state={game}
+              editText={editText}
+              onEditText={() => setEditText((v) => !v)}
+              onWipe={() => {
+                clearAllDevEdits();
+                forgetEverything();
+                window.location.reload();
+              }}
+            />
           </div>
         )}
       </div>
@@ -464,6 +479,7 @@ export function MiniApp() {
       <BuildBadge />
       <DevToggle on={dev} onToggle={() => setDev((v) => !v)} />
       <DevEditsPanel on={dev} />
+      <TextEditLayer on={dev && editText} />
     </div>
   );
 }

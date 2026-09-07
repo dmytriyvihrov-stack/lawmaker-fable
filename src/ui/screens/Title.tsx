@@ -5,6 +5,8 @@ const CHAPTERS: Stage[] = ['village', 'town', 'kingdom'];
 
 interface Props {
   hasSave: boolean;
+  /** A reign is in the slot and this version cannot open it. Say so. */
+  staleSave?: boolean;
   onNew: () => void;
   onContinue: () => void;
   /** The dev switch in the corner, which is the gate on the row below. */
@@ -13,7 +15,7 @@ interface Props {
   onBeginAt?: (chapter: Stage) => void;
 }
 
-export function Title({ hasSave, onNew, onContinue, dev = false, onBeginAt }: Props) {
+export function Title({ hasSave, staleSave = false, onNew, onContinue, dev = false, onBeginAt }: Props) {
   return (
     <div className="flex min-h-[70vh] flex-col items-center justify-center gap-8 px-6 text-center">
       <div>
@@ -22,6 +24,13 @@ export function Title({ hasSave, onNew, onContinue, dev = false, onBeginAt }: Pr
         </div>
         <h1 className="text-3xl leading-tight tracking-wide">{UI.title.name}</h1>
         <p className="mt-3 text-[15px] leading-relaxed text-parchment-dim">{UI.title.tagline}</p>
+        {/* An hour of somebody's play used to disappear behind a missing
+            Continue button and no sentence at all. */}
+        {staleSave && (
+          <p className="mx-auto mt-4 max-w-sm rounded-md border border-bad/50 bg-bad/[0.08] px-3 py-2 text-[13px] leading-relaxed text-bad">
+            {UI.title.staleSave}
+          </p>
+        )}
       </div>
       <div className="flex w-full max-w-xs flex-col gap-3">
         <button

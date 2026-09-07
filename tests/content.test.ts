@@ -375,9 +375,27 @@ describe('content validator', () => {
         }
       }
     }
+    /* Four boards can reach their floor and each has a scene waiting there.
+       The square is the fifth and it never gets that far: it walks out at
+       `walkOut.at`, twenty six, or at ten behind a full watch, and the reign
+       is over. So the mood collapse is not a collapse at all - it is the
+       deputation, injected by the reducer at that line, and `x_flight` is the
+       warning fired in the band above it. A scene written at `mood lte 0` was
+       a scene no reign in twelve seeds and seven players ever saw. */
     expect([...collapseBoards].sort()).toEqual(
-      ['army', 'crownSanity', 'economy', 'health', 'mood'].sort(),
+      ['army', 'crownSanity', 'economy', 'health'].sort(),
     );
+    expect(caseIds.has('x_square'), 'the square has nowhere to say so').toBe(true);
+    expect(CASES.find((c) => c.id === 'x_square')!.trigger, 'x_square is injected').toBeNull();
+    const flight = CASES.find((c) => c.id === 'x_flight')!;
+    const flightConds: Condition[] = [];
+    walkConditions(flight.trigger, flightConds);
+    const moodBand = flightConds.find((c) => c.kind === 'stat' && c.stat === 'mood');
+    expect(moodBand, 'x_flight no longer watches the square').toBeDefined();
+    expect(
+      (moodBand as { value: number }).value,
+      'x_flight fires below the line the square walks out at, so never',
+    ).toBeGreaterThan(CONFIG.walkOut.at);
     for (const step of IVA_STEPS) {
       expect(
         allChoices.some((ch) => ch.setIva === step),
@@ -600,12 +618,19 @@ describe('content validator', () => {
     for (const p of PROPOSALS) {
       const village = VILLAGE_SUBJECTS.includes(p.options[0].subject);
       if (village) {
-        // a hamlet law waits for nothing except, at most, a year of the place
-        // existing: it may never wait for a crowd or a charter it will not see
+        /* A hamlet law waits for nothing a hamlet will not reach: a year of
+           the place existing, or something that has actually happened in it,
+           or either of those. It may never wait for a crowd or a charter it
+           will not see. `pv3_dead` is the reason this is not simply "turn":
+           the law about burying people arrives the year somebody is buried,
+           with a year as the long stop behind it. */
         const gate = p.unlockedBy;
-        if (gate !== undefined) {
-          expect(gate.kind, `${p.id} waits on more than a year`).toBe('turn');
-        }
+        const reachable = (c: typeof gate): boolean =>
+          c === undefined ||
+          c.kind === 'turn' ||
+          c.kind === 'flag' ||
+          (c.kind === 'any' && c.conds.every((inner) => reachable(inner)));
+        expect(reachable(gate), `${p.id} waits on more than a hamlet can reach`).toBe(true);
         continue;
       }
       expect(TOWN_SUBJECTS).toContain(p.options[0].subject);

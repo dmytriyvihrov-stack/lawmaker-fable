@@ -153,7 +153,19 @@ export const CASES: CaseEvent[] = [
   // ================================================================= village: strangers
   {
     id: 'v3_millwright',
-    trigger: { kind: 'lawActive', subject: 'strangers' },
+    /* A mill wants a plot, and a plot wants ground somebody has broken.
+       This walked in on a bare valley in the second spring, where the best
+       land on the stream had been farmed for eleven years by a woman standing
+       in grass nobody had ever ploughed, and a stranger offered to put a wheel
+       on it. The law on strangers is what lets him through the gate; the field
+       is what there is for him to want. */
+    trigger: {
+      kind: 'all',
+      conds: [
+        { kind: 'lawActive', subject: 'strangers' },
+        { kind: 'built', work: 'fields' },
+      ],
+    },
     priority: 1,
     character: 'millwright',
     title: 'The Mill-Wright',
@@ -1556,7 +1568,19 @@ export const CASES: CaseEvent[] = [
 
   {
     id: 'x_flight',
-    trigger: { kind: 'stat', stat: 'mood', op: 'lte', value: 0 },
+    /* It waited on a mood of nothing, and a mood of nothing cannot happen: the
+       square walks out at twenty six, or at ten behind a full watch, and ends
+       the reign long before the board reaches the floor. So in twelve seeds
+       and seven players nobody ever saw this. It is a warning shot now, fired
+       in the band above the deputation, and only in a place big enough for
+       eleven families to leave without anybody noticing for a week. */
+    trigger: {
+      kind: 'all',
+      conds: [
+        { kind: 'stat', stat: 'mood', op: 'lte', value: 36 },
+        { kind: 'souls', op: 'gte', value: 60 },
+      ],
+    },
     priority: 0,
     character: 'crowd',
     title: 'The Road South',
@@ -2629,6 +2653,187 @@ export const CASES: CaseEvent[] = [
           'He sleeps in the long house with the door open and works the yard where four windows look at it. Nothing goes missing again. Nobody is comfortable, and nothing goes missing again.',
         tags: ['communitarian'],
         effects: { mood: -4, economy: 4, culture: 4 },
+      },
+    ],
+  },
+
+  /* =============================================== the ones that come round
+
+     Everything above this line happens once. Forty seven scenes, nine decrees,
+     and then a reign that lasts thirty years spends its last decade with
+     nobody at the door: six years running of a card that says nothing is
+     happening, which is the worst thing in a played timeline and the reason
+     the drafting table running dry is the commonest way a good reign ends.
+
+     These four are the other kind. They are not the arc; they are the work.
+     A stone gets moved, somebody wants a place for their boy, somebody is at
+     the gate in November, and there is a bottom to the store and a decision
+     about it. Every one of them is a thing that happens in a place every few
+     years for as long as the place exists, so every one of them may be asked
+     again: the scheduler holds them back until the written arc has nothing
+     left, and then keeps them apart with a cooldown read off the log.
+
+     The rules they are written to. Nothing here sets a flag, opens a chain,
+     kills anybody, or moves a board more than four points: a scene that can
+     come round three times must not be able to decide a reign three times.
+     Every one of them is a real argument with a real cost on both sides, and
+     none of them is a chore. And each is written so that the second telling
+     reads as the same kind of year rather than the same year.
+     ============================================================== */
+
+  {
+    id: 'rr_stone',
+    // out at the field edge, where a boundary is a stone and not a line
+    trigger: { kind: 'souls', op: 'gte', value: 24 },
+    priority: 14,
+    character: 'digger',
+    title: 'The Stone at the Corner',
+    question: 'The stone at the corner of two strips is nine feet from where both of them remember it.',
+    scene: [
+      'Neither of them moved it and both of them are certain, which is what makes this the one argument every place has and no place settles. There is a furrow that says one thing and a hedge that says another, and the hedge is younger than the furrow.',
+      'They have brought it to you because they have run out of ways to be reasonable at each other, and because whoever loses would rather lose to you than to the other one.',
+    ],
+    choices: [
+      {
+        id: 'the_furrow',
+        text: 'The furrow is older than the hedge. The stone goes back.',
+        result:
+          'It takes four of them and most of a morning, and it goes in deeper than it was. The one who loses says nothing at all and works his side of it for the rest of his life without once standing on the other.',
+        tags: ['kantian'],
+        effects: { mood: -2, economy: 3 },
+      },
+      {
+        id: 'split_it',
+        text: 'Split the difference and put a post in.',
+        result:
+          'A post goes in halfway, and both of them are quietly furious and privately relieved. The post is still called the wrong name by both households a decade later.',
+        tags: ['utilitarian'],
+        effects: { mood: 3, economy: -1 },
+      },
+      {
+        id: 'let_it_lie',
+        text: 'Leave it where it stands. It has been there a year.',
+        result:
+          'Nothing is decided, which is a decision, and the place learns that a stone that survives a year is a stone that stays. Two other corners move quietly before the spring.',
+        tags: ['libertarian'],
+        effects: { mood: -1, economy: -2, crownSanity: 2 },
+      },
+    ],
+  },
+
+  {
+    id: 'rr_apprentice',
+    trigger: { kind: 'souls', op: 'gte', value: 30 },
+    priority: 14,
+    character: 'millwright',
+    title: 'The Place at the Bench',
+    question: 'There is one place at the bench this year and three houses have asked for it.',
+    scene: [
+      'A trade is the only thing in this valley a person can be given that cannot be taken off them again, and there is one of it going. One is the eldest of a house that has fed the work for years. One is plainly the best with their hands. One has nothing else at all and everybody knows it.',
+      'Whoever gets it eats for the rest of their life. The other two go back to the ground, which is not a cruelty, and everybody standing here can do the arithmetic.',
+    ],
+    choices: [
+      {
+        id: 'the_best_hands',
+        text: 'The one who is best at it.',
+        result:
+          'The bench gets somebody who is worth watching inside a season, and two households learn that being owed something here does not count for much. Both of those are true and both of them are felt.',
+        tags: ['meritocratic'],
+        effects: { economy: 4, mood: -2 },
+      },
+      {
+        id: 'the_one_owed',
+        text: 'The house that has carried the work.',
+        result:
+          'The eldest of that house takes the place and is adequate at it for thirty years. Nobody is surprised and nobody complains, and the place quietly agrees that this is how it is done here.',
+        tags: ['communitarian'],
+        effects: { mood: 3, economy: -1 },
+      },
+      {
+        id: 'the_one_with_nothing',
+        text: 'The one with nothing else.',
+        result:
+          'It is the answer everybody expected of you and not the one the bench wanted. The work is slower for two years and there is one fewer person in this place who has run out of things to try.',
+        tags: ['egalitarian'],
+        effects: { mood: 4, economy: -3, health: 1 },
+      },
+    ],
+  },
+
+  {
+    id: 'rr_gate',
+    trigger: { kind: 'souls', op: 'gte', value: 20 },
+    priority: 14,
+    character: 'chaplain',
+    title: 'At the Gate in November',
+    question: 'There is a family at the gate with a cart, and it is too late in the year to be travelling.',
+    scene: [
+      'Four of them and a cart with a bad wheel. They are going somewhere and they will not say where, and the road they want is shut by weather in a fortnight. They are asking for the winter and offering the work of two pairs of hands.',
+      'Two pairs of hands are worth having. Four mouths in a hard year are four mouths, and everybody at this gate has counted both.',
+    ],
+    choices: [
+      {
+        id: 'the_winter',
+        text: 'The winter, and the work, and we see about the spring.',
+        result:
+          'They are in the third house by nightfall and out at the wood by the end of the week. Two of them are still here in ten years and one of them is not, and nobody ever finds out where they had been going.',
+        tags: ['communitarian'],
+        effects: { mood: 3, economy: -3, health: -1 },
+      },
+      {
+        id: 'a_night',
+        text: 'A night, a fire and a loaf, and the road in the morning.',
+        result:
+          'They eat at somebody else’s hearth, sleep in the dry, and are gone before it is properly light. It is the answer this place gives, and it is the answer it gets asked about afterwards.',
+        tags: ['utilitarian'],
+        effects: { mood: -1, economy: -1 },
+      },
+      {
+        id: 'the_road',
+        text: 'The road. We have counted our own winter already.',
+        result:
+          'The cart goes back the way it came with the wheel no better than it was. Nobody in this place says anything about it for a month, and then somebody does, at the wrong moment, in front of everybody.',
+        tags: ['libertarian'],
+        effects: { mood: -4, economy: 3 },
+      },
+    ],
+  },
+
+  {
+    id: 'rr_bottom',
+    trigger: { kind: 'souls', op: 'gte', value: 26 },
+    priority: 14,
+    character: 'treasurer',
+    title: 'What Is Left in the Store',
+    question: 'The store is down to what is left, and there is more than one thing it could be spent on.',
+    scene: [
+      'It is not a crisis. It is the ordinary bottom of an ordinary year, and it comes round in this place the way the frost does. What is in there is enough to be worth arguing about and not enough to settle anything.',
+      'The Treasurer would like it left alone. The square would like a day of it. And there is a list of small broken things as long as your arm that nobody has been able to pay for since spring.',
+    ],
+    choices: [
+      {
+        id: 'put_it_by',
+        text: 'It stays where it is. We have all been hungry in March.',
+        result:
+          'The store keeps what it has and the list of small broken things gets one line longer. In March everybody is glad, out loud, which is not the same as having been glad in October.',
+        tags: ['utilitarian'],
+        effects: { economy: 3, mood: -3 },
+      },
+      {
+        id: 'the_list',
+        text: 'The list. Every small broken thing on it, this month.',
+        result:
+          'A gate, two roofs, the causeway and the pump, in three weeks, by people who have been walking past all of them since April. Nothing about the place is different and everything about it works.',
+        tags: ['meritocratic'],
+        effects: { economy: -3, health: 3, mood: 1 },
+      },
+      {
+        id: 'a_day_of_it',
+        text: 'A day of it, in the square, before the frost.',
+        result:
+          'One long afternoon of it, and the place remembers the afternoon for years and the store for about a fortnight. Whether that was worth it is the argument this place will be having at the same time next year.',
+        tags: ['communitarian'],
+        effects: { mood: 4, economy: -3, crownSanity: 2 },
       },
     ],
   },

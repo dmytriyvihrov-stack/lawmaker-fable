@@ -57,6 +57,7 @@ const POSTURE: Record<Doing, Posture> = {
   mourning: 'stand',
   resting: 'sit',
   mending: 'sit',
+  limping: 'stand',
   running: 'run',
   ferrying: 'stand',
   counting: 'stand',
@@ -86,6 +87,7 @@ const PLACE: Record<Doing, Place> = {
   mourning: 'field',
   resting: 'roofs',
   mending: 'field',
+  limping: 'road',
   running: 'road',
   ferrying: 'water',
   counting: 'roofs',
@@ -105,9 +107,9 @@ const PLACE: Record<Doing, Place> = {
 export function FolkFigure({ pin, scale = 1 }: { pin: FolkPin; scale?: number }) {
   const look = folkLook(pin.character);
   // and the one who does not go anywhere so much as get followed there
-  const moving = ['hauling', 'running', 'riding', 'ferrying', 'prowling', 'herding'].includes(
-    pin.doing,
-  );
+  const moving = [
+    'hauling', 'running', 'riding', 'ferrying', 'prowling', 'herding', 'limping',
+  ].includes(pin.doing);
   return (
     <g transform={`translate(${pin.x} ${pin.y})`} className="town-folk" data-doing={pin.doing}>
       <title>{pin.label}</title>
@@ -411,6 +413,13 @@ function Ground({ doing }: { doing: Doing }) {
     case 'pouring':
       // a step to sit on, since a person sitting on nothing is a person falling
       return <rect x="-3.4" y="-1.6" width="4.6" height="1.6" fill={SOFT} />;
+    case 'limping':
+      // the lane under him, and the one foot that is taking all of it
+      return (
+        <g stroke={SOFT} strokeWidth="0.6" fill="none" opacity="0.7">
+          <path d="M-7 0 h14" />
+        </g>
+      );
     case 'riding':
       return (
         <g fill={INK}>
@@ -600,6 +609,14 @@ function Hands({ doing, posture, seal }: { doing: Doing; posture: Posture; seal:
     case 'mending':
       // both hands on the rail across the knees
       return <path d="M0.8 -4.4 L2.6 -2.8" stroke={INK} strokeWidth="0.6" strokeLinecap="round" />;
+    case 'limping':
+      // the arm down and out, and the stick taking the weight the back cannot
+      return (
+        <g strokeLinecap="round" fill="none">
+          <path d="M1.7 -6.2 L3.2 -4.6" stroke={INK} strokeWidth="0.65" />
+          <path d="M3.4 -4.8 L4.4 0.2" stroke={SOFT} strokeWidth="0.7" />
+        </g>
+      );
     case 'mourning':
       return <path d="M1.6 -5.6 L2.8 -3.4" stroke={INK} strokeWidth="0.6" strokeLinecap="round" />;
     case 'running':

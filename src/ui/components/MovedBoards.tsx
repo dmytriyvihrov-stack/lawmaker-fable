@@ -35,6 +35,29 @@ interface Props {
    * five lines tall for the sake of nine characters.
    */
   row?: boolean;
+  /**
+   * Spell the feelings out as numbers as well as words.
+   *
+   * The rule everywhere a choice is being weighed is that how the square and
+   * the crown feel is a word and never a count: "-6" invites arithmetic this
+   * game does not reward, and a player doing arithmetic is a player not
+   * reading. That rule is about *deciding*. Afterwards is a different job:
+   * once the answer is given, the screen owes the player the plain figure of
+   * what it did, and the aftermath and the small things on the map both say
+   * it. You never get a number to choose by; you always get one to learn from.
+   */
+  numeric?: boolean;
+  /**
+   * A number and nothing else: no word beside it, and no mark for when it
+   * lands.
+   *
+   * For the two places that report what already happened and say when it
+   * landed once, for the whole row. The aftermath used to print "+3.6 rises"
+   * on one line and "-1.2" on the next, so one row carried a tenth and an
+   * adjective and its neighbour carried only the tenth, four times over,
+   * each with its own "at once" beside it.
+   */
+  plain?: boolean;
   className?: string;
 }
 
@@ -46,10 +69,16 @@ const signed = movePoints;
  * it is a word: "falls hard" is the whole of what a player needs, and "-6" is
  * an invitation to arithmetic that nothing in this game rewards.
  */
-function amount(id: StatId, delta: number): { text: string; wide: boolean } {
-  return isFeeling(id)
-    ? { text: feelingWord(delta), wide: true }
-    : { text: signed(delta), wide: false };
+function amount(
+  id: StatId,
+  delta: number,
+  numeric = false,
+  plain = false,
+): { text: string; wide: boolean } {
+  if (!isFeeling(id) || plain) return { text: signed(delta), wide: false };
+  return numeric
+    ? { text: `${signed(delta)} ${feelingWord(delta)}`, wide: true }
+    : { text: feelingWord(delta), wide: true };
 }
 
 function rows(effects: Effects | undefined) {
@@ -68,7 +97,7 @@ function rows(effects: Effects | undefined) {
  * answer at the bench, a building in the year of work. One shape everywhere,
  * so the numbers under a dilemma read the same as the numbers under a law.
  */
-export function MovedBoards({ once, every, souls, place, emptyLine, bare, row, className }: Props) {
+export function MovedBoards({ once, every, souls, place, emptyLine, bare, row, numeric, plain, className }: Props) {
   const nowRows = rows(once);
   const yearRows = rows(every);
 
@@ -139,12 +168,12 @@ export function MovedBoards({ once, every, souls, place, emptyLine, bare, row, c
           key={`o${row.id}`}
           emoji={row.emoji}
           label={row.label}
-          value={amount(row.id, row.delta).text}
+          value={amount(row.id, row.delta, numeric, plain).text}
           tone={row.delta > 0 ? 'text-good' : 'text-bad'}
-          width={amount(row.id, row.delta).wide ? 'w-20' : 'w-8'}
+          width={amount(row.id, row.delta, numeric, plain).wide ? 'w-28' : 'w-8'}
           dim={!felt(row.id)}
-          when={felt(row.id) ? UI.seal.onceIcon : UI.seal.whenTownIcon}
-          whenLabel={felt(row.id) ? UI.seal.once : UI.seal.whenTown}
+          when={plain ? undefined : felt(row.id) ? UI.seal.onceIcon : UI.seal.whenTownIcon}
+          whenLabel={plain ? undefined : felt(row.id) ? UI.seal.once : UI.seal.whenTown}
         />
       ))}
       {yearRows.map((row) => (
@@ -152,9 +181,9 @@ export function MovedBoards({ once, every, souls, place, emptyLine, bare, row, c
           key={`e${row.id}`}
           emoji={row.emoji}
           label={row.label}
-          value={amount(row.id, row.delta).text}
+          value={amount(row.id, row.delta, numeric, plain).text}
           tone={row.delta > 0 ? 'text-good' : 'text-bad'}
-          width={amount(row.id, row.delta).wide ? 'w-20' : 'w-8'}
+          width={amount(row.id, row.delta, numeric, plain).wide ? 'w-28' : 'w-8'}
           dim={!felt(row.id)}
           when={bare ? undefined : felt(row.id) ? UI.seal.everyYearIcon : UI.seal.whenTownIcon}
           whenLabel={bare ? undefined : felt(row.id) ? UI.seal.everyYear : UI.seal.whenTown}
@@ -167,8 +196,8 @@ export function MovedBoards({ once, every, souls, place, emptyLine, bare, row, c
           value={`${signed(souls)}%`}
           tone={souls > 0 ? 'text-good' : 'text-bad'}
           width="w-8"
-          when={UI.seal.onceIcon}
-          whenLabel={UI.seal.once}
+          when={plain ? undefined : UI.seal.onceIcon}
+          whenLabel={plain ? undefined : UI.seal.once}
         />
       )}
     </ul>

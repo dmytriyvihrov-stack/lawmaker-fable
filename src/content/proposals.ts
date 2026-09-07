@@ -156,9 +156,22 @@ export const PROPOSALS: Proposal[] = [
     id: 'pv3_dead',
     act: 3,
     advisor: 'healer',
-    // somebody has to have died before this is a question, and in a place of
-    // nine that takes a year or two of being a place
-    unlockedBy: { kind: 'turn', op: 'gte', value: 4 },
+    /* Somebody has to have died before this is a question, and it used to be
+       a calendar that decided that: year four, whatever had or had not
+       happened by year four. It is the burial that decides it now. The year
+       the count first falls, or the first long winter, the healer is at the
+       door with this, and it lands on a place that has just carried somebody
+       up the far field rather than on one that is being asked to imagine it.
+       The year is still there underneath, unchanged, so a place that is living
+       well is asked on the same schedule it always was. The flag can only ever
+       bring this forward. */
+    unlockedBy: {
+      kind: 'any',
+      conds: [
+        { kind: 'flag', flag: 'first_dead' },
+        { kind: 'turn', op: 'gte', value: 4 },
+      ],
+    },
     title: 'The Ground',
     advice: {
       option: 1,

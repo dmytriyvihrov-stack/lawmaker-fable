@@ -1,5 +1,6 @@
 import type { Ref } from 'react';
 import { UI } from '../../content/ui-strings';
+import { TYPE } from '../type';
 import { characterMeta } from '../../content/meta';
 import { seasonLine } from '../../content/season-lines';
 import { getCase } from '../../engine/registry';
@@ -41,14 +42,14 @@ export function Interlude({ state, season, waiting, next, onOpen, cardRef }: Pro
       >
         <SeasonDial season={season} size={26} turn={state.turn} />
         <div className="min-w-0 flex-1">
-          <div className="text-[9px] uppercase tracking-[0.2em] text-parchment-dim">
+          <div className={`${TYPE.label} text-parchment-dim`}>
             {UI.idle.kicker} &middot; {UI.court.turn} {state.turn}, {UI.seasons[season]}
           </div>
           {/* The year of work is spent in autumn, which for a long time made
               autumn the only season that happened. Each of the others gets a
               line of its own, out of the seed, so a drifting year is a year
               and not a progress bar. */}
-          <p key={season} className="drift-in truncate text-[14px] italic leading-snug text-parchment">
+          <p key={season} className={`drift-in truncate ${TYPE.body} italic leading-snug text-parchment`}>
             {seasonLine(state.seed, state.turn, season, state.stage)}
           </p>
         </div>
@@ -58,7 +59,7 @@ export function Interlude({ state, season, waiting, next, onOpen, cardRef }: Pro
         <button
           type="button"
           onClick={onOpen}
-          className="shrink-0 rounded-full border border-ink-line px-4 py-1.5 text-[11px] tracking-wide text-parchment hover:border-parchment-dim"
+          className={`shrink-0 rounded-full border border-ink-line px-4 py-1.5 ${TYPE.tag} tracking-wide text-parchment hover:border-parchment-dim`}
         >
           {UI.idle.skip}
         </button>
@@ -81,13 +82,13 @@ export function Interlude({ state, season, waiting, next, onOpen, cardRef }: Pro
         </span>
       )}
       <div className="min-w-0 flex-1">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-seal">
+        <div className={`${TYPE.label} text-seal`}>
           {event ? UI.idle.waitingHeading : UI.idle.waitingLawHeading}
         </div>
         <div className="truncate text-lg leading-tight tracking-wide">
           {event ? event.title : UI.composer.heading}
         </div>
-        <div className="truncate text-[12px] text-parchment-dim">
+        <div className={`truncate ${TYPE.note} text-parchment-dim`}>
           {who ? who.label : UI.idle.waitingLaw}
         </div>
       </div>

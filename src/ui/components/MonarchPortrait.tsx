@@ -1,3 +1,5 @@
+import type { Stage } from '../../engine/types';
+import { ROYAL_WARDROBE } from '../../content/monarchs';
 import type { MonarchDef } from '../../content/monarchs';
 
 interface Props {
@@ -5,6 +7,7 @@ interface Props {
   /** 0..100, the monarch's patience with you. Drives the eyes and the mouth. */
   mood: number;
   size?: number;
+  stage?: Stage;
   /**
    * There is a hard thing on the table, 0..1. The face does not know the
    * answer either: it leans in, and the brows come down with the weight of it.
@@ -17,7 +20,7 @@ interface Props {
  * five tempers each: furious, grim, level, pleased, delighted. Everything the
  * portrait says it says with a jaw, and now also with the whole head.
  */
-export function MonarchPortrait({ monarch, mood, size = 132, bracing = 0 }: Props) {
+export function MonarchPortrait({ monarch, mood, size = 132, bracing = 0, stage = 'village' }: Props) {
   // a hard question ages a face by twenty points for as long as it is on the table
   const felt = Math.max(0, Math.min(100, mood - Math.round(bracing * 22)));
   const furious = felt <= 10;
@@ -26,6 +29,36 @@ export function MonarchPortrait({ monarch, mood, size = 132, bracing = 0 }: Prop
   const delighted = felt >= 90;
   /** The head leans with the temper: away from you when angry, toward you when won over. */
   const lean = (furious ? -6 : grim ? -3 : delighted ? 4 : pleased ? 2 : 0) + bracing * 3;
+
+  if (monarch.id === 'vaelis') {
+    const dress = ROYAL_WARDROBE[stage];
+    return <svg viewBox="0 0 120 150" width={size} height={size * 1.25} role="img" aria-label={monarch.name} className="block" data-royal-portrait={stage}>
+      <rect width="120" height="150" rx="8" fill="#303c36" />
+      <circle cx="60" cy="61" r="46" fill="#b6b993" opacity=".09" />
+      <path d="M9 150 Q12 117 41 110 H79 Q108 117 111 150Z" fill={dress.cloth} />
+      <path d="M14 150 L26 119 L43 112 L47 150Z" fill={dress.cloak} />
+      <path d="M51 91 H69 V116 L60 126 L50 116Z" fill="#e4bca0" />
+      <path d="M49 110 L60 126 L72 110 M60 126 V150" fill="none" stroke={dress.trim} strokeWidth="1.5" />
+      {stage !== 'village' && <><path d="M24 121 Q54 145 92 120" fill="none" stroke={dress.trim} strokeWidth="2.5" /><path d="M30 120 l4 -6 l6 6 l-5 6Z" fill={dress.trim} /></>}
+      {stage === 'kingdom' && <><path d="M23 119 L45 108 L52 119 M97 119 L76 108 L69 119" fill="none" stroke="#fff7e7" strokeWidth="9" /><path d="M66 131 l5 7 l-5 7 l-5 -7Z" fill={dress.trim} /><path d="M89 130 L102 150 M27 135 L21 150" stroke={dress.trim} strokeWidth="1.2" /></>}
+      <g transform={`rotate(${lean * .55} 60 100)`}>
+        <path d="M33 55 Q26 17 60 19 Q95 17 88 57 L92 111 L78 121 L74 78 H45 L43 118 L29 106Z" fill="#d9d4bc" stroke="#aaa990" strokeWidth="1" />
+        <path d="M38 50 Q38 31 60 31 Q83 31 82 53 L79 79 Q76 92 60 99 Q44 93 41 79Z" fill="#f0cfb4" />
+        <path d="M41 56 Q41 82 60 98 Q46 92 42 79Z" fill="#c59b87" opacity=".35" />
+        <path d="M36 57 Q34 30 59 24 Q86 26 85 58 Q76 38 60 36 Q46 41 36 57Z" fill="#eee8d2" />
+        <path d="M60 26 Q48 28 40 44 M63 28 Q75 31 81 45" fill="none" stroke="#bfc0a8" strokeWidth="1.5" />
+        <path d="M36 48 Q32 81 38 109 M84 48 Q90 84 82 112" fill="none" stroke="#f5eed6" strokeWidth="6" />
+        <path d="M36 55 l3 5 l-5 5 l5 5 l-4 5 l4 5 l-4 5 l4 5 l-3 5 M84 55 l-3 5 l5 5 l-5 5 l4 5 l-4 5 l4 5 l-4 5 l3 5" fill="none" stroke="#aaa990" strokeWidth="1.3" />
+        <path d={grim ? 'M44 58 L54 61 M76 58 L66 61' : 'M44 58 Q50 55 55 59 M65 59 Q70 55 76 58'} fill="none" stroke="#9b887a" strokeWidth="1.7" strokeLinecap="round" />
+        <path d="M44 65 Q50 61 55 65 M65 65 Q71 61 76 65" fill="none" stroke="#655a58" strokeWidth="1.4" />
+        <ellipse cx="50" cy="65" rx="2" ry={grim ? 1.3 : 2.5} fill="#7d748d" /><ellipse cx="70" cy="65" rx="2" ry={grim ? 1.3 : 2.5} fill="#7d748d" />
+        <path d="M60 67 L57 77 Q60 79 63 77" fill="none" stroke="#bd957f" strokeWidth="1" />
+        <path d={grim ? 'M53 85 Q60 82 67 85' : pleased ? 'M53 83 Q60 90 67 83' : 'M54 85 Q60 86 66 85'} fill="none" stroke="#a96d67" strokeWidth="1.7" strokeLinecap="round" />
+        {stage === 'town' && <path d="M36 43 Q60 35 84 43" fill="none" stroke={dress.trim} strokeWidth="2" />}
+        {stage === 'kingdom' && <><path d="M36 40 L36 28 L47 34 L51 24 L60 31 L69 24 L74 34 L84 28 L84 40 Q60 34 36 40Z" fill={dress.trim} stroke="#9e8149" strokeWidth="1" /><path d="M60 31 l3 4 l-3 4 l-3 -4Z" fill="#915654" /></>}
+      </g>
+    </svg>;
+  }
 
   return (
     <svg
@@ -42,7 +75,7 @@ export function MonarchPortrait({ monarch, mood, size = 132, bracing = 0 }: Prop
       {/* shoulders, in the gold, and something on them: a collar, a chain, and
           the fall of a garment. A monarch drawn as one dark hill was a monarch
           in a bag. */}
-      <path d="M18 150 Q22 112 60 108 Q98 112 102 150 Z" fill="#c8a24a" />
+      <path d="M18 150 Q22 112 60 108 Q98 112 102 150 Z" fill={monarch.id === 'vaelis' ? ROYAL_WARDROBE[stage].cloth : '#c8a24a'} />
       <path
         d="M42 116 Q60 130 78 116"
         fill="none"
@@ -58,7 +91,7 @@ export function MonarchPortrait({ monarch, mood, size = 132, bracing = 0 }: Prop
       <g className="fill-seal" opacity="0.55">
         {monarch.id !== 'vaelis' && <circle cx="60" cy="128" r="3.4" />}
       </g>
-      {garment(monarch.id)}
+      {garment(monarch.id, stage)}
       {/* neck */}
       <path d="M52 90 h16 v22 h-16 z" className="fill-parchment" opacity="0.9" />
       <path d="M52 104 q8 8 16 0 l0 8 h-16 z" className="fill-ink" opacity="0.12" />
@@ -79,7 +112,7 @@ export function MonarchPortrait({ monarch, mood, size = 132, bracing = 0 }: Prop
 
       <g transform={`rotate(${lean} 60 90)`}>
         {hair(monarch.id, headRx(monarch.id), headY(monarch.id))}
-        {crown(monarch.id)}
+        {(monarch.id !== 'vaelis' || stage !== 'village') && crown(monarch.id)}
         {eyes(monarch.id, grim, pleased)}
         {nose(monarch.id, headY(monarch.id))}
         {mouth(monarch.id, grim, pleased)}
@@ -98,11 +131,14 @@ export function MonarchPortrait({ monarch, mood, size = 132, bracing = 0 }: Prop
  * collar that comes up past the jaw, a shoulder built to be seen from the far
  * side of a field, and a clasp holding it that is worth more than the field.
  */
-function garment(id: string) {
+function garment(id: string, stage: Stage) {
   if (id !== 'vaelis') return null;
-  const dim = 'var(--color-parchment-dim)';
+  const dim = ROYAL_WARDROBE[stage].trim;
+  if (stage === 'village') return <path d="M42 116 Q60 138 78 116 M60 127 V150" fill="none" stroke={dim} strokeWidth="2" />;
   return (
     <g>
+      <path d="M18 150 Q20 118 42 113 L48 150Z" fill={ROYAL_WARDROBE[stage].cloak} />
+      {stage === 'kingdom' && <><path d="M28 121 Q60 139 92 121" fill="none" stroke="#fff6e4" strokeWidth="9" /><path d="M34 124 Q60 144 86 124" fill="none" stroke={dim} strokeWidth="2" /><path d="M59 137 l5 5 l-5 5 l-5 -5Z" fill={dim} /></>}
       {/* the raised shoulder, one side only, the way a coat is cut */}
       <path d="M18 150 Q20 116 44 111 L52 150 Z" fill={dim} opacity="0.2" />
       {/* the collar, standing */}

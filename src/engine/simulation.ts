@@ -79,8 +79,33 @@ export function openableBoard(s: GameState): StatId | 'both' | null {
  * they are pushed on, and the thing pushing hardest is simply how many of you
  * there are sharing one well.
  */
+/**
+ * How many souls the place has arranged itself to hold: a roof, clean water,
+ * and a room with beds in it. Not a cap on anything - it is the part of the
+ * count that crowding does not read as crowding.
+ */
+export function shelteredSouls(s: GameState): number {
+  const per = CONFIG.crowd.answers;
+  return (
+    (s.buildings.house ?? 0) * per.house +
+    (s.buildings.well ?? 0) * per.well +
+    (s.buildings.long_room ?? 0) * per.long_room
+  );
+}
+
+/**
+ * What sharing one well does to how long people live, a year at a time.
+ *
+ * Only the part of the count nothing has been built for, and bent past
+ * `bendsAt`, so a big place is answerable rather than doomed. See the note on
+ * `CONFIG.crowd`.
+ */
 export function crowdingOnHealth(s: GameState): number {
-  return -Math.floor(s.population / CONFIG.crowdHealthEvery);
+  const felt = Math.max(0, s.population - shelteredSouls(s));
+  const { bendsAt, healthEvery } = CONFIG.crowd;
+  const under = Math.min(felt, bendsAt);
+  const over = Math.max(0, felt - bendsAt);
+  return -Math.floor((under + over / 2) / healthEvery);
 }
 
 /** The long winter comes every tenth year and holds for that year. */
@@ -137,8 +162,13 @@ export function seasonOf(phase: Phase, turn: number, scene?: Season): Season {
        that sentence is the game calling itself a liar. */
     case 'intro':
     case 'composer':
-    case 'case':
       return 'spring';
+    /* The bench is summer, and used to be spring as well. A year that spent
+       spring on a law and then spring again on the man who came to test it
+       could only be told by the wheel between them, which then had to go all
+       the way round to arrive back where it started: four seasons of drift and
+       the same season line twice, to get from spring to spring. */
+    case 'case':
     case 'aftermath':
       return 'summer';
     case 'works':
@@ -241,6 +271,20 @@ export function growthPercentOf(s: GameState, option: LawOption): number | null 
 }
 
 /** How many souls the year adds or takes. Deterministic. */
+/**
+ * How many people this place loses to how it is living, this year, in whole
+ * people.
+ *
+ * The same term `yearlyChange` uses, rounded down to somebody a place could
+ * actually carry up the far field. Under a whole person it is a rate and not a
+ * funeral, and nothing in the game should be triggered by a rate.
+ */
+export function deathsOf(s: GameState): number {
+  const P = CONFIG.population;
+  const rate = Math.max(0, P.deathFrom - s.stats.health) * P.deathPerPoint;
+  return Math.floor(rate * s.population);
+}
+
 export function yearlyChange(s: GameState): number {
   if (isWinter(s.turn)) {
     const { base, healthWeight, economyWeight } = CONFIG.winter.loss;
@@ -270,9 +314,34 @@ export function yearlyChange(s: GameState): number {
     ? (s.stats.mood - P.moodNeutral) * P.growthPerMood
     : 0;
 
-  const rate = base - 1 + cheer - deaths;
-  const births = s.stage === 'village' ? CONFIG.village.births : 0;
+  /* And the ground, which is the thing the count was never weighed against.
+     Everything above is a reason people arrive; this is whether there is
+     anywhere for them to be. It scales what the place gains and never what it
+     loses: a full valley stops growing, and a sick one still empties. */
+  const gain = Math.max(0, base - 1 + cheer);
+  const slack = Math.max(0, 1 - s.population / Math.max(1, roomFor(s)));
+  const rate = gain * slack - deaths;
+  const births = s.stage === 'village' ? Math.round(CONFIG.village.births * slack) : 0;
   return Math.round(s.population * rate + births);
+}
+
+/**
+ * How many people this place has made room for. See `CONFIG.population.room`:
+ * the valley as it was found, plus every year of work that put ground under a
+ * plough, a roof over somebody, a lid on a good year, a road in, or a bridge
+ * over the water.
+ */
+export function roomFor(s: GameState): number {
+  const R = CONFIG.population.room;
+  return (
+    R.base +
+    (s.buildings.fields ?? 0) * R.fields +
+    (s.buildings.house ?? 0) * R.house +
+    (s.buildings.well ?? 0) * R.well +
+    (s.buildings.granary ?? 0) * R.granary +
+    (s.buildings.road ?? 0) * R.road +
+    (s.buildings.bridge ?? 0) * R.bridge
+  );
 }
 
 /**
@@ -608,8 +677,16 @@ export function workCost(s: GameState, work: WorkDef): number {
   // a year that can be spent again has no floors to be dearer than, so it
   // costs what it says, in a hamlet and in a town, full and every time
   if (work.maxLevel === 0) return asked;
-  const base = s.stage === 'village' ? CONFIG.works.costVillage : CONFIG.works.costTown;
   const level = s.buildings[work.id] ?? 0;
+  // the first roof, in the first year, at what a first roof is worth. Only the
+  // two things that year is a choice between: everything else is priced at
+  // what a year of work costs, in the first year and in the fortieth.
+  const first = s.turn <= 1 && level === 0 && FIRST_YEAR_WORKS.includes(work.id);
+  const base = first
+    ? CONFIG.works.costFirstYear
+    : s.stage === 'village'
+      ? CONFIG.works.costVillage
+      : CONFIG.works.costTown;
   const full = base + CONFIG.works.perLevel * level;
   return s.stats.economy >= CONFIG.works.freeAbove ? Math.ceil(full / 2) : full;
 }

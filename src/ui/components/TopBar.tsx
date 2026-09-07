@@ -2,7 +2,7 @@ import { moodFace, STATS } from '../../content/meta';
 import { readingFor } from '../../content/town-readings';
 import { UI } from '../../content/ui-strings';
 import { CONFIG } from '../../engine/config';
-import { movePoints, points } from '../../engine/format';
+import { movePoints, movePointsWhole, points } from '../../engine/format';
 import {
   activeStats,
   isWinter,
@@ -91,6 +91,15 @@ function Gauge({
   const reading = feeling ? readingFor(stat, value, state.stage) : null;
   // the square has a face, and it is the only board that does
   const mark = stat === 'mood' ? moodFace(value) : meta.emoji;
+  /**
+   * How much line a gauge gets.
+   *
+   * They were 90 and 70, which is fine for four boards and one board too wide
+   * for six: at 1440 with the watch and the songs open, Culture wrapped onto a
+   * second row under the store, twenty two pixels taller than the rest of the
+   * header and out of the row it belongs to. A bar is read for its fill and its
+   * direction, and both survive being shorter.
+   */
   const wide = stat === 'economy' || feeling;
 
   return (
@@ -101,7 +110,7 @@ function Gauge({
       <span className="sr-only">{hover}</span>
       <DevEditTrigger id={`ui:stat:${stat}:hover`} text={UI.stats[stat]} dev={dev} />
       {feeling ? (
-        <span className={wide ? 'w-[90px]' : 'w-[70px]'}>
+        <span className={wide ? 'w-[58px]' : 'w-[44px]'}>
           <Feeling
             value={value}
             pull={pull}
@@ -114,7 +123,7 @@ function Gauge({
         <>
           <span
             className={`block h-2 overflow-hidden rounded-full bg-ink-line ${
-              wide ? 'w-[90px]' : 'w-[70px]'
+              wide ? 'w-[58px]' : 'w-[44px]'
             }`}
             role="meter"
             aria-valuemin={CONFIG.statMin}
@@ -138,7 +147,9 @@ function Gauge({
             <span className="text-[11px] tabular-nums text-parchment-dim">{Math.round(value)}</span>
           )}
           {pull !== 0 && (
-            <span className={`text-[11px] tabular-nums ${toneOf(pull)}`}>{movePoints(pull)}</span>
+            <span className={`text-[11px] tabular-nums ${toneOf(pull)}`}>
+              {movePointsWhole(pull)}
+            </span>
           )}
         </>
       )}
@@ -253,7 +264,7 @@ export function TopBar({
 
   return (
     <header className="pointer-events-auto border-b-2 border-ink-line bg-ink-soft">
-      <div className="ruler-topbar-row flex flex-wrap items-center gap-x-6 gap-y-1.5 px-4 py-2.5 sm:px-7 sm:py-3">
+      <div className="ruler-topbar-row flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-2.5 sm:px-6 sm:py-3">
         {/* what the place is, and what it is called */}
         <span
           className="flex shrink-0 items-center gap-1.5 text-parchment"
@@ -268,7 +279,7 @@ export function TopBar({
 
         <GrowthNote state={state} />
 
-        <div className="ruler-topbar-boards flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-1.5">
+        <div className="ruler-topbar-boards flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1.5">
           {boards.map((id, i) => (
             <Gauge key={id} state={state} stat={id} edge={i >= boards.length - 1} dev={dev} />
           ))}
@@ -335,9 +346,18 @@ export function TopBar({
           </button>
 
           {/* the year and the season it is in are one fact, so they stand together */}
-          <span className="ml-1 flex shrink-0 items-center gap-2 whitespace-nowrap text-[11px] uppercase tracking-[0.2em] text-parchment-dim">
+          {/* The dial says which season, so the word "year" beside a number in
+              a row of numbers is the one word here that is not carrying its
+              own width. It is on the pointer instead. */}
+          <span
+            className="ml-1 flex shrink-0 items-center gap-2 whitespace-nowrap text-[11px] uppercase tracking-[0.2em] text-parchment-dim"
+            title={`${UI.court.turn} ${state.turn}`}
+          >
             <SeasonDial season={season} turn={state.turn} />
-            {UI.court.turn} {state.turn}
+            <span className="tabular-nums">{state.turn}</span>
+            <span className="sr-only">
+              {UI.court.turn} {state.turn}
+            </span>
           </span>
 
           {/* And how fast that dial is allowed to go round.
@@ -359,7 +379,8 @@ export function TopBar({
 
           {/* the other clock, which runs whether or not anybody is looking */}
           <span className="ml-2 whitespace-nowrap text-[11px] text-seal" title={frost}>
-            <span aria-hidden>❄️</span> {frostShort}
+            <span aria-hidden>❄️</span> <span className="tabular-nums">{frostShort}</span>
+            <span className="sr-only">{frost}</span>
           </span>
 
           {/* and the corner, which is not part of the reign at all */}

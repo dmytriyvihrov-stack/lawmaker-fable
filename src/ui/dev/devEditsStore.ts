@@ -18,6 +18,17 @@ export interface DevEdit {
   text?: string;
   /** "Note to AI": a request rather than a rewrite, e.g. "needs a joke here". */
   note?: string;
+  /**
+   * Struck out: this line should not be in the game at all.
+   *
+   * A rewrite to an empty string and a deletion are two different requests -
+   * "say nothing here" and "there should be nothing here" - and whoever
+   * applies the batch needs to be able to tell them apart, so it is a flag of
+   * its own rather than an empty `text`. On screen the line disappears either
+   * way, which is the point: you can see the screen without it before anybody
+   * commits to it.
+   */
+  removed?: boolean;
   updatedAt: number;
 }
 
@@ -41,6 +52,23 @@ function persist(next: Store): void {
   }
 }
 
+/**
+ * A name for a line of text that nobody had to write down first.
+ *
+ * The wired-up pencils file an edit under a hand-written id like
+ * `case:v1_idle_hand:question`, which is better, and there are eight of them
+ * in a game with several thousand lines. Anything picked up off the screen is
+ * filed under what it says instead: whoever applies the batch has the exact
+ * sentence to search the content files for, and the same sentence picked twice
+ * lands on the same entry.
+ */
+export function idForText(text: string): string {
+  let h = 5381;
+  const key = text.trim();
+  for (let i = 0; i < key.length; i++) h = ((h * 33) ^ key.charCodeAt(i)) >>> 0;
+  return `text:${h.toString(36)}:${key.slice(0, 24).replace(/\s+/g, '-').toLowerCase()}`;
+}
+
 let state: Store = load();
 const listeners = new Set<() => void>();
 
@@ -57,19 +85,30 @@ export function getDevEditsSnapshot(): Store {
   return state;
 }
 
-/** Save a rewrite and/or a note. Saving back the original with no note clears the entry. */
-export function saveDevEdit(id: string, original: string, text: string, note: string): void {
+/**
+ * Save a rewrite, a note, a deletion, or any two of the three. An entry that
+ * asks for none of them is not an entry, so it clears itself.
+ */
+export function saveDevEdit(
+  id: string,
+  original: string,
+  text: string,
+  note: string,
+  removed = false,
+): void {
   const trimmedText = text.trim();
   const trimmedNote = note.trim();
+  const rewritten = !removed && trimmedText !== original.trim();
   const next = { ...state };
-  if (trimmedText === original.trim() && trimmedNote === '') {
+  if (!rewritten && trimmedNote === '' && !removed) {
     delete next[id];
   } else {
     next[id] = {
       id,
       original,
-      text: trimmedText === original.trim() ? undefined : trimmedText,
+      text: rewritten ? trimmedText : undefined,
       note: trimmedNote || undefined,
+      removed: removed || undefined,
       updatedAt: Date.now(),
     };
   }

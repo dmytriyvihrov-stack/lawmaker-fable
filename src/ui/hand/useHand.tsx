@@ -327,7 +327,7 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
     const a: Acting = { caseId: id, choiceId, ruling, text, hooks };
     setActing(a);
     setStage('act');
-    camera.flyTo(frameFor(at, FRAME.act), MS.settle);
+    camera.flyTo(frameFor(at, sc.actFy ?? FRAME.act), MS.settle);
     beginAct(a, act);
     return true;
   };

@@ -12,7 +12,7 @@ export default defineConfig({
   base: './',
   cacheDir: '.vite-cache-minigames',
   define: {
-    __BUILD_ID__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')),
+    // the build id is a meta tag in the page now, see vite.config.ts
   },
   build: {
     outDir: 'dist-minigames',

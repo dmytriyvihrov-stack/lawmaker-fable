@@ -43,6 +43,16 @@ export function movePoints(n: number): string {
   return t > 0 ? `+${body}` : body;
 }
 
+/**
+ * The same move, rounded to a whole point, for the places that are a row of
+ * numbers rather than a report: the header carried "-27.5" beside "+1", which
+ * is four characters of a tenth nobody can act on, in the one row that has to
+ * fit six boards and the books and the year and the frost on one line.
+ */
+export function movePointsWhole(n: number): string {
+  return movePoints(Math.round(n));
+}
+
 export function splitLawId(lawId: LawId): { subject: SubjectId; action: ActionId } {
   const parts = lawId.split('_');
   const subject = parts[0] as SubjectId;
@@ -72,6 +82,23 @@ export function formatLaw(s: GameState, lawId: LawId): string {
   const law = s.laws[idx];
   const base = `LAW ${roman(idx + 1)} - "${law.label}"`;
   return law.status === 'active' ? base : `${base} (since repealed)`;
+}
+
+/**
+ * The same law, by number alone: `Law II`.
+ *
+ * A scene that crosses a law used to quote the whole sentence back, in capitals,
+ * on a card that is already narrow, while the sentence itself stood in the
+ * Standing panel two inches to the right and in the Codex behind one click. The
+ * number is the reference; the text is where the text lives.
+ */
+export function lawNumber(s: GameState, lawId: LawId): string | null {
+  const { subject, action } = splitLawId(lawId);
+  for (let i = s.laws.length - 1; i >= 0; i--) {
+    const l = s.laws[i];
+    if (l.subject === subject && l.action === action) return `Law ${roman(i + 1)}`;
+  }
+  return null;
 }
 
 /** Who the town names when a law finally costs somebody. */
@@ -119,9 +146,25 @@ export function agoWords(years: number | null): string {
   return UI.ago.years.replace('{n}', word);
 }
 
-export function renderTemplate(text: string, s: GameState): string {
+/**
+ * Options for the one template that has a second reading.
+ *
+ * `spoken` is the law that is on the screen already, in full, a line above the
+ * paragraph being rendered: the seal shows the sentence and then the ceremony
+ * line quoted the whole thing back in capitals underneath it, which was the
+ * third time a player read one law in one screen. Where the paragraph names
+ * that law it says "it" instead, and a reference to any other law is still
+ * spelled out, because that one is not on the screen.
+ */
+export interface TemplateOptions {
+  spoken?: LawId;
+}
+
+export function renderTemplate(text: string, s: GameState, opts: TemplateOptions = {}): string {
   return text
-    .replace(/\{\{law:([a-z_]+)\}\}/g, (_m, id: string) => formatLaw(s, id as LawId))
+    .replace(/\{\{law:([a-z_]+)\}\}/g, (_m, id: string, at: number) =>
+      opts.spoken === id ? (at === 0 ? 'It' : 'it') : formatLaw(s, id as LawId),
+    )
     .replace(/\{\{ago:([a-z0-9_]+)\}\}/g, (_m, id: string) => agoWords(yearsSince(s, id)))
     .replace(/\{\{casualty\}\}/g, () => casualtyName(s))
     .replace(/\{\{lean\}\}/g, () => leaningDetail(s));

@@ -17,7 +17,7 @@ export function JourneyCard({ state, control, cardRef, dev }: { state: GameState
     <div ref={cardRef} className="journey-card journey-errand pointer-events-auto" role="status">
       <span className="journey-spark" aria-hidden="true">✦</span>
       <div><p className="ruler-eyebrow">{s.mode === 'collect-work' ? JOURNEY.doing : JOURNEY.fetching}</p>
-        <h2>{s.mode === 'collect-work' ? JOURNEY.tasks[errand.moment.hand] : errand.moment.label}</h2>
+        <h2>{s.mode === 'collect-work' ? (errand.moment.task ?? JOURNEY.tasks[errand.moment.hand]) : errand.moment.label}</h2>
         <p className="journey-note">{s.visit ? JOURNEY.waiting : JOURNEY.reserved}</p></div>
       {s.errands.length > 1 && <span className="journey-count">{s.errands.length}</span>}
       {dev && <button className="journey-skip" onClick={control.skip}>{JOURNEY.devSkip}</button>}
@@ -30,13 +30,15 @@ export function JourneyCard({ state, control, cardRef, dev }: { state: GameState
       <div className="journey-story">
         <p className="ruler-eyebrow">{walking ? JOURNEY.walking : briefing ? `${who} · ${JOURNEY.heading}` : JOURNEY.approaching}</p>
         <h2>{event.title}</h2>
-        {(briefing || walking) ? <>
-          <p className="journey-intro">{event.question ? renderTemplate(event.question, state) : JOURNEY.speaking}</p>
-          <details className="journey-details" open={walking}>
-            <summary>{JOURNEY.more}</summary>
-            {event.scene.map((line, i) => <p key={i}>{renderTemplate(line, state)}</p>)}
-          </details>
-        </> : <p className="journey-note">{who}</p>}
+        {/* One hook on the road, and the scene at the bench.
+
+            This card used to carry the title, the question and both scene
+            paragraphs, and then the bench opened and said the same three
+            things again, word for word. What somebody stopping you on a lane
+            gives you is the one sentence that makes you come and look. */}
+        {(briefing || walking)
+          ? <p className="journey-intro">{event.question ? renderTemplate(event.question, state) : JOURNEY.speaking}</p>
+          : <p className="journey-note">{who}</p>}
         {walking && <p className="journey-note">{JOURNEY.arriving}</p>}
       </div>
       {briefing && <button className="journey-go" type="button" onClick={control.follow}>{JOURNEY.go}<span aria-hidden="true">↗</span></button>}

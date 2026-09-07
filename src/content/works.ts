@@ -93,11 +93,16 @@ export const WORKS: WorkDef[] = [
     id: 'granary',
     stage: 'both',
     name: 'Build up the granary',
-    line: 'Somewhere to put a good year. The store can hold far more, it eats a little of what it keeps, and the long winter takes less.',
+    line: 'Somewhere to put a good year. The store can hold far more, the long winter takes less, and nothing rots that did not have to.',
     cost: 10,
     townCost: 14,
     maxLevel: 2,
-    trend: { economy: -1 },
+    /* It used to eat a point a year for the privilege of standing there, which
+       made the one thing that lifts the lid on the store the least attractive
+       thing on a list nobody can afford one item from. A granary is a lid and
+       a floor: what it keeps is what would otherwise have gone bad, so it pays
+       for itself slowly and never quickly. */
+    trend: { economy: 1 },
     winterShelter: 5,
   },
   {
@@ -157,7 +162,7 @@ export const WORKS: WorkDef[] = [
     group: 'infrastructure',
     needsWork: { id: 'road', level: 1 },
     name: 'Throw a bridge over the river',
-    line: 'The far bank stops being a day away and starts being the far bank. It earns nothing. It is simply there, and everybody uses it.',
+    line: 'The far bank stops being a day away and starts being the far bank. Nothing is carted over it that was not carted round, and people build on that side now.',
     cost: 10,
     townCost: 14,
     maxLevel: 2,
@@ -165,7 +170,13 @@ export const WORKS: WorkDef[] = [
        it that was not carted round by the ford; what changes is that the
        morning is no longer a day, which is a thing people are glad about and
        not a thing the store ever sees. It also brings whatever the far bank
-       has, which is why the Healer is against it. */
+       has, which is why the Healer is against it.
+
+       What it does do, and what it was missing for the three times anybody
+       chose it in nine hundred years of play, is open ground: the far bank is
+       somewhere to live once there is a way over the water, and `room.bridge`
+       in the config is the largest single thing a year of work can add to how
+       many people this valley holds. */
     trend: { mood: 2, health: -1 },
   },
   {

@@ -8,6 +8,10 @@
   --color-parchment-dim: #b6a683;
   --color-seal: #a3352c;
   --color-bench: #5c7f86;
+  /* The third card in the game. A law is sealed in wax and a person is met at
+     the bench; a year of work ends in something standing, so it is headed in
+     sawn timber and marked with a hammer instead of the seal. */
+  --color-timber: #b08a55;
   --color-good: #7fa663;
   --color-bad: #c96a5a;
   --color-grass: #55603f;
@@ -685,6 +689,13 @@ button:disabled {
 .city-moment-hit:hover .city-moment,
 .city-moment-hit:focus-visible .city-moment { animation: none; opacity: 1; }
 
+/* Somebody is at the door and the ruler is not free. The thing stays where it
+   is, because it is in the place and not on a menu, and it stops asking: no
+   glow, no hand on the pointer, no click. It is a dog in a field, not an
+   offer, and it will still be there when the card closes. */
+.city-moment-hit.moment-quiet { cursor: default; opacity: 0.42; }
+.city-moment-hit.moment-quiet .city-moment { animation: none; opacity: 0.7; }
+
 /* Two layers in every cursor, a dark stroke under a gold one, because this map
    is dark in winter and pale in summer and one colour disappears into one of
    them. 28 pixels, hot spot in the middle of the hand.
@@ -731,4 +742,27 @@ button:disabled {
 
 @media (prefers-reduced-motion: reduce) {
   .city-tail { animation: none; }
+}
+
+/* Dev mode, "edit any text": the game stops taking clicks and every line on
+   the page is a thing to pick up.
+
+   The outline is on hover, and on the deepest hovered thing only: `*:hover`
+   alone matches every ancestor as well, so the pointer drags a nest of six
+   boxes around with it. The dev chrome itself is left alone, because the
+   switch that turns this off is in it. */
+body.dev-text-mode,
+body.dev-text-mode * {
+  cursor: text !important;
+}
+
+body.dev-text-mode *:hover:not(:has(*:hover)) {
+  outline: 1px dashed rgba(191, 140, 70, 0.55);
+  outline-offset: 1px;
+}
+
+body.dev-text-mode [data-dev-chrome],
+body.dev-text-mode [data-dev-chrome] * {
+  cursor: auto !important;
+  outline: none !important;
 }

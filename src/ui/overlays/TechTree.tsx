@@ -15,6 +15,8 @@ interface Props {
 /** The board the tree is drawn on. Fixed units, so the wires can be exact. */
 const NODE_W = 168;
 const NODE_H = 116;
+/** A rung nobody has thought of yet, at the height of the one line it holds. */
+const DARK_H = 34;
 const GAP_X = 56;
 const GAP_Y = 24;
 const ROOT_W = 104;
@@ -260,31 +262,50 @@ export function TechTree({ state, onClose }: Props) {
                       : reveal === 'souls'
                         ? 'border-ink-line/70 bg-ink-soft/40 text-parchment-dim/80'
                         : 'border-ink-line/50 bg-ink-soft/30 text-parchment-dim/50';
+              /* A card with nothing in it is a line, not a card.
+
+                 Two of the nine on this board say only "not thought of yet",
+                 at the full height of a card that carries a name, a sentence,
+                 a bar and three numbers, on what is already the densest screen
+                 in the game. A slim box, centred in its own lane so the
+                 dashed edges still land on it. */
+              const slim = reveal === 'dark';
               return (
                 <div
                   key={tech.id}
-                  className={`absolute flex flex-col overflow-hidden rounded-lg border p-2 ${box}`}
+                  className={`absolute flex overflow-hidden rounded-lg border p-2 ${
+                    slim ? 'items-center' : 'flex-col'
+                  } ${box}`}
                   style={{
                     left: colX(col.get(tech.id) ?? 0),
-                    top: laneY(lane.get(tech.id) ?? 0),
+                    top: laneY(lane.get(tech.id) ?? 0) + (slim ? (NODE_H - DARK_H) / 2 : 0),
                     width: NODE_W,
-                    height: NODE_H,
+                    height: slim ? DARK_H : NODE_H,
                   }}
                   title={`${UI.techs.eraLabel.replace(
                     '{n}',
                     String(tech.era),
                   )}. ${UI.techs.orderHint.replace('{n}', String(idx + 1))}`}
                 >
-                  <div className="flex items-baseline justify-between gap-1">
-                    <span className="truncate text-[9px] uppercase tracking-[0.12em] text-parchment-dim">
-                      {branchOf(tech)}
-                    </span>
-                    <span className="text-[9px] tabular-nums text-parchment-dim">{idx + 1}</span>
-                  </div>
+                  {slim ? (
+                    <div className="flex w-full items-baseline justify-between gap-1">
+                      <span className="truncate text-[11px] leading-tight">{UI.techs.unknown}</span>
+                      <span className="text-[9px] tabular-nums text-parchment-dim">{idx + 1}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-baseline justify-between gap-1">
+                        <span className="truncate text-[9px] uppercase tracking-[0.12em] text-parchment-dim">
+                          {branchOf(tech)}
+                        </span>
+                        <span className="text-[9px] tabular-nums text-parchment-dim">{idx + 1}</span>
+                      </div>
 
-                  <div className="mt-0.5 text-[12px] font-medium leading-tight">
-                    {named ? tech.name : UI.techs.unknown}
-                  </div>
+                      <div className="mt-0.5 text-[12px] font-medium leading-tight">
+                        {named ? tech.name : UI.techs.unknown}
+                      </div>
+                    </>
+                  )}
 
                   {reveal === 'known' && (
                     <>

@@ -9,7 +9,8 @@
 #   ... -m "what changed"    your own commit message
 #   ... -NoSync              do not refresh the source, publish what is here
 #   ... -NoPush              build and commit, do not push
-#   ... -Check               run the validator and the tests before publishing
+#   ... -NoCheck             publish without the validator and the tests
+#                            (they run on every deploy otherwise)
 #
 # The live page updates about a minute after the push. The link never changes.
 #
@@ -40,6 +41,13 @@ param(
   [Alias('m')] [string] $Message = '',
   [switch] $NoSync,
   [switch] $NoPush,
+  # The validator and the tests run on every deploy. They used to be opt-in
+  # behind -Check, which meant the plain double-click published without the
+  # 46 content checks and the whole suite: the one quality guarantee this
+  # project has, skipped by the only release path it has. -NoCheck is the
+  # escape hatch for when you know what you are doing and are in a hurry.
+  [switch] $NoCheck,
+  # Accepted and ignored, so an old habit or an old note still works.
   [switch] $Check
 )
 
@@ -104,14 +112,14 @@ if (-not (Test-Path $vite) -or $installed -ne $lockHash) {
 }
 
 # ---- 3. the checks, if asked -----------------------------------------------
-if ($Check) {
+if ($NoCheck) {
+  Step 3 "skipping the validator and the tests, because -NoCheck was asked for"
+} else {
   Step 3 "running the content validator and the tests on the copy that is about to ship"
   & npm run validate
   if ($LASTEXITCODE -ne 0) { Die "npm run validate failed. Nothing was published." }
   & npm test
   if ($LASTEXITCODE -ne 0) { Die "npm test failed. Nothing was published." }
-} else {
-  Step 3 "skipping the validator and the tests (pass -Check to run them)"
 }
 
 # ---- 4. build --------------------------------------------------------------
@@ -162,6 +170,12 @@ Step 6 "checking the built page"
 $html = [System.IO.File]::ReadAllText($page)
 if ($html -notmatch 'id="root"') { Die "docs\index.html has no #root. React would have nothing to mount to." }
 if ($html -notmatch 'name="robots"') { Die "docs\index.html lost the noindex line. The page would be indexable." }
+# The build number lives in the page and not in the bundle, so that an
+# unchanged source tree builds byte-identical JavaScript and a deploy with no
+# changes commits nothing. If the transform in vite.config.ts ever breaks, the
+# badge in the corner quietly reads "dev" and a shared link can no longer be
+# checked against what is running - so it is asserted on the shipped page.
+if ($html -notmatch 'name="lawmaker-build"') { Die "docs\index.html has no build tag. The corner badge would read 'dev' and nobody could tell what is live." }
 if ($html[0] -eq [char]0xFEFF) { Die "docs\index.html starts with a byte order mark. Write it with UTF8Encoding(`$false)." }
 $bundles = @(Get-ChildItem -LiteralPath (Join-Path $site 'assets') -Filter *.js -ErrorAction SilentlyContinue)
 if ($bundles.Count -eq 0) { Die "no javascript bundle under docs\assets. The page would be blank." }

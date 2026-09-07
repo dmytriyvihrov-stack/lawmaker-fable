@@ -4,6 +4,7 @@ import { CONFIG } from '../../engine/config';
 import { movePoints } from '../../engine/format';
 import { keepsWatch, lawWeight, nextTech, yearlyChange } from '../../engine/simulation';
 import type { Effects, GameState, StatId } from '../../engine/types';
+import { buildId } from '../motion';
 
 const signed = movePoints;
 
@@ -13,12 +14,14 @@ const signed = movePoints;
  * the player standing on a stale pinned link needs it more than anyone.
  */
 export function BuildBadge() {
+  const build = buildId();
   return (
     <div
-      title={__BUILD_ID__}
+      data-dev-chrome
+      title={build}
       className="fixed bottom-20 right-2 z-40 rounded px-1.5 py-0.5 text-[10px] lowercase tracking-[0.2em] text-parchment-dim opacity-15 hover:opacity-60"
     >
-      build {__BUILD_ID__}
+      build {build}
     </div>
   );
 }
@@ -31,6 +34,7 @@ export function DevToggle({ on, onToggle }: { on: boolean; onToggle: () => void 
   return (
     <button
       type="button"
+      data-dev-chrome
       onClick={onToggle}
       aria-pressed={on}
       title={UI.dev.on}
@@ -45,8 +49,27 @@ export function DevToggle({ on, onToggle }: { on: boolean; onToggle: () => void 
   );
 }
 
-/** The arithmetic behind the reign, in one strip, while the switch is on. */
-export function DevBar({ state }: { state: GameState }) {
+/**
+ * The arithmetic behind the reign, in one strip, while the switch is on, and
+ * the two switches that belong to the strip rather than to the reign.
+ *
+ * `editText` puts a pencil on every line in the game (see `TextEditLayer`);
+ * `onWipe` throws away everything this browser has written down and opens a
+ * fresh reign, which is the thing a playtester wanted most and had to do by
+ * hand in the console, because the preview pane eats `window.confirm` and the
+ * player's own "Begin a reign" silently did nothing over an existing save.
+ */
+export function DevBar({
+  state,
+  editText,
+  onEditText,
+  onWipe,
+}: {
+  state: GameState;
+  editText: boolean;
+  onEditText: () => void;
+  onWipe: () => void;
+}) {
   const next = nextTech(state);
   const facts: [string, string][] = [
     [UI.dev.weight, `x${lawWeight(state)}`],
@@ -58,12 +81,32 @@ export function DevBar({ state }: { state: GameState }) {
   ];
 
   return (
-    <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 rounded-sm border border-seal/40 bg-seal/5 px-2 py-1">
+    <div data-dev-chrome className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-sm border border-seal/40 bg-seal/5 px-2 py-1">
       {facts.map(([label, value]) => (
         <span key={label} className="text-[10px] lowercase tracking-wide text-parchment-dim">
           {label}: <span className="tabular-nums text-seal">{value}</span>
         </span>
       ))}
+
+      <span className="ml-auto flex items-center gap-2">
+        <label
+          title={UI.dev.editTextOn}
+          className={`flex cursor-pointer items-center gap-1 text-[10px] lowercase tracking-wide ${
+            editText ? 'text-seal' : 'text-parchment-dim'
+          }`}
+        >
+          <input type="checkbox" checked={editText} onChange={onEditText} />
+          {UI.dev.editText}
+        </label>
+        <button
+          type="button"
+          onClick={onWipe}
+          title={UI.dev.wipeHint}
+          className="rounded-sm border border-seal/50 px-1.5 py-0.5 text-[10px] lowercase tracking-wide text-parchment-dim hover:text-seal"
+        >
+          {UI.dev.wipe}
+        </button>
+      </span>
     </div>
   );
 }

@@ -15,10 +15,12 @@ function reign(turn = 4): GameState {
   return s;
 }
 
-describe('the four small things', () => {
-  it('is four, all of them kind, none of them a decision', () => {
-    expect(MOMENTS.length).toBe(4);
-    expect(new Set(MOMENTS.map((m) => m.id)).size).toBe(4);
+describe('the small things', () => {
+  it('is five, all of them kind, none of them a decision', () => {
+    expect(MOMENTS.length).toBe(5);
+    expect(new Set(MOMENTS.map((m) => m.id)).size).toBe(5);
+    // four gestures over five things: the fifth is a winter one, and the hand
+    // that stacks a woodpile is the hand that picks a basket up
     expect(new Set(MOMENTS.map((m) => m.hand)).size, 'two of them feel the same').toBe(4);
     for (const moment of MOMENTS) {
       // no moment may ever be bad: this is the one corner with no cost in it
@@ -28,6 +30,14 @@ describe('the four small things', () => {
       // and none of them is worth playing for
       expect(Math.max(...moves), `${moment.id} is a lever`).toBeLessThanOrEqual(1);
       expect(moment.line.length, `${moment.id} says nothing`).toBeGreaterThan(40);
+      /* And the mark left over the spot afterwards is a verb and a number,
+         so the verb has to be a verb: one or two words, past tense, not the
+         sentence again. */
+      const words = moment.done.trim().split(/\s+/);
+      expect(words.length, `${moment.id} is a sentence, not a verb`).toBeLessThanOrEqual(2);
+      expect(words[0].length, `${moment.id} did nothing`).toBeGreaterThan(2);
+      // one board, because the mark says one board
+      expect(moves.length, `${moment.id} moves more than one board`).toBe(1);
       // a short word, so the pointer says what it is and gets out of the way
       expect(moment.label.length, `${moment.id} has no name`).toBeGreaterThan(4);
       expect(moment.label.length, `${moment.id} is a sentence, not a name`).toBeLessThan(16);
@@ -58,7 +68,7 @@ describe('the four small things', () => {
     }
   });
 
-  it('deals two a year, the same two every time that year is asked', () => {
+  it('deals one a year, the same one every time that year is asked', () => {
     for (const season of SEASONS) {
       const s = reign();
       const dealt = momentsOfYear(s, season);
@@ -71,7 +81,40 @@ describe('the four small things', () => {
     }
   });
 
-  it('is not the same two every year', () => {
+  it('waits for the thing it is about to exist', () => {
+    // there is no dog in this valley until the wolf's litter is under the
+    // granary steps, so the one small thing that is a dog waits for the flag
+    const dog = MOMENTS.find((m) => m.id === 'dog')!;
+    expect(dog.needsFlag).toBe('dogs_kept');
+    for (const season of SEASONS) {
+      expect(momentsOfYear(reign(), season).map((m) => m.id)).not.toContain('dog');
+    }
+    // and with it, over the years, the dog turns up like everything else
+    const withDogs = () => {
+      const s = reign();
+      s.flags = [...s.flags, 'dogs_kept'];
+      return s;
+    };
+    const dealt = new Set<string>();
+    for (let turn = 3; turn < 24; turn++) {
+      const s = withDogs();
+      s.turn = turn;
+      for (const id of momentsOfYear(s, 'summer').map((m) => m.id)) dealt.add(id);
+    }
+    expect(dealt.has('dog'), 'the dog never comes round').toBe(true);
+  });
+
+  it('has one for the half of the year the rest of them cannot happen in', () => {
+    // apples on frozen ground was the one nobody believed
+    for (const id of ['spill', 'bite', 'kid']) {
+      expect(MOMENTS.find((m) => m.id === id)!.seasons, id).not.toContain('winter');
+    }
+    const winter = MOMENTS.filter((m) => m.seasons?.includes('winter'));
+    expect(winter.length, 'nothing at all happens in the frost').toBeGreaterThan(0);
+    for (const m of winter) expect(m.needsFlag, `${m.id} is gated as well`).toBeUndefined();
+  });
+
+  it('is not the same one every year', () => {
     const years = new Set(
       [3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((turn) =>
         momentsOfYear(reign(turn), 'summer')

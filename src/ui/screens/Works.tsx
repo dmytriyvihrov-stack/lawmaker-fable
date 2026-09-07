@@ -1,7 +1,9 @@
+import { WorkModel } from '../components/town/parts';
+import { PAINT } from '../components/town/paint';
 import { useState } from 'react';
-import { PLOT_NAMES, SUBJECTS, WORK_ICONS } from '../../content/meta';
+import { PLOT_NAMES, STATS, SUBJECTS, WORK_ICONS } from '../../content/meta';
 import { UI } from '../../content/ui-strings';
-import { PopupHead } from '../components/Popup';
+import { CardFoot, PopupHead } from '../components/Popup';
 import { getProposal } from '../../engine/registry';
 import { reopenableProposals } from '../../engine/reducer';
 import { storeCap, workCost, workOnce, workSubsidised, worksFor } from '../../engine/simulation';
@@ -10,6 +12,10 @@ import { MovedBoards } from '../components/MovedBoards';
 import { WORKS } from '../../content/works';
 import { freePlots, needsPlacement, occupantOf, PLOT_IDS } from '../../engine/plots';
 import type { GameState, PlotId, Season, WorkDef, WorkId } from '../../engine/types';
+import { TYPE } from '../type';
+
+/** The one board a price is paid out of. */
+const STORE = STATS.find((s) => s.id === 'economy')!;
 
 interface Props {
   state: GameState;
@@ -73,7 +79,16 @@ export function Works({
    * its later links hidden is not a direction, it is a surprise.
    */
   const chain = WORKS.filter((w) => w.group === 'infrastructure');
-  const chainShown = chain.filter((w) => offeredIds.has(w.id) || w.needsWork !== undefined);
+  /* Not in the first year. That year is a roof or a saw pit and nothing else,
+     which is the whole of what five people who walked out of somewhere last
+     month are choosing between; a greyed run of roads and bridges under it
+     turned the simplest year in the game into a shelf of eight things, six of
+     which said "not yet". They all arrive in the second spring, together,
+     along with the first law. */
+  const chainShown =
+    state.turn <= 1
+      ? []
+      : chain.filter((w) => offeredIds.has(w.id) || w.needsWork !== undefined);
 
   // The year that costs nothing goes at the top: it is the one every reign
   // reaches for when there is nothing left to spend, and hunting for it at the
@@ -82,6 +97,31 @@ export function Works({
     .filter((w) => w.group === undefined)
     .sort((a, b) => (a.id === 'rest' ? -1 : b.id === 'rest' ? 1 : 0));
   const reopenable = reopenableProposals(state);
+
+  /**
+   * What is in the store, as a whole number.
+   *
+   * The store is a float in the engine, because trends and drifts are, and it
+   * was printed straight onto the card: "10 of 0.8", "17 of 4.7". A price of
+   * ten against a store of nought point eight is arithmetic in a game whose
+   * rule is that there are no dials to read.
+   */
+  const store = Math.round(state.stats.economy);
+  /**
+   * And whether anything on the shelf is within it. Seven cards each saying
+   * "The store cannot pay for it this year." is one fact told seven times; it
+   * is a fact about the store, so it is said once, over the shelf, by the
+   * store.
+   */
+  const affordable = [...works, ...chainShown].filter((w) => {
+    const cost = workCost(state, w);
+    const waiting =
+      w.needsWork !== undefined && (state.buildings[w.needsWork.id] ?? 0) < w.needsWork.level;
+    const maxed = w.maxLevel > 0 && (state.buildings[w.id] ?? 0) >= w.maxLevel;
+    return !waiting && !maxed && cost <= state.stats.economy;
+  });
+  /** `rest` is free and always there, so "nothing" means nothing but resting. */
+  const nothingAfford = affordable.every((w) => w.cost === 0);
 
   const card = 'answer w-full rounded-lg border p-3 text-left';
   const cardOpen = 'border-ink-line bg-ink-soft';
@@ -131,26 +171,29 @@ export function Works({
         onClick={() => pickWork(work.id)}
         onMouseEnter={() => open && onPreview?.(work.id)}
         onMouseLeave={() => onPreview?.(picked?.kind === 'work' ? picked.id : null)}
-        className={`${card} ${on ? cardOn : open ? cardOpen : cardOff}`}
+        className={`work-design-card ${card} ${on ? cardOn : open ? cardOpen : cardOff}`}
+        aria-pressed={on}
+        title={work.line}
       >
+        {['house', 'woodcutter', 'granary', 'hall', 'long_room', 'watch_house', 'well'].includes(work.id) && <svg className="work-miniature" viewBox="-25 -65 210 165" aria-hidden="true"><WorkModel id={work.id} paint={PAINT[season]} level={Math.min(work.maxLevel, level + 1)} /></svg>}
         <div className="flex items-baseline justify-between gap-2">
           <span className="flex min-w-0 items-baseline gap-2">
-            <span aria-hidden className="shrink-0 text-[14px] leading-none">
+            <span aria-hidden className={`shrink-0 ${TYPE.body} leading-none`}>
               {WORK_ICONS[work.id]}
             </span>
-            <span className="text-[14px] leading-snug text-parchment">{work.name}</span>
+            <span className={`${TYPE.body} leading-snug text-parchment`}>{work.name}</span>
           </span>
           {work.maxLevel > 0 && (
-            <span aria-hidden className="shrink-0 text-[11px] tracking-[0.2em] text-seal">
+            <span aria-hidden className={`shrink-0 ${TYPE.note} tracking-[0.2em] text-seal`}>
               {DOT.repeat(level)}
               {RING.repeat(work.maxLevel - level)}
             </span>
           )}
         </div>
-        <p className="mt-0.5 pl-[22px] text-[12px] leading-snug text-parchment-dim">{work.line}</p>
+        {on && <p className={`mt-1 ${TYPE.note} leading-snug text-parchment-dim`}>{work.line}</p>}
 
         {/* what it moves and what it costs, on one line, in that order */}
-        <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 pl-[22px] text-[11px]">
+        <div className={`mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 pl-[22px] ${TYPE.note}`}>
           <MovedBoards row once={workOnce(state, work)} every={work.trend} place={state} />
           {waiting ? (
             <span className="text-parchment-dim">
@@ -161,19 +204,32 @@ export function Works({
           ) : (
             (work.maxLevel > 0 || cost > 0) && (
               /* A thing you cannot afford still has a price, and the price is
-                 the whole reason you cannot afford it. Say both. */
-              <span className={subsidised ? 'text-good' : 'text-parchment-dim'}>
-                {(subsidised ? UI.works.free : UI.works.cost).replace('{n}', String(cost))}
+                 the whole reason you cannot afford it. Say both, and say them
+                 against the shelf they come off: the store's own mark, what
+                 this takes, and what there is to take it from. Ten out of
+                 twelve and ten out of forty are not the same decision, and
+                 "costs 10 from the store" was the same sentence for both. */
+              <span
+                className={`flex items-baseline gap-1 ${
+                  tooDear ? 'text-bad' : subsidised ? 'text-good' : 'text-parchment-dim'
+                }`}
+                title={UI.works.costLabel}
+              >
+                <span aria-hidden>{STORE.emoji}</span>
+                <span className="tabular-nums">
+                  {(subsidised ? UI.works.free : UI.works.cost).replace('{n}', String(cost))}
+                </span>
+                <span className="sr-only">{UI.works.costLabel}</span>
               </span>
             )
           )}
         </div>
-        {tooDear && !waiting && !maxed && (
-          <p className="mt-0.5 pl-[22px] text-[11px] text-bad">
-            {overShelf
-              ? UI.works.overShelf.replace('{n}', String(cost))
-              : UI.works.cannotPay}
-          </p>
+        {/* A store that cannot pay this year may pay next year, and that is
+            the line over the shelf. A price past the end of the shelf itself
+            will not be paid in any year of this reign, which is a fact about
+            this card and stays on it. */}
+        {overShelf && !waiting && !maxed && (
+          <p className={`mt-0.5 pl-[22px] ${TYPE.note} text-bad`}>{UI.works.overShelf}</p>
         )}
       </button>
     );
@@ -182,12 +238,13 @@ export function Works({
   return (
     <>
       <PopupHead
+        mark="hammer"
         kicker={`${UI.works.heading} · ${UI.popup.ofYear
           .replace('{season}', UI.seasons[season])
           .replace('{n}', String(state.turn))}`}
+        note={UI.works.prompt}
       />
       <div className="p-4">
-        <p className="text-[15px] text-parchment">{UI.works.prompt}</p>
 
         {/* The other half of a year of work.
 
@@ -202,11 +259,11 @@ export function Works({
         {asking && (
           <section className="mt-3 rounded-lg border border-seal/50 bg-seal/[0.08] p-3">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <span className="text-[13px] text-parchment">{UI.works.whereHeading}</span>
-              <span className="text-[10px] italic text-hair">{UI.works.whereLine}</span>
+              <span className={`${TYPE.body} text-parchment`}>{UI.works.whereHeading}</span>
+              <span className={`${TYPE.note} italic text-hair`}>{UI.works.whereLine}</span>
             </div>
             {groundOpen.length === 0 ? (
-              <p className="mt-2 text-[12px] leading-snug text-bad">{UI.works.whereNone}</p>
+              <p className={`mt-2 ${TYPE.note} leading-snug text-bad`}>{UI.works.whereNone}</p>
             ) : (
               <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
                 {PLOT_IDS.map((id) => {
@@ -219,6 +276,7 @@ export function Works({
                       type="button"
                       disabled={!free}
                       onClick={() => onPlot(id)}
+                      title={free ? PLOT_NAMES[id].line : undefined}
                       className={`rounded-md border p-2 text-left ${
                         on
                           ? 'border-seal bg-seal/25'
@@ -227,20 +285,33 @@ export function Works({
                             : 'border-transparent bg-ink-soft/40 opacity-50'
                       }`}
                     >
-                      <div className="text-[12px] leading-snug text-parchment">
+                      {/* The name, and nothing under it while the ground is
+                          free: the same six names are already pegged out on
+                          the town above this card, and a second line each
+                          made the ground picker taller than the shelf it is
+                          picking for. What the place is like is on the peg,
+                          under the pointer. */}
+                      <div className={`${TYPE.note} leading-snug text-parchment`}>
                         {PLOT_NAMES[id].label}
                       </div>
-                      <p className="mt-0.5 text-[10px] leading-snug text-parchment-dim">
-                        {free
-                          ? PLOT_NAMES[id].line
-                          : UI.works.whereTaken.replace('{name}', nameOf(taken))}
-                      </p>
+                      {!free && (
+                        <p className={`mt-0.5 ${TYPE.note} leading-snug text-parchment-dim`}>
+                          {UI.works.whereTaken.replace('{name}', nameOf(taken))}
+                        </p>
+                      )}
                     </button>
                   );
                 })}
               </div>
             )}
           </section>
+        )}
+
+        {nothingAfford && (
+          <p className={`mt-3 flex flex-wrap items-baseline gap-1.5 rounded-lg border border-bad/40 bg-bad/[0.07] px-3 py-2 ${TYPE.note} leading-snug text-parchment-dim`}>
+            <span aria-hidden>{STORE.emoji}</span>
+            {UI.works.storeShort.replace('{have}', String(store))}
+          </p>
         )}
 
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -253,10 +324,10 @@ export function Works({
         {chainShown.length > 0 && (
           <section className="mt-4 rounded-lg border border-ink-line/70 p-2.5">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <span className="text-[10px] uppercase tracking-[0.2em] text-parchment-dim">
+              <span className={`${TYPE.label} text-parchment-dim`}>
                 {UI.works.groupInfrastructure}
               </span>
-              <span className="text-[10px] italic text-hair">{UI.works.groupLine}</span>
+              <span className={`${TYPE.note} italic text-hair`}>{UI.works.groupLine}</span>
             </div>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               {chainShown.map((work) => (
@@ -276,10 +347,10 @@ export function Works({
               aria-expanded={reopenOpen}
               className="flex w-full items-center justify-between gap-2 rounded-md border border-ink-line px-3 py-2 text-left"
             >
-              <span className="text-[13px] text-parchment">
+              <span className={`${TYPE.body} text-parchment`}>
                 {UI.works.reopenToggle.replace('{n}', String(reopenable.length))}
               </span>
-              <span aria-hidden className="text-[12px] text-parchment-dim">
+              <span aria-hidden className={`${TYPE.note} text-parchment-dim`}>
                 {reopenOpen ? '▴' : '▾'}
               </span>
             </button>
@@ -304,14 +375,14 @@ export function Works({
                   >
                     <div className="flex items-center gap-2">
                       <span aria-hidden>{label?.emoji ?? '📜'}</span>
-                      <span className="text-[14px] text-parchment">
+                      <span className={`${TYPE.body} text-parchment`}>
                         {UI.works.reopen.replace(
                           '{subject}',
                           (label?.label ?? subject).toLowerCase(),
                         )}
                       </span>
                     </div>
-                    <p className="mt-1 text-[12px] leading-snug text-parchment-dim">
+                    <p className={`mt-1 ${TYPE.note} leading-snug text-parchment-dim`}>
                       {UI.works.reopenLine}
                     </p>
                   </button>
@@ -335,7 +406,7 @@ export function Works({
             direction and a fold of standing laws the way to spend the year was
             below the bottom edge of the window until somebody went looking. It
             sits on the bottom edge of the scroll now, on its own paper. */}
-        <div className="sticky -mx-4 -mb-4 mt-4 bg-ink-soft/95 px-4 pb-4 pt-2 [bottom:0]">
+        <CardFoot>
           <button
             type="button"
             disabled={picked === null || (asking && plot === null)}
@@ -344,7 +415,7 @@ export function Works({
               if (picked.kind === 'work') onBuild(picked.id, plot ?? undefined);
               else onReopen(picked.id);
             }}
-            className="min-h-[48px] w-full rounded-lg bg-seal px-5 py-2 text-[17px] tracking-[0.2em] text-parchment disabled:opacity-30"
+            className="min-h-[48px] w-full rounded-lg bg-timber px-5 py-2 text-[17px] tracking-[0.2em] text-ink disabled:opacity-30"
           >
             {asking && plot !== null
               ? UI.works.whereOn.replace('{where}', PLOT_NAMES[plot].label.toUpperCase())
@@ -352,7 +423,7 @@ export function Works({
                 ? UI.works.wherePick
                 : UI.works.choose}
           </button>
-        </div>
+        </CardFoot>
       </div>
     </>
   );

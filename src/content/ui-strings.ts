@@ -3,6 +3,9 @@ import type { PhilTag } from '../engine/types';
 /** All UI chrome lives here. Not one string of it in the components. */
 export const UI = {
   title: {
+    /** There is a reign in the slot and this version cannot open it. */
+    staleSave:
+      'There is a reign saved here that this version of the game cannot open. Beginning a new one will write over it.',
     name: 'Lawmaker Fable',
     tagline: 'Five people, one field, and a seal. Write the law before the place is big enough to need it.',
     newGame: 'Begin a reign',
@@ -14,7 +17,10 @@ export const UI = {
 
   intro: {
     speaker: 'The Monarch',
-    question: 'Who is a good ruler?',
+    /* The rider and the wax used to be a block of their own above the crown's
+       portrait, which is a wrapper round a question that reads the same
+       without it. It is half a sentence in front of the question now. */
+    question: 'One question came up the road with the wax. Who is a good ruler?',
     /**
      * The one place the game says what it is, and it now says it in four
      * lines instead of six paragraphs.
@@ -33,12 +39,13 @@ export const UI = {
       kicker: 'Spring. Five of you, and nothing written down anywhere.',
       caption:
         'You walked out of the old place together and stopped here, for the water. On the second night the others voted in a field with their hands up, and the seal is yours.',
-      charge:
-        'Look after them, settle what they bring to your door, and raise this place into a town.',
+      /* Two blocks went out of here. `charge` said "look after them, settle
+         what they bring to your door, and raise this place into a town",
+         which is the tagline on the title screen said again in longer words;
+         and `lead` wrapped the question in a rider with a stick of wax, and
+         the question reads the same without the wrapper, so half of it moved
+         into the question itself. Eight blocks of text down to six. */
     },
-    lead: [
-      'A rider has come up from the capital with a stick of wax and one question.',
-    ],
     footnote: 'Nothing binds you to this answer. It will be remembered anyway.',
     answers: [
       { tag: 'utilitarian' as PhilTag, text: 'One who leaves the most people better off.' },
@@ -69,9 +76,12 @@ export const UI = {
     winterNext: 'The long winter next year.',
     winterHere: 'The long winter. It holds the whole year.',
     /** The same clock at the width of the header: a mark and a count. */
-    frostIn: 'in {n} years',
-    frostNext: 'next year',
-    frostHere: 'this year',
+    /* The number of winters, and nothing else. The whole sentence is under
+       the pointer; on the row it is one fact among six and was the widest of
+       them. */
+    frostIn: '{n}',
+    frostNext: '1',
+    frostHere: 'now',
   },
 
   /** The one control on this screen that is about the game and not the place. */
@@ -109,12 +119,29 @@ export const UI = {
 
   works: {
     heading: 'The year of work',
-    prompt: 'One thing gets built this year, or nothing does.',
-    cost: 'costs {n} from the store',
-    free: 'a full store pays half of it: {n} from the store',
+    /* Six words on one line under the heading, not a sentence across the top
+       of the card. It is the rule of the screen and it is true every year, so
+       it is said the size a rule is said at and then got out of the way. */
+    prompt: 'One thing, or nothing.',
+    /**
+     * A price against the shelf it comes off. "costs 10 from the store" was
+     * true and told a player nothing they could act on: ten out of what? The
+     * number that decides whether a thing is worth a year is the one after
+     * the minus, so both are here, in the store's own mark.
+     */
+    /* Just the number. It used to read "{n} of {have}", to price a thing
+       against the shelf it comes off, and the shelf is a float in the engine:
+       "10 of 0.8" and "17 of 4.7" went out on every card of every year. What
+       is in the store is said once now, over the shelf, and only when nothing
+       on it is within reach. */
+    cost: '{n}',
+    free: 'half price: {n}',
+    costLabel: 'from the store',
     moves: 'What it changes',
     atOnce: 'at once',
     cannotPay: 'The store cannot pay for it this year.',
+    /** Said once over the shelf when nothing on it is within the store. */
+    storeShort: 'The store holds {have}. Nothing on the shelf is within it this year; the year can rest.',
     /**
      * Not the same sentence as the one above it. A store that cannot pay
      * this year may pay next year; a store whose shelf ends below the price
@@ -122,7 +149,7 @@ export const UI = {
      * somebody in that position leaves them waiting on a number that has
      * already stopped.
      */
-    overShelf: 'The store cannot hold {n}. Build a granary and it can.',
+    overShelf: 'Needs a granary before the store can hold it.',
     maxed: 'Already the biggest in the county.',
     level: 'level {n} of {max}',
     /** A run of works that only make sense one after the other. */
@@ -169,6 +196,16 @@ export const UI = {
     waitingForSouls: 'Nobody here has the next idea yet. A bigger place would.',
     worked: 'Worked out',
     workedKicker: 'Nobody voted for this either',
+    /** The year the cog in the bar stops being a locked shape. */
+    opened: 'The workshops',
+    /* Two sentences. It was four, and the fourth made a promise a hamlet
+       cannot keep: a point in the pot comes off every 25 in the store, and a
+       hamlet with a store under 25 sat at "0 of 12" for six years running
+       after being told it would work something out every few years. What is
+       true is that the place does this on its own account, whenever it does. */
+    openedLine:
+      'There are enough of us now that somebody has time to be clever in. From this spring the place will work something out on its own account, and nobody will have voted for that either.',
+    openedWhere: 'It is under the cog, at the top of the screen.',
     root: 'The place itself',
     rootLine: 'Nobody here was asked to work anything out. They do it between harvests, and then it is simply true.',
     working: 'being worked out',
@@ -287,8 +324,13 @@ export const UI = {
     actionsLabel: 'What the law does',
     blankSubject: '__________',
     blankPredicate: '__________',
-    pickPrompt: 'Pick what the law is about, then what it says. That is the whole law.',
-    manyLaws: 'More than one law is open this year. The subject you pick is the law you write.',
+    /* One line in the head of the card, and the second form of it for the
+       years when more than one law is open. It was two lines a card apart
+       saying the same thing: "pick the subject, then what it says" under the
+       effects, and "the subject you pick is the law you write" at the foot of
+       the margin. */
+    pickPrompt: 'Pick the subject, then what it says. That is the whole law.',
+    pickPromptMany: 'Pick the subject, then what it says. The subject you pick is this year’s law.',
     locked: 'Not on the table today.',
     pickSubjectFirst: 'Pick the subject first, and the predicates follow.',
     seal: 'SEAL IT',
@@ -306,6 +348,13 @@ export const UI = {
      * Codex. The square still noticed.
      */
     bends: 'This goes round your own law:',
+    /* The same two, by number, for the line under the sentence being written.
+       The law itself is in the Standing panel beside the card and in the
+       Codex, and quoting it in capitals over a card already too tall for the
+       window was the third time a player had read it in one screen. */
+    breaksShort: 'Breaks {law}, and the crown pays for it.',
+    bendsShort: 'Goes round {law}. The crown pays half, and nothing is written down.',
+    aLaw: 'your own law',
     questionLabel: 'The question',
     /** What an answer costs, before you give it. */
     moves: 'What this answer does',
@@ -347,28 +396,31 @@ export const UI = {
    * two sentences. Marks rather than paragraphs: the same marks that are in the
    * header, so the next time they are seen they are already known.
    */
+  /* The one lecture in the game, and it has to fit in the window with the
+     sentence it is standing under and the line that says how to leave. The
+     lead was a whole paragraph to say "here are four dials", which the four
+     lines under it say by being four lines. */
   wiring: {
-    heading: 'While the seal is still warm',
-    lead: 'Four dials up there, and this is the whole of what they do.',
+    heading: 'While the seal is still warm \u00b7 the four dials up there',
     boards: [
       {
         stat: 'health',
-        line: 'Sickness. It decides how many of you are still here next spring.',
+        line: 'Sickness decides how many of you are here next spring.',
       },
       {
         stat: 'mood',
-        line: 'The square. People come to a place they are glad in and leave one they endure.',
+        line: 'The square: people come to a place they are glad in and leave one they endure.',
       },
       {
         stat: 'economy',
-        line: 'The store. It is what a year can be built with, and it only holds so much.',
+        line: 'The store is what a year can be built with, and it only holds so much.',
       },
       {
         stat: 'crownSanity',
-        line: 'You. Ruling the way your own laws read steadies it; ruling against them does not.',
+        line: 'You. Ruling the way your laws read steadies it; ruling against them does not.',
       },
     ],
-    floor: 'Let any one of them sit on the floor for a whole year and the reign ends there.',
+    floor: 'Any of them on the floor for a whole year, and the reign ends there.',
   },
 
   advisor: {
@@ -416,7 +468,15 @@ export const UI = {
     heading: 'What happened',
     continueButton: 'Continue',
     noChange: 'Nothing moved on the boards.',
-    whatBecameOf: 'What became of them',
+    /** What the answer came to, in the units the boards are in. Said after the
+     *  ruling and never before it: a dilemma keeps its weight a secret until
+     *  it has been answered, and then it owes the player the number. */
+    moved: 'What it came to',
+    /* Once, for the whole row. Every mark used to carry its own "at once",
+       which is four words repeated four times to say one thing. */
+    allAtOnce: 'all at once',
+    /** When a scene came out of a law the register can no longer name. */
+    aLaw: 'one of your laws',
   },
 
   ledger: {
@@ -559,7 +619,9 @@ export const UI = {
   /** The year the place stops being "the place" and starts being somewhere. */
   townName: {
     heading: 'The place wants a name',
-    kicker: 'Three years in, and the carters still ask which turning',
+    /* Under the year it arrives in. `townName.fromYear` is 11, and this said
+       "three years in" for as long as it has existed. */
+    kicker: 'Ten winters in, and the carters still ask which turning',
     lead: 'Nobody agrees, so it comes to you, like everything else. Two words. That is how every name on the road got made.',
     firstLabel: 'The first word',
     secondLabel: 'And the second',
@@ -597,7 +659,10 @@ export const UI = {
    */
   world: {
     icon: '🌍',
-    heading: 'The world, as far as the road goes',
+    heading: 'Beyond the borders',
+    atlas: 'The royal atlas',
+    closeMark: '×',
+    actionIcons: { ask: '🌾', send: '🎁', raid: '⚔' },
     close: 'Close',
     you: 'Your kingdom',
     yours: 'you',
@@ -680,15 +745,24 @@ export const UI = {
   winter: {
     heading: 'The Treasurer',
     title: 'The long winter, in year {n}',
+    /* One paragraph. It was two, and then a bill, and then three notes under
+       the bill, and then a line of advice that said the bill again in words.
+       What a warning has to do is name the date and say what can still be done
+       about it. */
     lead: [
-      'It comes every tenth year, it has always come every tenth year, and it is two harvests away. The old ones have started saying so out loud, which is how everybody knows it is two and not three.',
-      'Nothing is asked of you today. But anything you want standing before the frost must be built this year or next, and the store must be filled by then.',
+      'It comes every tenth year and it is two harvests away. Anything you want standing before the frost must be built this year or next, and the store filled by then.',
     ],
     billLabel: 'What it takes, at the numbers you have now',
-    mouths: 'And {n} off the store for the mouths, because nothing is sown and nothing is carted.',
+    /* The mouths used to be a sentence under the bill, holding a number the
+       bill was already about. It is inside the store's own figure now. */
     weight: 'A place this size feels it {n} times over. A hamlet huddles; a town queues.',
-    shelter: 'What you have built already spares {n} points of the loss.',
-    advice: 'Health and a full store are the two things that decide how many are still here in the spring. A granary spares the rest.',
+    /* And what standing buildings spare, joined to what would spare more. */
+    shelter: 'What you have built already spares {n} of that. A granary spares more.',
+    /** How many walk out of the frost, in words, because a tenth of a person
+     *  is not a thing and "-23.8%" was on a card that has no other number
+     *  with a decimal point on it. */
+    soulsShare: 'about {share} of you',
+    shares: ['hardly any', 'a few', 'about a tenth', 'about a fifth', 'about a quarter', 'about a third', 'nearly half'],
     dismiss: 'Click anywhere to carry on',
   },
 
@@ -723,6 +797,13 @@ export const UI = {
     growth: 'souls next year',
     yes: 'yes',
     no: 'no',
+    /* The two switches on the strip. Neither is a fact about the reign, so
+       they sit apart from the six that are. */
+    editText: 'edit any text',
+    editTextOn: 'Click any line to rewrite it, cut it, or leave a note. The game takes no other click while this is on.',
+    wipe: 'clear history',
+    wipeHint: 'Forget the saved reign, the pending edits and every setting, and open a fresh one.',
+    wiped: 'cleared',
   },
 
   stats: {

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import type { EpithetDef } from '../../content/epithets';
 import { UI } from '../../content/ui-strings';
 import { PersonPortrait } from './PersonPortrait';
+import { reducedMotion } from '../motion';
 
 interface Props {
   epithet: EpithetDef;
@@ -10,11 +11,6 @@ interface Props {
 
 /** Long enough to read the name and the reason for it, twice, and no longer. */
 const HOLD_MS = 4800;
-
-function reducedMotion(): boolean {
-  if (typeof window === 'undefined' || !window.matchMedia) return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 /**
  * Somewhere between one year and the next, the place stopped describing you

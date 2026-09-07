@@ -13,6 +13,14 @@ export interface Journey {
   path: Point[];
   elapsed: number;
   job: Job;
+  /**
+   * The jobs this valley actually has right now, in the order they come round.
+   * A field is a year of work somebody has to spend before there is one, and
+   * until then nobody is in the furrows - not the folk, who are posted off
+   * `buildings.fields` already, and not the ruler, who used to walk out to bare
+   * grass twice a day and bow at it.
+   */
+  open: Job[];
   station: number;
   errands: Errand[];
   completed: Errand[];
@@ -23,18 +31,69 @@ const JOBS: Record<Job, Point[]> = {
   fields: [{ x: 440, y: 398 }, { x: 365, y: 445 }],
   wood: [{ x: 1240, y: 334 }, { x: 1280, y: 358 }],
 };
+/**
+ * The day, and who decides it.
+ *
+ * It used to be a dropdown: the ruler stood at the door until somebody chose
+ * "walking the lanes" or "tending the field" for them, and then walked two
+ * stops and stood there again. A person with a valley to run does not wait to
+ * be told which way to walk. The stops of one job run out and the next job
+ * starts, round and round, all day, and the only thing that interrupts it is
+ * somebody coming to find you or a small thing waiting to be done. Choosing
+ * is still possible - `chooseJob` is what the tests and the dev switch use -
+ * it is simply not something the game asks a player to do.
+ */
+export const JOB_ORDER: Job[] = ['lanes', 'fields', 'wood'];
+/** The one job that is not there until a year of work has cleared the ground. */
+const JOB_NEEDS_WORK: Partial<Record<Job, string>> = { fields: 'fields' };
+
+/**
+ * Which of the three the place can actually offer, given what it has built.
+ *
+ * Takes the buildings rather than the whole reign so it stays a function of
+ * one fact, and so the thing that decides where the ruler spends the day can
+ * be tested without a game around it.
+ */
+export function openJobs(buildings: Partial<Record<string, number>> | undefined): Job[] {
+  return JOB_ORDER.filter((job) => {
+    const needs = JOB_NEEDS_WORK[job];
+    return needs === undefined || (buildings?.[needs] ?? 0) > 0;
+  });
+}
 export const WALK_SPEED = 108;
 export const ACTION_SECONDS = 2.2;
-export function newJourney(): Journey {
-  return { at: HOME, callerAt: null, mode: 'working', path: [HOME], elapsed: 0, job: 'lanes', station: 0, errands: [], completed: [], visit: null };
+export function newJourney(open: Job[] = JOB_ORDER): Journey {
+  const jobs = open.length ? open : ['lanes' as Job];
+  return { at: HOME, callerAt: null, mode: 'working', path: [HOME], elapsed: 0, job: jobs[0], open: jobs, station: 0, errands: [], completed: [], visit: null };
+}
+
+/**
+ * The valley built something, or has not built it yet, and the round changes.
+ *
+ * The ruler is not pulled off what they are doing for it: a job that has just
+ * closed is walked out of at the end of its own round, which is the same way
+ * every other job here ends.
+ */
+export function setOpenJobs(s: Journey, open: Job[]): Journey {
+  const jobs = open.length ? open : ['lanes' as Job];
+  if (jobs.length === s.open.length && jobs.every((j, i) => j === s.open[i])) return s;
+  return { ...s, open: jobs };
 }
 function walk(s: Journey, to: Point, mode: Mode): Journey {
   return { ...s, mode, elapsed: 0, path: route(s.at, to) };
 }
+/** The stops of a job run out, and the next job the place has starts. Nobody is asked. */
+function onRound(s: Journey): Journey {
+  const round = s.open.length ? s.open : ['lanes' as Job];
+  const here = round.indexOf(s.job);
+  if (here >= 0 && s.station < JOBS[s.job].length) return s;
+  return { ...s, job: round[(here + 1) % round.length], station: 0 };
+}
 function nextTask(s: Journey): Journey {
   if (s.errands.length) return walk(s, s.errands[0].moment, 'collect-walk');
   if (s.visit) return { ...s, mode: 'caller', elapsed: 0, callerAt: s.visit.at, path: route(s.visit.at, { x: s.at.x - 20, y: s.at.y }) };
-  return walk(s, JOBS[s.job][s.station % JOBS[s.job].length], 'work-walk');
+  const next = onRound(s);
+  return walk(next, JOBS[next.job][next.station], 'work-walk');
 }
 export function queueErrand(s: Journey, errand: Errand): Journey {
   if ([...s.errands, ...s.completed].some((e) => e.key === errand.key)) return s;

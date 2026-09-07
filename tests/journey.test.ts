@@ -3,7 +3,7 @@ import { MOMENTS, MOMENT_SOURCE } from '../src/content/moments';
 import { CASE_SPOTS } from '../src/content/meta';
 import { momentsNow } from '../src/engine/moments';
 import { newGame, takeMoment } from '../src/engine/reducer';
-import { ACTION_SECONDS, canAnswer, chooseJob, followVisitor, newJourney, queueErrand, requestVisit, skipJourney, tickJourney } from '../src/ui/journey/model';
+import { ACTION_SECONDS, canAnswer, chooseJob, followVisitor, newJourney, queueErrand, openJobs, requestVisit, setOpenJobs, skipJourney, tickJourney } from '../src/ui/journey/model';
 import { along, atCrossing, distance, HOME, inWater, onFoot, pathLength, route } from '../src/ui/journey/routes';
 import type { Journey } from '../src/ui/journey/model';
 
@@ -92,6 +92,51 @@ describe('the golden things wait for a promised walk', () => {
     expect(changed.errands).toEqual(s.errands);
     expect(changed.path).toBe(s.path);
     expect(changed.job).toBe('wood');
+  });
+
+  /**
+   * Nobody works ground nobody has broken.
+   *
+   * The round used to be the same three jobs from the first spring, so the
+   * ruler of a valley with no field walked out to the bare grass where one
+   * would go, twice a day, and bowed at it. The folk were already posted off
+   * `buildings.fields`; this is the same rule for the one person on the map
+   * who was not.
+   */
+  it('reads the round off what the reign has built', () => {
+    const bare = newGame(11).buildings;
+    expect(openJobs(bare)).toEqual(['lanes', 'wood']);
+    expect(openJobs({ ...bare, fields: 1 })).toEqual(['lanes', 'fields', 'wood']);
+    // and a place with nothing at all still has lanes to walk
+    expect(openJobs(undefined)).toEqual(['lanes', 'wood']);
+  });
+
+  it('leaves out a job the place has not built, and takes it up when it has', () => {
+    let s = newJourney(['lanes', 'wood']);
+    const seen = new Set<string>([s.job]);
+    for (let i = 0; i < 40; i++) {
+      s = finishLeg(tickJourney(s, 8));
+      seen.add(s.job);
+    }
+    expect([...seen].sort()).toEqual(['lanes', 'wood']);
+
+    // the year the ground is broken, the field joins the round
+    s = setOpenJobs(s, ['lanes', 'fields', 'wood']);
+    const after = new Set<string>();
+    for (let i = 0; i < 40; i++) {
+      s = finishLeg(tickJourney(s, 8));
+      after.add(s.job);
+    }
+    expect(after.has('fields')).toBe(true);
+  });
+
+  it('walks out of a job the year has just closed, at the end of its round', () => {
+    let s = chooseJob(newJourney(), 'fields');
+    s = setOpenJobs(s, ['lanes', 'wood']);
+    // not pulled off it mid-stride: the job it is on now is still the field
+    expect(s.job).toBe('fields');
+    for (let i = 0; i < 12; i++) s = finishLeg(tickJourney(s, 8));
+    expect(s.job).not.toBe('fields');
   });
 });
 

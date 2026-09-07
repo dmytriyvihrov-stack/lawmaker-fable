@@ -5,6 +5,27 @@ import { allCases, allProposals } from './registry';
 import type { CurrentEvent, GameState } from './types';
 
 /**
+ * The scenes that come round rather than happening once.
+ *
+ * Every other case in this game is spent the first time it is answered, which
+ * is right for the arc and wrong for a reign that outlasts it: forty seven
+ * one-shot scenes and thirty years leaves the last decade with nobody at the
+ * door. These are the ordinary recurring business of a place - a stone, a
+ * bench, a gate in November, the bottom of the store - and the convention is
+ * the id, the way `x_` is a crisis and `r1_` is somebody coming back.
+ */
+const recurring = (id: string): boolean => id.startsWith('rr_');
+
+/** The year this scene was last ruled on. `-Infinity` if it never has been. */
+function lastSeen(s: GameState, id: string): number {
+  let last = Number.NEGATIVE_INFINITY;
+  for (const line of s.log) {
+    if (line.kind === 'case' && line.refId === id && line.turn > last) last = line.turn;
+  }
+  return last;
+}
+
+/**
  * Picks the event for the current turn (section 5.3).
  * Takes a draft state that the reducer has already cloned: it consumes the
  * pending entry, so it must not be called on live state.
@@ -67,6 +88,7 @@ export function pickEvent(
     const candidates = cases.filter(
       (c) =>
         c.trigger !== null &&
+        !recurring(c.id) &&
         !draft.shownCases.includes(c.id) &&
         c.priority > CONFIG.urgentPriority &&
         evaluate(c.trigger, draft),
@@ -90,11 +112,44 @@ export function pickEvent(
     return { kind: 'case', id: best.id };
   };
 
+  /**
+   * And when the written arc has nothing left, the ordinary business of the
+   * place. Last on purpose: a scene that can be asked again must never take
+   * the year from one that cannot. Whichever has been away longest, and the
+   * seed between equals, and never one that has been round inside
+   * `year.recurAfter`, so a quiet year is still allowed to happen.
+   */
+  const roundPick = (): CurrentEvent | null => {
+    const pool = cases.filter(
+      (c) =>
+        recurring(c.id) &&
+        c.trigger !== null &&
+        evaluate(c.trigger, draft) &&
+        draft.turn - lastSeen(draft, c.id) >= CONFIG.year.recurAfter,
+    );
+    if (pool.length === 0) return null;
+    let best = pool[0];
+    let bestSeen = lastSeen(draft, best.id);
+    let bestR = rand01(draft.seed, 'round', draft.turn, best.id);
+    for (const c of pool.slice(1)) {
+      const seen = lastSeen(draft, c.id);
+      const r = rand01(draft.seed, 'round', draft.turn, c.id);
+      if (seen < bestSeen || (seen === bestSeen && r < bestR)) {
+        best = c;
+        bestSeen = seen;
+        bestR = r;
+      }
+    }
+    return { kind: 'case', id: best.id };
+  };
+
   // a decree opens the year it is due; otherwise the year belongs to people
   const first = lawAllowed ? proposalPick() : null;
   if (first) return first;
   const second = casePick();
   if (second) return second;
+  const third = roundPick();
+  if (third) return third;
 
   // 4. nothing left
   return null;

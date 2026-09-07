@@ -141,6 +141,14 @@ export type StoryFlag =
   | 'marta_kept' | 'marta_moved'
   | 'fugitive_hidden' | 'fugitive_given'
   | 'wolf_kept' | 'wolf_driven' | 'wolf_eaten' | 'dogs_kept'
+  /**
+   * The first year this place put somebody in the ground. Set by the engine,
+   * the way `became_town` is, the first year the count actually falls or the
+   * first long winter, whichever comes first. The law about the dead waits on
+   * it: a rule for burying people, written in a place where nobody has died
+   * yet, is a form somebody filled in.
+   */
+  | 'first_dead'
   /** The ground, the wood, and the one nobody could carry. */
   | 'ground_kept' | 'ground_cut' | 'road_buried' | 'road_refused'
   | 'wood_shut' | 'wood_open' | 'corner_carried' | 'corner_left'

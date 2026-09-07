@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useDevEdit } from '../dev/useDevEdit';
+import { useTextEditMode } from '../dev/textEditMode';
 
 interface PopoverProps {
   value: string;
+  original: string;
   changed: boolean;
   edit: { note?: string } | undefined;
-  save: (text: string, note: string) => void;
+  save: (text: string, note: string, removed?: boolean) => void;
   reset: () => void;
 }
 
@@ -14,7 +16,7 @@ interface PopoverProps {
  * The editor itself: a rewrite box and a note box, shared by both the inline
  * form (prose) and the button-adjacent form (a choice's own label).
  */
-function DevEditPopover({ value, changed, edit, save, reset }: PopoverProps) {
+function DevEditPopover({ value, original, changed, edit, save, reset }: PopoverProps) {
   const [open, setOpen] = useState(false);
   const [draftText, setDraftText] = useState(value);
   const [draftNote, setDraftNote] = useState(edit?.note ?? '');
@@ -32,7 +34,7 @@ function DevEditPopover({ value, changed, edit, save, reset }: PopoverProps) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="Edit this text"
-        title={changed ? 'Edited — click to change or clear' : 'Edit this text'}
+        title={changed ? 'Edited. Click to change or clear' : 'Edit this text'}
         className={`align-super text-[10px] leading-none ${
           changed ? 'text-seal' : 'text-parchment-dim/60 hover:text-seal'
         }`}
@@ -70,6 +72,18 @@ function DevEditPopover({ value, changed, edit, save, reset }: PopoverProps) {
               className="rounded bg-seal px-2.5 py-1 text-[11px] tracking-wide text-parchment"
             >
               Save
+            </button>
+            {/* "there should be nothing here", which is a different request
+                from "this should say nothing", and is filed as one. */}
+            <button
+              type="button"
+              onClick={() => {
+                save(original, draftNote, true);
+                setOpen(false);
+              }}
+              className="rounded border border-bad px-2.5 py-1 text-[11px] text-bad"
+            >
+              Delete
             </button>
             {changed && (
               <button
@@ -125,7 +139,8 @@ interface Props {
  */
 export function DevText({ id, text, dev, className }: Props) {
   const { value, edit, save, reset } = useDevEdit(id, text);
-  if (!dev) return <span className={className}>{value}</span>;
+  const editing = useTextEditMode();
+  if (!dev || !editing) return <span className={className}>{value}</span>;
   const changed = edit !== undefined;
   return (
     <span className={`relative inline ${className ?? ''}`}>
@@ -134,7 +149,7 @@ export function DevText({ id, text, dev, className }: Props) {
       >
         {value}
       </span>{' '}
-      <DevEditPopover value={value} changed={changed} edit={edit} save={save} reset={reset} />
+      <DevEditPopover value={value} original={text} changed={changed} edit={edit} save={save} reset={reset} />
     </span>
   );
 }
@@ -146,11 +161,13 @@ export function DevText({ id, text, dev, className }: Props) {
  */
 export function DevEditTrigger({ id, text, dev, className }: Props) {
   const { value, edit, save, reset } = useDevEdit(id, text);
-  if (!dev) return null;
+  const editing = useTextEditMode();
+  if (!dev || !editing) return null;
   return (
     <span className={className}>
       <DevEditPopover
         value={value}
+        original={text}
         changed={edit !== undefined}
         edit={edit}
         save={save}
@@ -178,7 +195,8 @@ export function HoverText({
   children,
 }: Props & { children?: ReactNode }) {
   const { value, edit, save, reset } = useDevEdit(id, text);
-  if (!dev) {
+  const editing = useTextEditMode();
+  if (!dev || !editing) {
     return (
       <span className={className} title={value}>
         {children ?? value}
@@ -191,7 +209,7 @@ export function HoverText({
       <span className={changed ? 'rounded-sm outline outline-1 outline-seal/50' : undefined}>
         {children ?? value}
       </span>{' '}
-      <DevEditPopover value={value} changed={changed} edit={edit} save={save} reset={reset} />
+      <DevEditPopover value={value} original={text} changed={changed} edit={edit} save={save} reset={reset} />
     </span>
   );
 }

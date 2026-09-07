@@ -124,6 +124,20 @@ export const VERDICT_VERBS: WordTile[] = [
   { id: 'is_everybodys_by_law', text: "IS EVERYBODY'S, AND SO IS HIS DAY" },
   { id: 'is_his_by_law', text: 'IS HIS, BY THE LAW OF THE WORK' },
 
+  // the four that come round: a stone, a bench, a gate in November, a store
+  { id: 'goes_back_to_the_furrow', text: 'GOES BACK WHERE THE FURROW SAYS' },
+  { id: 'is_split_with_a_post', text: 'IS SPLIT, AND A POST GOES IN' },
+  { id: 'stays_where_it_stands', text: 'STAYS WHERE IT STANDS' },
+  { id: 'goes_to_the_best_hands', text: 'GOES TO THE BEST HANDS' },
+  { id: 'goes_to_the_house_owed', text: 'GOES TO THE HOUSE THAT IS OWED' },
+  { id: 'goes_to_the_one_with_nothing', text: 'GOES TO THE ONE WITH NOTHING' },
+  { id: 'has_the_winter', text: 'HAS THE WINTER, AND THE WORK' },
+  { id: 'has_a_night_and_a_loaf', text: 'HAS A NIGHT AND A LOAF' },
+  { id: 'has_the_road', text: 'HAS THE ROAD' },
+  { id: 'stays_in_the_store', text: 'STAYS IN THE STORE' },
+  { id: 'goes_on_the_list', text: 'GOES ON THE LIST OF BROKEN THINGS' },
+  { id: 'goes_on_one_afternoon', text: 'GOES ON ONE AFTERNOON' },
+
   // the coat, and the toll box
   { id: 'gives_it_back', text: 'GIVES THE COAT BACK' },
   { id: 'keeps_it', text: 'KEEPS THE COAT' },
@@ -1340,6 +1354,50 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
       { verb: 'rides_between_the_stones', choiceId: 'rides' },
       { verb: 'runs_on_his_legs', choiceId: 'legs' },
       { verb: 'runs_the_second_race', choiceId: 'two_races' },
+    ],
+  },
+
+  rr_stone: {
+    subject: 'THE STONE',
+    verbs: ['goes_back_to_the_furrow', 'is_split_with_a_post', 'stays_where_it_stands'],
+    objects: [],
+    rulings: [
+      { verb: 'goes_back_to_the_furrow', choiceId: 'the_furrow' },
+      { verb: 'is_split_with_a_post', choiceId: 'split_it' },
+      { verb: 'stays_where_it_stands', choiceId: 'let_it_lie' },
+    ],
+  },
+
+  rr_apprentice: {
+    subject: 'THE PLACE AT THE BENCH',
+    verbs: ['goes_to_the_best_hands', 'goes_to_the_house_owed', 'goes_to_the_one_with_nothing'],
+    objects: [],
+    rulings: [
+      { verb: 'goes_to_the_best_hands', choiceId: 'the_best_hands' },
+      { verb: 'goes_to_the_house_owed', choiceId: 'the_one_owed' },
+      { verb: 'goes_to_the_one_with_nothing', choiceId: 'the_one_with_nothing' },
+    ],
+  },
+
+  rr_gate: {
+    subject: 'THE FAMILY AT THE GATE',
+    verbs: ['has_the_winter', 'has_a_night_and_a_loaf', 'has_the_road'],
+    objects: [],
+    rulings: [
+      { verb: 'has_the_winter', choiceId: 'the_winter' },
+      { verb: 'has_a_night_and_a_loaf', choiceId: 'a_night' },
+      { verb: 'has_the_road', choiceId: 'the_road' },
+    ],
+  },
+
+  rr_bottom: {
+    subject: 'WHAT IS LEFT',
+    verbs: ['stays_in_the_store', 'goes_on_the_list', 'goes_on_one_afternoon'],
+    objects: [],
+    rulings: [
+      { verb: 'stays_in_the_store', choiceId: 'put_it_by' },
+      { verb: 'goes_on_the_list', choiceId: 'the_list' },
+      { verb: 'goes_on_one_afternoon', choiceId: 'a_day_of_it' },
     ],
   },
 

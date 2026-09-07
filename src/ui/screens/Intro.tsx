@@ -70,38 +70,34 @@ export function Intro({ seed, dev = false, onDeclare }: Props) {
         </p>
       </section>
 
-      {/* what the whole reign is for, said once, before anybody talks */}
-      <p className={`mt-5 rounded-lg border border-seal/50 bg-seal/[0.12] px-4 py-3 ${TYPE.body} leading-relaxed text-parchment`}>
-        <DevText id="intro:brief:charge" text={brief.charge} dev={dev} />
-      </p>
-
       {/* and then the crown, who has come a long way to ask one thing: a
           picture of this one, their name, why they are here, and the one thing
-          about them that will bend the whole reign */}
+          about them that will bend the whole reign.
+
+          The picture is the size of a picture. It was a 48 pixel stamp beside
+          a name, which is the size of an icon: the one person in this game who
+          was painted properly, the one whose face is going to be over the
+          whole reign, drawn smaller than the five strangers at the top of the
+          screen. It is a portrait on a wall now, on the left, with everything
+          she has come to say running down the side of it. */}
       <section className="mt-5 rounded-lg border border-ink-line bg-ink-soft p-4">
-        <header className="mb-3 flex items-center gap-3">
-          {/* The crown is painted, like everybody else in this game. An emoji
-              here made the one person with an actual portrait the only one
-              without, and five monarchs read as one. */}
-          <MonarchPortrait monarch={monarch} mood={72} size={48} />
-          <div className="min-w-0">
-            <div className={`${TYPE.label} text-parchment-dim`}>
-              {UI.intro.speaker}
-            </div>
-            <div className={`${TYPE.title} leading-tight text-parchment`}>{monarch.name}</div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <div className="mx-auto shrink-0 rounded-lg border border-ink-line bg-ink/40 p-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.35)] sm:mx-0">
+            <MonarchPortrait monarch={monarch} mood={72} size={132} />
           </div>
-        </header>
-        <div className="space-y-3">
-          {UI.intro.lead.map((p, i) => (
-            <p key={i} className={`${TYPE.body} leading-relaxed text-parchment/90`}>
-              <DevText id={`intro:lead:${i}`} text={p} dev={dev} />
+          <div className="min-w-0 flex-1">
+            <div className={`${TYPE.label} text-parchment-dim`}>{UI.intro.speaker}</div>
+            <div className={`${TYPE.display} leading-tight text-parchment`}>{monarch.name}</div>
+            {/* What she is, which is the one thing about her that will bend
+                the reign. The rider with the wax used to stand above it in a
+                block of its own; that half sentence is in front of the
+                question now, where the question is. */}
+            <p className={`mt-3 ${TYPE.body} leading-relaxed text-parchment-dim`}>
+              <span className="text-seal">{monarch.traitName}. </span>
+              <DevText id={`monarch:${monarch.id}:traitLine`} text={monarch.traitLine} dev={dev} />
             </p>
-          ))}
+          </div>
         </div>
-        <p className={`mt-3 rounded-md border border-ink-line bg-ink/50 p-3 ${TYPE.body} leading-relaxed text-parchment-dim`}>
-          <span className="text-seal">{monarch.traitName}. </span>
-          <DevText id={`monarch:${monarch.id}:traitLine`} text={monarch.traitLine} dev={dev} />
-        </p>
       </section>
 
       <h2 className={`mt-6 text-center ${TYPE.title} leading-snug`}>

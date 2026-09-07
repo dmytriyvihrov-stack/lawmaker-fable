@@ -1,0 +1,46 @@
+# The first safety net in this project that does not depend on one Windows
+# machine being switched on.
+#
+# `deploy.ps1` runs the validator and the whole suite before it publishes, and
+# that is the release gate. This is the other half: it runs on every push,
+# against a clean checkout and a clean install, so a commit that only builds
+# because of something sitting in a local `node_modules` or a local
+# `.vite-cache` is caught here rather than on the day somebody clones it.
+#
+# It does not publish anything. `docs/` is written by the deploy and by
+# nothing else, so the live page can never move without somebody asking for it.
+
+name: check
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      # `npm ci` and not `npm install`: the lockfile is the contract.
+      - run: npm ci
+
+      - name: typecheck both entries
+        run: npx tsc -b
+
+      - name: the content validator
+        run: npm run validate
+
+      - name: the whole suite
+        run: npm test
+
+      # And that it actually builds. Not published; just proof it can be.
+      - name: build
+        run: npx vite build

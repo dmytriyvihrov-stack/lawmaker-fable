@@ -10,13 +10,11 @@
 .ruler-case > aside { background: #131c1638; border-color: #9ab4a04d; }
 .ruler-case > section:last-child { background: #141d173d; border-color: #9ab4a033; }
 .ruler-case > section:nth-child(2) > div:last-child { max-width: 54ch; }
-.ruler-controls { display: flex; align-items: center; gap: 10px; width: 270px; padding: 10px 12px; background: #22291fef; border: 1px solid #d1bd813d; border-radius: 13px; box-shadow: 0 5px 18px #25341b26; color: #f0e5c7; backdrop-filter: blur(6px); }
-.ruler-control-icon { display: grid; place-items: center; width: 37px; height: 40px; background: #d1b26814; border: 1px solid #d1b2683a; border-radius: 9px; }
 .ruler-eyebrow { margin: 0; font-family: system-ui, sans-serif; font-size: 9px; line-height: 1.5; letter-spacing: .16em; text-transform: uppercase; color: #c7b788; }
-.ruler-controls select { display: block; width: 100%; margin-top: 3px; padding: 0 3px 0 0; border: 0; color: #f1e4c8; background: transparent; font: inherit; font-size: 13px; cursor: pointer; }
-.ruler-controls option { background: #262c22; }
-.ruler-task-note { margin: 3px 0 0; font-size: 10px; color: #bbbba1; }
-.ruler-dev { position: absolute; top: calc(100% + 6px); left: 0; display: flex; flex-wrap: wrap; gap: 6px; padding: 7px 9px; background: #21281fed; border: 1px solid #8e7a5266; border-radius: 8px; font: 10px system-ui, sans-serif; }
+/* One line under the crown: what the ruler is doing, and nothing about it. */
+.ruler-doing-line { margin: 7px 0 0; text-align: center; color: #d9cba6; font-size: 12px; line-height: 1.3; }
+.ruler-doing-strip { margin: 3px 0 0; text-align: left; font-size: 11px; }
+.ruler-dev { display: flex; flex-wrap: wrap; gap: 6px; padding: 7px 9px; background: #21281fed; border: 1px solid #8e7a5266; border-radius: 8px; font: 10px system-ui, sans-serif; color: #f0e5c7; }
 .ruler-dev label { display: flex; align-items: center; gap: 5px; }
 .ruler-dev button { border: 1px solid #a3926577; padding: 2px 5px; border-radius: 4px; }
 .journey-card { position: relative; display: flex; align-items: flex-start; gap: 18px; width: 100%; max-width: 800px; max-height: 39dvh; padding: 20px 24px; overflow-y: auto; scrollbar-width: thin; border: 1px solid #bfc8a36b; border-radius: 15px; background: linear-gradient(115deg, #253129f5, #272d24fa); color: #f1e5c7; box-shadow: 0 16px 50px #15220e77, inset 0 1px #d8e6b71a; backdrop-filter: blur(8px); animation: journey-appear 250ms ease-out; }
@@ -63,10 +61,7 @@
   .ruler-topbar-actions > button { height: 28px; padding-left: 7px; padding-right: 7px; }
   .ruler-edition .decision-paper { max-height: 39dvh; }
   .ruler-control-dock { left: 10px; top: 8px; }
-  .ruler-controls { width: 228px; gap: 7px; padding: 7px 9px; }
-  .ruler-control-icon { width: 29px; height: 34px; }
-  .ruler-eyebrow { font-size: 8px; }
-  .ruler-controls select { font-size: 12px; }
+  .ruler-doing-line { font-size: 11px; }
   .ruler-card-dock { padding: 0 10px 28px; }
   .journey-card { gap: 12px; padding: 15px 16px; }
   .journey-card h2 { font-size: 21px; }
@@ -85,8 +80,8 @@
   .journey-errand { flex-wrap: nowrap; gap: 10px; }
   .journey-spark { flex-basis: 30px; width: 30px; height: 30px; font-size: 16px; }
   .journey-errand h2 { font-size: 17px; }
-  .ruler-controls { width: 212px; }
-  .ruler-case { padding: 12px; gap: 12px; }
+  .ruler-case-body { padding: 12px; }
+  .ruler-case { gap: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ruler-layer *, .journey-card { animation: none !important; }

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { CSSProperties } from 'react';
 import { rand01 } from '../../../engine/rng';
 import type { TownPaint } from './paint';
@@ -23,7 +24,7 @@ function riverPoint(bend: number, t: number, offset = 0) {
 }
 
 /** Broad washes give the open ground a slope without inventing a built field. */
-export function GroundWashes({ paint }: { paint: TownPaint }) {
+export const GroundWashes = memo(function GroundWashes({ paint }: { paint: TownPaint }) {
   return (
     <g aria-hidden pointerEvents="none" className="city-tint">
       <path d="M0 284 Q320 228 590 288 T1100 280 L1440 236 V356 Q1110 300 850 350 T0 356Z" fill={paint.groundLow} opacity=".17" />
@@ -33,7 +34,7 @@ export function GroundWashes({ paint }: { paint: TownPaint }) {
       <path d="M40 532 Q246 486 426 522 M1020 642 Q1220 572 1410 608 M64 682 Q250 638 438 674" fill="none" stroke={paint.groundLow} strokeWidth="3" opacity=".26" strokeLinecap="round" />
     </g>
   );
-}
+});
 
 /**
  * Current, shallow edges, and a few reeds rooted in the bank.
@@ -43,7 +44,7 @@ export function GroundWashes({ paint }: { paint: TownPaint }) {
  * it in drifts along the banks, nothing glints and nothing flows: the same
  * shape, standing still, which is what a frozen river is.
  */
-export function River({ paint }: { paint: TownPaint }) {
+export const River = memo(function River({ paint }: { paint: TownPaint }) {
   const frozen = paint.ice;
   return (
     <g aria-hidden pointerEvents="none" className="city-tint">
@@ -126,7 +127,7 @@ export function River({ paint }: { paint: TownPaint }) {
       })}
     </g>
   );
-}
+});
 
 /**
  * Handfuls of grass, with quiet gaps left for the eye and for the cards.
@@ -140,7 +141,7 @@ export function River({ paint }: { paint: TownPaint }) {
  */
 const MEADOW_SEED = 5411;
 
-export function MeadowDetails({ paint }: { paint: TownPaint }) {
+export const MeadowDetails = memo(function MeadowDetails({ paint }: { paint: TownPaint }) {
   return (
     <g aria-hidden pointerEvents="none">
       {Array.from({ length: 54 }, (_, i) => {
@@ -174,4 +175,4 @@ export function MeadowDetails({ paint }: { paint: TownPaint }) {
       })}
     </g>
   );
-}
+});

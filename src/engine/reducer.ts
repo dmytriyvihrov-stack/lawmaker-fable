@@ -20,6 +20,7 @@ import {
   animalKeep,
   herdKeep,
   crowdingOnHealth,
+  deathsOf,
   isActiveStat,
   isWinter,
   lawTrend,
@@ -64,8 +65,22 @@ import type {
 
 const STAT_IDS: StatId[] = ['crownSanity', 'mood', 'health', 'economy', 'army', 'culture'];
 
+/**
+ * A fresh state to work on. Every action deep-copies the reign, which is the
+ * whole reason the reducer can be written as plain assignment and still be a
+ * pure function, so it happens on every click and it is worth the two lines:
+ * `structuredClone` is a few times faster than a JSON round trip and is the
+ * only thing in here that is not identical everywhere. The fallback is the
+ * round trip, for anything old enough not to have it - the state is plain
+ * data either way, so the two agree exactly.
+ */
+const deepCopy: <T>(v: T) => T =
+  typeof structuredClone === 'function'
+    ? structuredClone
+    : (v) => JSON.parse(JSON.stringify(v));
+
 function clone(s: GameState): GameState {
-  return JSON.parse(JSON.stringify(s)) as GameState;
+  return deepCopy(s);
 }
 
 /** A tenth of a point, which is the unit every board is written in. */
@@ -281,7 +296,11 @@ export function newGame(seed: number): GameState {
     usedProposals: [],
     shownCases: [],
     pending: [],
-    flags: [],
+    /* A reign can grow past a town. This was set by the dev door and by
+       nothing else, so `world.ts`, the map, the three things a year can be
+       spent abroad and every test behind them were finished, passing, and
+       unreachable in the game anybody actually opens. */
+    flags: ['kingdom_open'],
     cityFlags: [],
     iva: [],
     log: [],
@@ -416,7 +435,12 @@ export function chooseLaw(
     }
   }
   draft.lastAftermath = {
-    paragraphs: paragraphs.map((p) => renderTemplate(p, draft)),
+    /* The law being sealed is on the screen a line above this paragraph, so
+       the paragraph says "it". Any other law it names is not, and is spelled
+       out the way it always was. */
+    paragraphs: paragraphs.map((p) =>
+      renderTemplate(p, draft, { spoken: `${option.subject}_${option.action}` as LawId }),
+    ),
     deltas: diffStats(before, draft.stats),
   };
 
@@ -832,7 +856,21 @@ export function advance(s: GameState): GameState {
   }
 
   // 6. the count, and the charter that follows it
+  const countBefore = draft.population;
   draft.population = Math.max(1, draft.population + yearlyChange(draft));
+  /* And the first year this place buried somebody, which is what the law about
+     the dead has been waiting on. Three ways to be sure of it, and all three
+     are somebody rather than a rate: the count actually fell, or a long winter
+     went through, or how the place is living took a whole person off it in one
+     year. A hamlet living well never trips any of them, and the law arrives on
+     its own calendar instead - which is the point. This can only bring it
+     forward. */
+  if (
+    !draft.flags.includes('first_dead') &&
+    (draft.population < countBefore || isWinter(draft.turn) || deathsOf(draft) >= 1)
+  ) {
+    draft.flags.push('first_dead');
+  }
   if (draft.stage === 'village' && draft.population >= CONFIG.town.at) {
     draft.stage = 'town';
     draft.townSince = draft.turn;

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { SUBJECT_WORDS, buildLabel, predicateFor } from '../../content/law-words';
 import { ACTIONS, SUBJECTS } from '../../content/meta';
 import { PersonPortrait } from '../components/PersonPortrait';
-import { PopupHead } from '../components/Popup';
+import { CardFoot, PopupHead } from '../components/Popup';
 import { UI } from '../../content/ui-strings';
 import { getProposal } from '../../engine/registry';
 import { openProposals } from '../../engine/reducer';
@@ -98,20 +98,27 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
 
   return (
     <>
+      {/* The rule of the screen, in the head, once. It used to be said twice:
+          "Pick what the law is about, then what it says" under the effects, and
+          "More than one law is open this year. The subject you pick is the law
+          you write" at the foot of the margin. One sentence covers both. */}
       <PopupHead
         kicker={`${UI.popup.draftingTable} · ${UI.popup.ofYear
           .replace('{season}', UI.seasons[season])
           .replace('{n}', String(state.turn))}`}
+        note={proposals.length > 1 ? UI.composer.pickPromptMany : UI.composer.pickPrompt}
       />
-      <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_336px]">
+      <div className="p-4">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_336px]">
         {/* The sentence, which is the document. It is what the reign is
             actually made of, so it gets the width and the matter that raised
             it stands in the margin beside it rather than in front of it. */}
         <section className="min-w-0 rounded-xl border border-ink-line bg-ink/60 p-4">
           <div className={`${TYPE.label} text-parchment-dim`}>{UI.popup.lawWillRead}</div>
-          {/* The document. It is the point of this screen, so it is the one
-              thing on it set at display size. */}
-          <p className={`mt-2 ${TYPE.display} leading-tight`}>
+          {/* The document, at the size a sentence is read at. It was `display`,
+              26px, which took three lines the moment both halves were picked
+              and pushed the wax off the bottom of the window. */}
+          <p className={`mt-2 ${TYPE.title} leading-snug`}>
             <span className={subject ? 'text-parchment' : 'text-hair'}>
               {subject ? SUBJECT_WORDS[subject] : UI.composer.blankSubject}{' '}
             </span>
@@ -144,89 +151,62 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
               {ACTIONS.filter((a) => openActions.has(a.id)).map((a) => {
                 const isStanding = standing !== undefined && standing.action === a.id;
                 return (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => chooseAction(a.id)}
-                    title={a.label}
-                    className={`${row} ${action === a.id ? chosen : isStanding ? held : open}`}
-                  >
-                    {predicateFor(subject, a.id)}
-                    {isStanding && (
-                      <span className={`ml-1.5 ${TYPE.label} text-seal`}>
-                        {UI.composer.standing}
-                      </span>
+                  <div key={a.id}>
+                    <button
+                      type="button"
+                      onClick={() => chooseAction(a.id)}
+                      title={a.label}
+                      className={`${row} ${action === a.id ? chosen : isStanding ? held : open}`}
+                    >
+                      {predicateFor(subject, a.id)}
+                      {isStanding && (
+                        <span className={`ml-1.5 ${TYPE.label} text-seal`}>
+                          {UI.composer.standing}
+                        </span>
+                      )}
+                    </button>
+                    {/* What this predicate does, under the predicate itself.
+
+                        It used to be a block of its own headed "And so" under
+                        the whole column, which said the same thing one screen
+                        further from the word it belonged to and cost four
+                        lines of a card that had already run out of them. It is
+                        beside the button rather than inside it because a list
+                        cannot live in a button. */}
+                    {action === a.id && picked && (
+                      <div className={`mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 pl-3.5 ${TYPE.note}`}>
+                        <MovedBoards row once={onceRaw} every={everyRaw} place={state} />
+                        {growth !== null && (
+                          <span className="flex items-baseline gap-1">
+                            <span aria-hidden>🚶</span>
+                            <span className={growth > 0 ? 'text-good' : 'text-parchment-dim'}>
+                              +{growth}%
+                            </span>
+                            <span className="sr-only">{UI.story.whoComes}</span>
+                          </span>
+                        )}
+                      </div>
                     )}
-                  </button>
+                  </div>
                 );
               })}
             </div>
           )}
 
-          {/* what it will do, in the units the place will feel, and the wax
-              beside it: the two are one decision and sit on one line */}
-          <div className="mt-3 flex items-end justify-between gap-3 border-t border-ink-line pt-2">
-          <div className="min-h-[52px] min-w-0 flex-1">
-            {picked ? (
-              <>
-                <div className={`${TYPE.label} text-parchment-dim`}>{UI.popup.whatItDoes}</div>
-                <MovedBoards
-                  className="mt-1"
-                  once={onceRaw}
-                  every={everyRaw}
-                  place={state}
-                  emptyLine={UI.story.movesNothing}
-                />
-                {growth !== null && (
-                  <div className={`mt-1 flex items-baseline gap-2 ${TYPE.note}`}>
-                    <span aria-hidden className="w-4">
-                      🚶
-                    </span>
-                    <span
-                      className={`w-8 shrink-0 tabular-nums ${
-                        growth > 0 ? 'text-good' : 'text-parchment-dim'
-                      }`}
-                    >
-                      +{growth}%
-                    </span>
-                    <span className="flex-1 text-parchment/85">{UI.story.whoComes}</span>
-                    <span className={`${TYPE.label} text-seal`}>{UI.seal.everyYear}</span>
-                  </div>
-                )}
-                {picked.o.perTurnWatch && (
-                  <p className={`mt-1.5 ${TYPE.note} leading-snug text-parchment-dim`}>
-                    {UI.story.watchNote}
-                  </p>
-                )}
-                {dev && (
-                  <DevEffects
-                    raw={picked.o.effects}
-                    felt={scaleEffects(picked.o.effects, CONFIG.law.sealScale)}
-                    extra={[['perTurn', JSON.stringify(picked.o.perTurn ?? {})]]}
-                  />
-                )}
-              </>
-            ) : (
-              <p className={`${TYPE.note} text-parchment-dim`}>{UI.composer.pickPrompt}</p>
-            )}
-          </div>
-
-          <button
-            type="button"
-            disabled={!picked || label === null}
-            onClick={() => picked && label !== null && onSeal(picked.p.id, picked.i, label)}
-            className={`min-h-[40px] shrink-0 rounded-lg bg-seal px-7 ${TYPE.body} tracking-[0.18em] text-parchment disabled:opacity-30`}
-          >
-            {UI.composer.seal}
-          </button>
-          </div>
-          {reopening && (
-            <p className={`mt-2 text-center ${TYPE.note} text-parchment-dim`}>
-              {UI.composer.reopenCost
-                .replace('{crown}', String(Math.abs(CONFIG.reopen.crownSanity)))
-                .replace('{mood}', String(Math.abs(CONFIG.reopen.mood)))}
+          {/* the two rules that are rules and not numbers */}
+          {picked?.o.perTurnWatch && (
+            <p className={`mt-2 ${TYPE.note} leading-snug text-parchment-dim`}>
+              {UI.story.watchNote}
             </p>
           )}
+          {dev && picked && (
+            <DevEffects
+              raw={picked.o.effects}
+              felt={scaleEffects(picked.o.effects, CONFIG.law.sealScale)}
+              extra={[['perTurn', JSON.stringify(picked.o.perTurn ?? {})]]}
+            />
+          )}
+
         </section>
         {/* the matter, and the advisor in the margin of it */}
         <section className="order-first min-w-0 lg:order-last">
@@ -268,11 +248,28 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
             </div>
           )}
 
-          {proposals.length > 1 && (
-            <p className={`mt-3 ${TYPE.note} leading-snug text-hair`}>{UI.composer.manyLaws}</p>
-          )}
         </section>
 
+      </div>
+
+      {reopening && (
+        <p className={`mt-3 text-center ${TYPE.note} text-parchment-dim`}>
+          {UI.composer.reopenCost
+            .replace('{crown}', String(Math.abs(CONFIG.reopen.crownSanity)))
+            .replace('{mood}', String(Math.abs(CONFIG.reopen.mood)))}
+        </p>
+      )}
+
+      <CardFoot>
+        <button
+          type="button"
+          disabled={!picked || label === null}
+          onClick={() => picked && label !== null && onSeal(picked.p.id, picked.i, label)}
+          className={`min-h-[48px] w-full rounded-lg bg-seal px-5 py-2 text-[17px] tracking-[0.2em] text-parchment disabled:opacity-30`}
+        >
+          {UI.composer.seal}
+        </button>
+      </CardFoot>
       </div>
     </>
   );

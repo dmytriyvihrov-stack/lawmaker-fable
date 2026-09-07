@@ -54,9 +54,13 @@ export const WORK_SITES: Partial<
   fence: { x: 560, y: 250, scale: 1, label: { x: 220, y: -18 } },
   fields: { x: 300, y: 300, scale: 1, label: { x: 160, y: -12 } },
   mine: { x: 114, y: 344, scale: 1, label: { x: 0, y: 44 } },
-  /* At the trees, because that is the whole idea of it: the cabin stands
-     where the wood is, clear of the front rank the cutters work. */
-  woodcutter: { x: 1216, y: 322, scale: 0.9, label: { x: 34, y: -16 }, frame: { x: 34, y: 46, s: 1.1 } },
+  /* At the trees, because that is the whole idea of it: the cabin stands where
+     the wood is, clear of the front rank the cutters work. Out of them now,
+     though, and a little way back down the slope towards the roofs: standing
+     inside the front rank it was a roof among trunks that read as one more
+     dark shape in the wood, and the whole point of a saw pit is that the wood
+     comes down to the place rather than the place going up into the wood. */
+  woodcutter: { x: 1166, y: 350, scale: 0.9, label: { x: 34, y: -16 }, frame: { x: 34, y: 46, s: 1.1 } },
   /* A house goes up among the other roofs and not on its own. This is the
      ground for the first one; the rest arrive as roofs with the count. */
   house: { x: 610, y: 402, scale: 0.92, label: { x: 28, y: -14 }, frame: { x: 28, y: 44, s: 1 } },
