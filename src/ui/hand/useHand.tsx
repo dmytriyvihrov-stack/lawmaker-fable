@@ -433,7 +433,15 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
 
   const strip =
     stage === 'act' && acting ? (
-      <div className="pointer-events-auto grid w-full max-w-[1140px] grid-cols-[minmax(0,300px)_1fr_auto] items-center gap-5 rounded-2xl border border-bench bg-ink-soft/95 px-6 py-3 shadow-[0_20px_44px_rgba(0,0,0,0.5)] backdrop-blur-[2px]">
+      <div className="pointer-events-auto relative grid w-full max-w-[1140px] grid-cols-[minmax(0,300px)_1fr_auto] items-center gap-5 rounded-2xl border border-bench bg-ink-soft/95 px-6 py-3 shadow-[0_20px_44px_rgba(0,0,0,0.5)] backdrop-blur-[2px]">
+        {/* The ground fading into the bar rather than being cut by it. At 4x
+            the scene fills the frame and whoever is standing in the last strip
+            of it met a hard edge halfway up their body: a digger sliced off at
+            the waist, which reads as a drawing error and not as depth. */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-12 block h-12 bg-gradient-to-b from-transparent to-ink-soft/95"
+        />
         <div className="min-w-0">
           <div className="text-[9px] uppercase tracking-[0.2em] text-parchment-dim">
             {HAND_STRIP.kicker}
