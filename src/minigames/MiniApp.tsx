@@ -14,6 +14,7 @@ import { BuildBadge, DevBar, DevToggle } from '../ui/components/DevCorner';
 import { DevEditsPanel } from '../ui/components/DevEditsPanel';
 import { TextEditLayer } from '../ui/dev/TextEditLayer';
 import { clearAllDevEdits } from '../ui/dev/devEditsStore';
+import { clearAllDevMarks } from '../ui/dev/devMarksStore';
 import { setTextEditMode } from '../ui/dev/textEditMode';
 import { Interlude } from '../ui/components/Interlude';
 import { MonarchPanel } from '../ui/components/MonarchPanel';
@@ -340,6 +341,7 @@ export function MiniApp() {
               onOpenBoard={(board) => setGame((g) => openBoard(g, board))}
               onWipe={() => {
                 clearAllDevEdits();
+                clearAllDevMarks();
                 forgetEverything();
                 window.location.reload();
               }}

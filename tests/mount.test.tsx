@@ -23,6 +23,7 @@ import { TopBar } from '../src/ui/components/TopBar';
 import { GrowthLadder } from '../src/ui/components/GrowthLadder';
 import { DevBar } from '../src/ui/components/DevCorner';
 import { DevDials } from '../src/ui/components/DevDials';
+import { DevVerdict } from '../src/ui/components/DevVerdict';
 import { townFolk } from '../src/engine/folk';
 
 /**
@@ -200,6 +201,16 @@ describe('every screen renders', () => {
       expect(panel, state.stage).toContain('souls');
       expect(panel.includes('open it'), state.stage).toBe(state.stage === 'village');
     }
+  });
+
+  it('the thumbs are drawn in dev mode and nowhere else', () => {
+    const props = { id: 'case:v1_idle_hand', label: 'The Idle Hand', turn: 3 };
+    expect(draw(<DevVerdict {...props} dev={false} />)).toBe('');
+    const on = draw(<DevVerdict {...props} dev wide />);
+    expect(on).toContain('aria-pressed');
+    // the thumbs alone out on the map, the line of why only where there is room
+    expect(draw(<DevVerdict {...props} dev />)).not.toContain('why');
+    expect(on).toContain('why');
   });
 
   it('a fresh reign draws its first three screens in order', () => {

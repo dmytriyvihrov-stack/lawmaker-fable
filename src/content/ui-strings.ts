@@ -824,6 +824,19 @@ export const UI = {
     openBoard: 'open it',
     openBoardHint: 'The place decides it is a thing with this board, at the value it has been quietly sitting at.',
 
+    /* The thumbs, on everything that happens. Not a switch of their own: they
+       are the one dev mark that is left while somebody is still playing, and a
+       switch to find first is a mark nobody makes. */
+    likeMark: '👍',
+    dislikeMark: '👎',
+    likeHint: 'This one landed. Marked for whoever writes the content next.',
+    dislikeHint: 'This one did not. Marked for whoever writes the content next.',
+    markWhy: 'why',
+    markNote: 'why, in a line',
+    marksHeading: 'Marked',
+    editsHeading: 'Rewritten',
+    markDrop: 'Take this mark back.',
+
     statesHeading: 'Jump to',
     statesHint: 'A reign that never happened, opened at that stage. This one is thrown away.',
     samePlace: 'this place',

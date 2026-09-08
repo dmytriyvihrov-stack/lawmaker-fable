@@ -12,6 +12,7 @@ import { renderTemplate } from '../../engine/format';
 import { MovedBoards } from '../components/MovedBoards';
 import { DevEffects } from '../components/DevCorner';
 import { DevText } from '../components/DevText';
+import { DevVerdict } from '../components/DevVerdict';
 import { TYPE } from '../type';
 import type { ActionId, GameState, Proposal, Season, SubjectId } from '../../engine/types';
 
@@ -216,6 +217,15 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
             </p>
           )}
           <h2 className={`${TYPE.title} leading-tight`}>{proposal.title}</h2>
+          {/* The proposal itself, judged where it is read. */}
+          <DevVerdict
+            id={`proposal:${proposal.id}`}
+            label={proposal.title}
+            turn={state.turn}
+            dev={dev}
+            wide
+            className="mt-1"
+          />
           <div className="mt-2 space-y-1.5">
             {proposal.problem.map((p, i) => (
               <p key={i} className={`${TYPE.note} leading-relaxed text-parchment-dim`}>

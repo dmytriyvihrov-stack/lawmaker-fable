@@ -44,8 +44,10 @@ import { CONFIG } from '../engine/config';
 import { movePoints } from '../engine/format';
 import { BuildBadge, DevBar, DevToggle } from './components/DevCorner';
 import { DevEditsPanel } from './components/DevEditsPanel';
+import { DevVerdict } from './components/DevVerdict';
 import { TextEditLayer } from './dev/TextEditLayer';
 import { clearAllDevEdits } from './dev/devEditsStore';
+import { clearAllDevMarks } from './dev/devMarksStore';
 import { setTextEditMode } from './dev/textEditMode';
 import { FolkGallery } from './dev/FolkGallery';
 import { previewReign } from './previewReign';
@@ -767,6 +769,33 @@ export function App() {
     decides && !choosingBoard && !game.townName && game.turn >= CONFIG.townName.fromYear;
   const showNaming = naming && !sealing;
 
+  /**
+   * The set-piece moments, and where a thumb can go on one.
+   *
+   * Every one of them is a full screen sheet that is itself one button saying
+   * "carry on", so there is nowhere inside to put a control that is not that,
+   * and a button cannot be nested in a button anyway. The mark sits over the
+   * corner of the sheet instead, on whichever sheet is actually up - the same
+   * queue the sheets themselves are drawn in, so a thumb is never offered for
+   * something standing behind something else.
+   *
+   * Three of them, because three of them carry writing that changes: the
+   * sentence a law came out as, the line a technology arrives with, and the
+   * name the place settles on for you. The fixed ones - the winter, the
+   * workshops opening - say the same thing every reign.
+   */
+  const sealedNow = sealing
+    ? [...game.laws].reverse().find((l) => l.status === 'active')
+    : undefined;
+  const quiet = !sealing && !showNaming && !choosingBoard && winterAhead === null;
+  const marked = sealedNow
+    ? { id: `seal:${sealedNow.subject}_${sealedNow.action}`, label: sealedNow.label }
+    : worked && quiet
+      ? { id: `tech:${worked}`, label: TECHS.find((t) => t.id === worked)?.name ?? worked }
+      : named && quiet && !worked && !treeOpened
+        ? { id: `epithet:${named.id}`, label: named.name }
+        : null;
+
   const caseEvent = game.current?.kind === 'case' ? getCase(game.current.id) : undefined;
   const caseOpen = game.phase === 'case' && caseEvent !== undefined && !idling && journeyReady;
 
@@ -981,6 +1010,18 @@ export function App() {
   const saidWorth = saidNow
     ? STATS.map((stat) => ({ ...stat, delta: saidNow.effect[stat.id] ?? 0 })).find((s) => s.delta !== 0)
     : undefined;
+  /**
+   * The small things a thumb can be left on, dev only.
+   *
+   * The one just done is in the list as well as the ones still out there. It
+   * has to be: the map stops offering a thing the moment it is taken, and
+   * taking it is the only way to find out whether it was worth writing. The
+   * receipt over the spot fades in seven seconds and takes no click by design,
+   * so the mark sits under it instead and stays for the rest of the year.
+   */
+  const markable = dev && momentsShown
+    ? [...moments, ...(saidNow && !moments.some((m) => m.id === saidNow.id) ? [saidNow] : [])]
+    : [];
 
   return (
     <div className="ruler-edition flex h-dvh w-full flex-col overflow-hidden bg-ink">
@@ -1053,6 +1094,7 @@ export function App() {
                    means `forgetEverything` is the last write, so the key does
                    not come back as an empty object a moment later. */
                 clearAllDevEdits();
+                clearAllDevMarks();
                 forgetEverything();
                 forgetTheLastReign();
                 setSaved(null);
@@ -1152,6 +1194,37 @@ export function App() {
             </span>
           </div>
         )}
+
+        {/* dev only: two thumbs beside the small thing itself, out on the
+            meadow where it happened, so a run can be walked once and come out
+            as a list of what was worth stopping for.
+
+            Over the spot and not under it, which is where the receipt goes as
+            well: every one of these things stands in the upper half of the
+            picture and the card comes up over the lower half, so under the
+            spot is behind the card about half the time. And above the card's
+            level besides, because "about half the time" is not a thing a tool
+            is allowed to be. */}
+        {markable.map((moment) => {
+          const at = fitToScreen(fit, moment.x, moment.y);
+          return (
+            <div
+              key={`mark:${moment.id}`}
+              className="absolute z-30 -translate-x-1/2"
+              style={{
+                left: Math.max(70, Math.min(fit.w - 70, at.x)),
+                top: Math.max(90, at.y - 30),
+              }}
+            >
+              <DevVerdict
+                id={`moment:${moment.id}`}
+                label={moment.label}
+                turn={game.turn}
+                dev={dev}
+              />
+            </div>
+          );
+        })}
       </div>
       {hand.overlay}
       </div>
@@ -1228,6 +1301,14 @@ export function App() {
       )}
 
       {sealing && <SealMoment state={game} onDone={() => dispatch({ type: 'nextInYear' })} />}
+
+      {/* The thumb on whichever sheet is up, over its corner. Above the sheet
+          itself, which is at z-50 and is one big button. */}
+      {dev && marked && (
+        <div className="fixed left-3 top-3 z-[60] rounded-sm border border-ink-line bg-ink/95 px-1.5 py-1 shadow-lg">
+          <DevVerdict id={marked.id} label={marked.label} turn={game.turn} dev={dev} wide />
+        </div>
+      )}
 
       {choosingBoard && !sealing && (
         <BoardChoice
