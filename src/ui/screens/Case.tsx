@@ -17,6 +17,7 @@ import { ChoiceButton } from '../components/ChoiceButton';
 import { ConsequenceHint } from '../components/ConsequenceHint';
 import { DevEffects } from '../components/DevCorner';
 import { DevEditTrigger, DevText } from '../components/DevText';
+import { DevVerdict } from '../components/DevVerdict';
 import { CardFoot } from '../components/Popup';
 import { lawNumber } from '../../engine/format';
 import { useDevEdit } from '../dev/useDevEdit';
@@ -246,6 +247,15 @@ export function Case({ state, dev = false, onChoose }: Props) {
             are both in the top bar, all the time, and the person standing in
             front of you is what this card is. */}
         <h2 className={`${TYPE.display} leading-tight`}>{event.title}</h2>
+        {/* The whole case, judged in one click by whoever is playing it. */}
+        <DevVerdict
+          id={`case:${event.id}`}
+          label={event.title}
+          turn={state.turn}
+          dev={dev}
+          wide
+          className="mt-1"
+        />
         {event.question && (
           <p className={`mt-3 border-l-4 border-bench bg-bench/10 px-3 py-2 ${TYPE.body} leading-snug text-parchment`}>
             <DevText id={`case:${event.id}:question`} text={event.question} dev={dev} />

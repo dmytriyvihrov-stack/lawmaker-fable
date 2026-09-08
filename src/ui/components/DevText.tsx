@@ -29,7 +29,12 @@ function DevEditPopover({ value, original, changed, edit, save, reset }: Popover
   }, [value, edit?.note, open]);
 
   return (
-    <span className="relative inline-block">
+    /* Dev chrome, and it has to say so. The click-anything layer swallows
+       every click that is not inside something marked, which made these
+       pencils - the only ones with a hand written id on them - unopenable in
+       the one mode they are drawn in. It also keeps their own tooltips out of
+       the list of things the layer offers to rewrite. */
+    <span data-dev-chrome className="relative inline-block">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

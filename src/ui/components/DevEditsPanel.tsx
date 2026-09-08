@@ -1,9 +1,18 @@
 import { useState } from 'react';
+import { UI } from '../../content/ui-strings';
 import { clearAllDevEdits, formatDevEditsForExport } from '../dev/devEditsStore';
+import { clearAllDevMarks, clearDevMark, formatDevMarksForExport, noteDev } from '../dev/devMarksStore';
 import { useAllDevEdits } from '../dev/useDevEdit';
+import { useAllDevMarks } from '../dev/useDevMarks';
 
 /**
- * Everything left on the pencil marks, in one place, ready to hand over.
+ * Everything a session left behind, in one place, ready to hand over.
+ *
+ * Two kinds of thing, one pad. The pencils leave a rewrite of a line that is
+ * wrong; the thumbs leave a verdict on a thing that happened. They are made
+ * with different hands and they are read by the same person afterwards, so
+ * there is one button, one panel and one "copy all" rather than two of each
+ * fighting over the same corner of the window.
  *
  * Nothing here reaches a content file: the button copies plain text, in the
  * shape a person pastes into a chat with whoever writes the content next.
@@ -15,14 +24,20 @@ export function DevEditsPanel({ on }: { on: boolean }) {
   const [copied, setCopied] = useState(false);
   const [asking, setAsking] = useState(false);
   const edits = useAllDevEdits();
-  const count = Object.keys(edits).length;
+  const marks = useAllDevMarks();
+  const edited = Object.keys(edits).length;
+  const marked = Object.keys(marks).length;
+  const count = edited + marked;
 
   if (!on || count === 0) return null;
 
   const rows = Object.values(edits).sort((a, b) => a.id.localeCompare(b.id));
+  const markRows = Object.values(marks).sort((a, b) => a.turn - b.turn || a.id.localeCompare(b.id));
 
   const copyAll = async () => {
-    const text = formatDevEditsForExport(edits);
+    const text = [formatDevMarksForExport(marks), formatDevEditsForExport(edits)]
+      .filter(Boolean)
+      .join('\n\n');
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -39,14 +54,14 @@ export function DevEditsPanel({ on }: { on: boolean }) {
         onClick={() => setOpen((v) => !v)}
         className="rounded border border-seal bg-ink px-2 py-1 text-[10px] tracking-wide text-seal"
       >
-        {count} edit{count === 1 ? '' : 's'} pending
+        {count} pending
       </button>
 
       {open && (
         <div className="absolute bottom-full right-0 mb-1 w-[360px] max-w-[88vw] rounded-md border border-seal bg-ink p-3 shadow-lg">
           <div className="mb-2 flex items-center justify-between gap-2">
             <span className="text-[10px] uppercase tracking-[0.18em] text-parchment-dim">
-              Pending edits
+              Pending
             </span>
             <span className="flex gap-1.5">
               <button
@@ -61,7 +76,11 @@ export function DevEditsPanel({ on }: { on: boolean }) {
                   most used. It asks in place instead. */}
               <button
                 type="button"
-                onClick={() => (asking ? clearAllDevEdits() : setAsking(true))}
+                onClick={() => {
+                  if (!asking) return setAsking(true);
+                  clearAllDevEdits();
+                  clearAllDevMarks();
+                }}
                 onBlur={() => setAsking(false)}
                 className={`rounded border px-2 py-1 text-[11px] ${
                   asking ? 'border-bad text-bad' : 'border-ink-line text-parchment-dim'
@@ -72,6 +91,56 @@ export function DevEditsPanel({ on }: { on: boolean }) {
             </span>
           </div>
           <ul className="max-h-[50vh] space-y-2 overflow-y-auto">
+            {/* The thumbs first: they are the walk through the reign, and the
+                rewrites are what came out of stopping on the way. */}
+            {markRows.length > 0 && (
+              <li className="text-[9px] uppercase tracking-[0.18em] text-seal">
+                {UI.dev.marksHeading} ({markRows.length})
+              </li>
+            )}
+            {markRows.map((m) => (
+              <li
+                key={m.id}
+                className="rounded border border-ink-line bg-ink-soft p-2 text-[11px] leading-snug"
+              >
+                <div className="mb-1 flex items-baseline gap-1.5">
+                  <span aria-hidden>
+                    {m.verdict === 'up' ? UI.dev.likeMark : m.verdict === 'down' ? UI.dev.dislikeMark : '·'}
+                  </span>
+                  <span className="min-w-0 flex-1 text-parchment">{m.label}</span>
+                  <span className="shrink-0 text-[9px] lowercase text-parchment-dim">
+                    year {m.turn}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => clearDevMark(m.id)}
+                    title={UI.dev.markDrop}
+                    className="shrink-0 rounded-sm border border-ink-line px-1 text-[9px] leading-none text-parchment-dim hover:border-bad hover:text-bad"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="truncate text-[9px] uppercase tracking-wide text-parchment-dim/70">
+                  {m.id}
+                </div>
+                {/* The why, typed here when there was no room for it out where
+                    the thing happened: the map has none, and a run is walked
+                    faster than a sentence is written. */}
+                <input
+                  defaultValue={m.note ?? ''}
+                  key={`${m.id}:${m.note ?? ''}`}
+                  onBlur={(e) => noteDev(m.id, m.label, e.target.value, m.turn)}
+                  placeholder={UI.dev.markNote}
+                  className="mt-1 w-full rounded-sm border border-ink-line bg-ink px-1 py-0.5 text-[10px] text-parchment"
+                />
+              </li>
+            ))}
+
+            {rows.length > 0 && (
+              <li className="pt-1 text-[9px] uppercase tracking-[0.18em] text-seal">
+                {UI.dev.editsHeading} ({rows.length})
+              </li>
+            )}
             {rows.map((e) => (
               <li key={e.id} className="rounded border border-ink-line bg-ink-soft p-2 text-[11px] leading-snug">
                 <div className="mb-1 truncate text-[9px] uppercase tracking-wide text-seal">

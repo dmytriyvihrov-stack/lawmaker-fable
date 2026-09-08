@@ -86,6 +86,23 @@ export function getDevEditsSnapshot(): Store {
 }
 
 /**
+ * The entry a piece of text on the page belongs to.
+ *
+ * A pick reads what the page says, and what the page says may already be an
+ * override. Filed under its own words, that rewrite becomes a second entry -
+ * so a line edited twice left the batch saying `WAS: <the first rewrite>`,
+ * which is a diff against something no content file has ever contained. The
+ * second look is for an entry whose rewrite is what is on the page now, which
+ * is how a pick finds its way back to the original it started from.
+ */
+export function findDevEdit(shown: string): DevEdit | undefined {
+  const direct = state[idForText(shown)];
+  if (direct) return direct;
+  const key = shown.trim();
+  return Object.values(state).find((e) => (e.text ?? '').trim() === key);
+}
+
+/**
  * Save a rewrite, a note, a deletion, or any two of the three. An entry that
  * asks for none of them is not an entry, so it clears itself.
  */

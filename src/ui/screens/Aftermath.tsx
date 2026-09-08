@@ -4,6 +4,7 @@ import { getCase, getProposal, getWork } from '../../engine/registry';
 import { causeLawOf, lastTownChanges, threadsOf } from '../../engine/story';
 import type { Effects, GameState } from '../../engine/types';
 import { DevEffects } from '../components/DevCorner';
+import { DevVerdict } from '../components/DevVerdict';
 import { MovedBoards } from '../components/MovedBoards';
 import { CardFoot } from '../components/Popup';
 import { lawNumber } from '../../engine/format';
@@ -70,6 +71,27 @@ export function Aftermath({ state, dev = false, onContinue }: Props) {
       : undefined;
   const opened = sealed ? threadsOf(sealed) : [];
 
+  /**
+   * What a mark left on this screen is a mark on.
+   *
+   * Not the screen: the screen is the same every time. What is being judged
+   * here is the consequence written for one answer, so the id carries the
+   * answer as well as the thing answered, and a ruling that reads flat can be
+   * told apart from the case that set it up.
+   */
+  const judged = !last
+    ? null
+    : event
+      ? {
+          id: `aftermath:case:${last.refId}:${last.choiceId}`,
+          label: `${event.title} \u2192 ${choice?.text ?? last.choiceId}`,
+        }
+      : sealed
+        ? { id: `aftermath:law:${last.refId}:${last.choiceId}`, label: sealed.label }
+        : built
+          ? { id: `aftermath:work:${last.refId}`, label: built.name }
+          : { id: `aftermath:${last.kind}:${last.refId}`, label: last.refId };
+
   return (
     <div className="p-5">
       {/* What this is, and the law it came out of, on one line.
@@ -89,6 +111,19 @@ export function Aftermath({ state, dev = false, onContinue }: Props) {
         )}
         {who && <span className="text-parchment"> &middot; {who.label}</span>}
       </h2>
+
+      {/* What came of the answer, judged separately from the case that asked
+          it: a good case can still end in a flat paragraph. */}
+      {judged && (
+        <DevVerdict
+          id={judged.id}
+          label={judged.label}
+          turn={state.turn}
+          dev={dev}
+          wide
+          className="mb-3"
+        />
+      )}
 
       {/* The first law used to be explained here, on a card a sealed law never
           reaches: the app shows the seal in place of this screen when the last

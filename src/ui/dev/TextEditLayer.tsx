@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  findDevEdit,
   getDevEditsSnapshot,
   idForText,
   resetDevEdit,
@@ -33,10 +34,21 @@ import {
  * `MutationObserver` puts the override back after it. Both directions settle:
  * React only writes when its own value changed, and this only writes when it
  * finds an original, which its own write removes.
+ *
+ * Hover text is the same job through a second door. A tooltip lives in a
+ * `title` attribute, so there is no text node under the pointer to pick up and
+ * nothing on the page to draw a pencil beside: three of them in the whole game
+ * were wired by hand (`HoverText`, `useHoverText`) and the other fifty could
+ * not be argued with at all. A click now offers both what is written where you
+ * clicked and what the thing you clicked says when you rest on it, and the
+ * swap walks `[title]` alongside the text nodes.
  */
 
 interface Pick {
-  original: string;
+  /** The line of text under the pointer, if the pointer was over one. */
+  line: string | null;
+  /** What the thing under the pointer says on a hover, if it says anything. */
+  hover: string | null;
   x: number;
   y: number;
 }
@@ -55,9 +67,56 @@ function wantedFrom(edits: Record<string, DevEdit>): Map<string, string> {
   return wanted;
 }
 
+/**
+ * The dev chrome is not the game, and an override must not reach it.
+ *
+ * The pending edits panel exists to show what a line said before and what it
+ * says now, and the picker shows the original over the box you are rewriting
+ * it in. Both are text on the page, so the swap found them and helpfully
+ * replaced the "before" with the "after": two identical lines, and a batch
+ * that appeared to be a diff against itself.
+ */
+function isChrome(node: Node): boolean {
+  const el = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+  return el?.closest('[data-dev-chrome]') != null;
+}
+
+/**
+ * Everything this has written over, and what it said before.
+ *
+ * An override is filed under the original, so a line already wearing one has
+ * nothing left on the page for the next rewrite to match: edit a sentence
+ * twice and the second version sat in the panel and never reached the screen,
+ * which is half of what the screen is for. Putting back what was written, and
+ * only then writing what is wanted now, is what makes a second pass land.
+ *
+ * It happens when the store changes and never when the page redraws, which is
+ * the whole reason it settles: put back and write again on every mutation is
+ * two writes that cause a mutation, for good.
+ */
+const written = new Map<Text, string>();
+const titled = new Map<Element, string>();
+
+function putBack(): void {
+  for (const [node, was] of written) {
+    if (node.isConnected && node.nodeValue !== was) node.nodeValue = was;
+  }
+  written.clear();
+  for (const [el, was] of titled) {
+    if (el.isConnected && el.getAttribute('title') !== was) el.setAttribute('title', was);
+  }
+  titled.clear();
+}
+
 function applyEdits(root: HTMLElement, wanted: Map<string, string>): void {
+  // a node React has thrown away is not worth putting anything back into
+  for (const node of Array.from(written.keys())) if (!node.isConnected) written.delete(node);
+  for (const el of Array.from(titled.keys())) if (!el.isConnected) titled.delete(el);
   if (wanted.size === 0) return;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) => (isChrome(node) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+  });
   const hits: [Text, string][] = [];
   let node: Node | null;
   while ((node = walker.nextNode())) {
@@ -67,9 +126,44 @@ function applyEdits(root: HTMLElement, wanted: Map<string, string>): void {
     if (!key) continue;
     const to = wanted.get(key);
     if (to === undefined) continue;
-    hits.push([text, raw.replace(key, to)]);
+    /* A function, not the string: a rewrite is somebody's prose, and `$&` in
+       the middle of it is two characters they typed and not an instruction to
+       paste the match back in. */
+    hits.push([text, raw.replace(key, () => to)]);
   }
-  for (const [text, value] of hits) text.nodeValue = value;
+  for (const [text, value] of hits) {
+    if (!written.has(text)) written.set(text, text.nodeValue ?? '');
+    text.nodeValue = value;
+  }
+
+  // and the same swap on the hovers, which have no text node to walk
+  for (const el of Array.from(root.querySelectorAll('[title]'))) {
+    if (isChrome(el)) continue;
+    const was = el.getAttribute('title') ?? '';
+    const key = was.trim();
+    if (!key) continue;
+    const to = wanted.get(key);
+    if (to === undefined) continue;
+    if (!titled.has(el)) titled.set(el, was);
+    el.setAttribute('title', to);
+  }
+}
+
+/**
+ * What the content file says, for a piece of text that may already be wearing
+ * an override. Everything is filed under the original, so a second pick has to
+ * find its way back to it rather than opening a second entry on the rewrite.
+ */
+function original(shown: string | null): string | null {
+  if (!shown) return null;
+  return findDevEdit(shown)?.original ?? shown;
+}
+
+/** What the thing under the pointer says on a hover, if it says anything. */
+function hoverAt(x: number, y: number): string | null {
+  const el = document.elementFromPoint(x, y)?.closest('[title]');
+  const said = el?.getAttribute('title')?.trim() ?? '';
+  return said || null;
 }
 
 /** The text the pointer is actually over, and not the box it sits inside. */
@@ -99,9 +193,18 @@ function textAt(x: number, y: number): string | null {
 
 export function TextEditLayer({ on }: { on: boolean }) {
   const [picked, setPicked] = useState<Pick | null>(null);
+  /** Which of the two the panel is editing: what is written, or what is said. */
+  const [target, setTarget] = useState<'line' | 'hover'>('line');
   const [draft, setDraft] = useState('');
   const [note, setNote] = useState('');
   const panel = useRef<HTMLDivElement>(null);
+
+  /** Whatever is already filed against this piece of text, in the two boxes. */
+  const load = (was: string) => {
+    const had = findDevEdit(was);
+    setDraft(had?.text ?? was);
+    setNote(had?.note ?? '');
+  };
 
   /* Whatever the store holds, on the page, and back on it every time React
      has drawn over it. This runs whether or not the switch is on: an edit is
@@ -109,18 +212,34 @@ export function TextEditLayer({ on }: { on: boolean }) {
   useEffect(() => {
     const root = document.body;
     let queued = false;
+    let afresh = false;
     const run = () => {
       queued = false;
+      // the store moved: the page is holding the last answer, not the original
+      if (afresh) putBack();
+      afresh = false;
       applyEdits(root, wantedFrom(getDevEditsSnapshot()));
     };
-    const later = () => {
+    const later = (changed = false) => {
+      afresh ||= changed;
       if (queued) return;
       queued = true;
       queueMicrotask(run);
     };
-    const observer = new MutationObserver(later);
-    observer.observe(root, { childList: true, subtree: true, characterData: true });
-    const stop = subscribeDevEdits(later);
+    const observer = new MutationObserver(() => later());
+    /* `title` as well as the text: a hover React has just redrawn is the
+       original again, and the override has to land back on it the same way it
+       lands back on a line. The write this makes is itself a mutation, and it
+       settles for the same reason - once the attribute says the new thing,
+       there is no original left to match. */
+    observer.observe(root, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ['title'],
+    });
+    const stop = subscribeDevEdits(() => later(true));
     run();
     return () => {
       observer.disconnect();
@@ -144,12 +263,17 @@ export function TextEditLayer({ on }: { on: boolean }) {
       e.preventDefault();
       e.stopPropagation();
       if (e.type !== 'click') return;
-      const text = textAt(e.clientX, e.clientY);
-      if (!text) return;
-      const existing = getDevEditsSnapshot()[idForText(text)];
-      setPicked({ original: existing?.original ?? text, x: e.clientX, y: e.clientY });
-      setDraft(existing?.text ?? existing?.original ?? text);
-      setNote(existing?.note ?? '');
+      /* Both doors at once: the line the pointer is over, and the hover the
+         thing under it carries. Either can be missing - a bare paragraph has
+         no tooltip, an icon button has no text - and a click that finds
+         neither is not a pick at all. */
+      const line = original(textAt(e.clientX, e.clientY));
+      const hover = original(hoverAt(e.clientX, e.clientY));
+      if (!line && !hover) return;
+      const first = line ? 'line' : 'hover';
+      setPicked({ line, hover, x: e.clientX, y: e.clientY });
+      setTarget(first);
+      load((first === 'line' ? line : hover) as string);
     };
     window.addEventListener('click', grab, true);
     window.addEventListener('mousedown', grab, true);
@@ -161,9 +285,19 @@ export function TextEditLayer({ on }: { on: boolean }) {
   }, [on]);
 
   if (!on || !picked) return null;
-  const id = idForText(picked.original);
+  /* A pick with both doors open falls back to the one it has: the chip row is
+     the only way to change `target`, and it is not drawn unless both exist. */
+  const was = (target === 'hover' ? picked.hover : picked.line) ?? picked.line ?? picked.hover ?? '';
+  const both = picked.line !== null && picked.hover !== null;
+  const id = idForText(was);
   const edit = getDevEditsSnapshot()[id];
   const close = () => setPicked(null);
+  const choose = (which: 'line' | 'hover') => {
+    const next = which === 'hover' ? picked.hover : picked.line;
+    if (!next) return;
+    setTarget(which);
+    load(next);
+  };
 
   return (
     <div
@@ -175,11 +309,35 @@ export function TextEditLayer({ on }: { on: boolean }) {
         top: Math.max(8, Math.min(window.innerHeight - 320, picked.y + 14)),
       }}
     >
-      <div className="mb-1 text-[9px] uppercase tracking-[0.15em] text-parchment-dim">
-        On the page
-      </div>
+      {both ? (
+        /* Two pieces of text under one pointer. A stat in the header is the
+           shape of it: the number is written there, and the board's name is
+           what it says when you rest on it, and both are content somebody may
+           want to argue with. */
+        <div className="mb-1 flex items-center gap-1">
+          {(['line', 'hover'] as const).map((which) => (
+            <button
+              key={which}
+              type="button"
+              onClick={() => choose(which)}
+              aria-pressed={target === which}
+              className={`rounded-sm border px-1.5 py-0.5 text-[9px] uppercase tracking-[0.15em] ${
+                target === which
+                  ? 'border-seal text-seal'
+                  : 'border-ink-line text-parchment-dim hover:text-seal'
+              }`}
+            >
+              {which === 'line' ? 'On the page' : 'On a hover'}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="mb-1 text-[9px] uppercase tracking-[0.15em] text-parchment-dim">
+          {target === 'hover' ? 'On a hover' : 'On the page'}
+        </div>
+      )}
       <p className="mb-2 max-h-16 overflow-y-auto text-[11px] leading-snug text-parchment-dim/80">
-        {picked.original}
+        {was}
       </p>
 
       <div className="mb-1 text-[9px] uppercase tracking-[0.15em] text-parchment-dim">Rewrite</div>
@@ -204,7 +362,7 @@ export function TextEditLayer({ on }: { on: boolean }) {
         <button
           type="button"
           onClick={() => {
-            saveDevEdit(id, picked.original, draft, note);
+            saveDevEdit(id, was, draft, note);
             close();
           }}
           className="rounded bg-seal px-2.5 py-1 text-[11px] tracking-wide text-parchment"
@@ -214,7 +372,7 @@ export function TextEditLayer({ on }: { on: boolean }) {
         <button
           type="button"
           onClick={() => {
-            saveDevEdit(id, picked.original, picked.original, note, true);
+            saveDevEdit(id, was, was, note, true);
             close();
           }}
           className="rounded border border-bad px-2.5 py-1 text-[11px] text-bad"

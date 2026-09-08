@@ -21,6 +21,9 @@ import { MonarchPanel } from '../src/ui/components/MonarchPanel';
 import { StandingLaws } from '../src/ui/components/StandingLaws';
 import { TopBar } from '../src/ui/components/TopBar';
 import { GrowthLadder } from '../src/ui/components/GrowthLadder';
+import { DevBar } from '../src/ui/components/DevCorner';
+import { DevDials } from '../src/ui/components/DevDials';
+import { DevVerdict } from '../src/ui/components/DevVerdict';
 import { townFolk } from '../src/engine/folk';
 
 /**
@@ -172,6 +175,42 @@ describe('every screen renders', () => {
         expect(svg.length).toBeGreaterThan(5000);
       }
     }
+  });
+
+  it('the dev strip and its dials draw at every stage', () => {
+    for (const state of [village, town, kingdom]) {
+      const strip = draw(
+        <DevBar
+          state={state}
+          editText={false}
+          onEditText={noop}
+          onWipe={noop}
+          onTurn={noop}
+          onOpenBoard={noop}
+          onBeginAt={noop}
+        />,
+      );
+      expect(strip.length, state.stage).toBeGreaterThan(100);
+
+      /* The panel is behind a click, so it is drawn here on its own. A hamlet
+         is the one that has boards it has not opened, and offers them instead
+         of a dial: that is the row this is really watching. */
+      const panel = draw(
+        <DevDials state={state} onTurn={noop} onOpenBoard={noop} onBeginAt={noop} />,
+      );
+      expect(panel, state.stage).toContain('souls');
+      expect(panel.includes('open it'), state.stage).toBe(state.stage === 'village');
+    }
+  });
+
+  it('the thumbs are drawn in dev mode and nowhere else', () => {
+    const props = { id: 'case:v1_idle_hand', label: 'The Idle Hand', turn: 3 };
+    expect(draw(<DevVerdict {...props} dev={false} />)).toBe('');
+    const on = draw(<DevVerdict {...props} dev wide />);
+    expect(on).toContain('aria-pressed');
+    // the thumbs alone out on the map, the line of why only where there is room
+    expect(draw(<DevVerdict {...props} dev />)).not.toContain('why');
+    expect(on).toContain('why');
   });
 
   it('a fresh reign draws its first three screens in order', () => {

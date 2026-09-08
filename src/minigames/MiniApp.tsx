@@ -3,7 +3,8 @@ import { CASE_SPOTS, LAW_SPOT, WORKS_SPOT } from '../content/meta';
 import { HAND_INSTRUCTIONS } from '../content/hand';
 import { CONFIG } from '../engine/config';
 import { townFolk } from '../engine/folk';
-import { chooseCase, chooseLaw, chooseWork, continueYear, reopenLaw } from '../engine/reducer';
+import { chooseCase, chooseLaw, chooseWork, continueYear, openBoard, reopenLaw } from '../engine/reducer';
+import { turnDial } from '../engine/dev';
 import { getCase } from '../engine/registry';
 import { forgetEverything } from '../engine/save';
 import { isWinter, seasonOf } from '../engine/simulation';
@@ -13,6 +14,7 @@ import { BuildBadge, DevBar, DevToggle } from '../ui/components/DevCorner';
 import { DevEditsPanel } from '../ui/components/DevEditsPanel';
 import { TextEditLayer } from '../ui/dev/TextEditLayer';
 import { clearAllDevEdits } from '../ui/dev/devEditsStore';
+import { clearAllDevMarks } from '../ui/dev/devMarksStore';
 import { setTextEditMode } from '../ui/dev/textEditMode';
 import { Interlude } from '../ui/components/Interlude';
 import { MonarchPanel } from '../ui/components/MonarchPanel';
@@ -333,8 +335,13 @@ export function MiniApp() {
               state={game}
               editText={editText}
               onEditText={() => setEditText((v) => !v)}
+              /* The bench has no reign to leave, so no jump: the dials alone,
+                 which is what a bench for looking at one scene wants anyway. */
+              onTurn={(dial, delta) => setGame((g) => turnDial(g, dial, delta))}
+              onOpenBoard={(board) => setGame((g) => openBoard(g, board))}
               onWipe={() => {
                 clearAllDevEdits();
+                clearAllDevMarks();
                 forgetEverything();
                 window.location.reload();
               }}

@@ -804,6 +804,44 @@ export const UI = {
     wipe: 'clear history',
     wipeHint: 'Forget the saved reign, the pending edits and every setting, and open a fresh one.',
     wiped: 'cleared',
+
+    /* The panel that drops out of the strip: the dials, and the reigns to jump
+       into. Both are things done to a reign rather than facts about one, which
+       is why they are behind a button and not on the strip itself. */
+    dials: 'dials',
+    dialsHint: 'Raise and lower every board, the count, the pot and the year, while the reign is running.',
+    dialsHeading: 'Turn it by hand',
+    /** The line a turned dial leaves in the ledger, so the Codex still answers "why". */
+    hand: 'A hand on the dial',
+    step: 'step',
+    stepHint: 'How far one press moves a dial.',
+    souls: 'souls',
+    potDial: 'the pot',
+    yearDial: 'the year',
+    yearHint: 'Moves the calendar and nothing else: no year is lived through, so nothing is paid out for the ones skipped.',
+    lid: 'lid',
+    lidHint: 'The store stops here until a granary lifts it.',
+    openBoard: 'open it',
+    openBoardHint: 'The place decides it is a thing with this board, at the value it has been quietly sitting at.',
+
+    /* The thumbs, on everything that happens. Not a switch of their own: they
+       are the one dev mark that is left while somebody is still playing, and a
+       switch to find first is a mark nobody makes. */
+    likeMark: '👍',
+    dislikeMark: '👎',
+    likeHint: 'This one landed. Marked for whoever writes the content next.',
+    dislikeHint: 'This one did not. Marked for whoever writes the content next.',
+    markWhy: 'why',
+    markNote: 'why, in a line',
+    marksHeading: 'Marked',
+    editsHeading: 'Rewritten',
+    markDrop: 'Take this mark back.',
+
+    statesHeading: 'Jump to',
+    statesHint: 'A reign that never happened, opened at that stage. This one is thrown away.',
+    samePlace: 'this place',
+    samePlaceHint: 'Keep the seed, so the same valley, the same crown and the same name come back one stage on. Off, and it is somewhere else entirely.',
+    sure: 'Sure?',
   },
 
   stats: {
