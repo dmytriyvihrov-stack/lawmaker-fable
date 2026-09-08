@@ -72,7 +72,7 @@ import { Register } from './overlays/Register';
 import { TechTree } from './overlays/TechTree';
 import { World } from './overlays/World';
 import { WORK_SITES, siteOf } from './components/town/sites';
-import { fitToMap, fitToScreen, useMapFit } from './useMapFit';
+import { fitToMap, fitToScreen, mapViewport, useMapFit } from './useMapFit';
 import { useHand } from './hand/useHand';
 import { handSpot } from './hand/spots';
 import { Aftermath } from './screens/Aftermath';
@@ -293,6 +293,9 @@ export function App() {
   /** The small thing most recently done, and the year it was done in. */
   const [said, setSaid] = useState<{ id: string; turn: number } | null>(null);
   const fit = useMapFit(mapRef);
+  /* The one box every layer over the town is drawn in. The scenes get the
+     same one straight from `useHand`, so there is never a second. */
+  const view = mapViewport(fit);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   /** The anchor as last written, so an unchanged measurement writes nothing. */
   const anchorNow = useRef<Anchor | null>(null);
@@ -952,9 +955,12 @@ export function App() {
             dispatch({ type: 'new', seed: freshSeed() });
           }}
         />
-        {/* on a narrow window the crown lies down under the header instead of
-            floating beside the town, because there is no beside */}
-        <div className="px-3 pt-2 lg:hidden">
+        {/* On a narrow window the crown lies down under the header instead of
+            floating beside the town, because there is no beside. On a phone
+            turned on its side there is no under either: see `journey.css`,
+            which takes it away rather than spend a fifth of a 390 pixel
+            window on a face. The mood it carries is on the header already. */}
+        <div className="ruler-crown-strip px-3 pt-2 lg:hidden">
           <div className="rounded-lg border border-ink-line bg-ink-soft/90 px-3 py-1.5 backdrop-blur">
             <MonarchPanel state={game} variant="strip" dev={dev} />
             {!hand.zoomed && <RulerDoing control={journey} className="ruler-doing-strip" />}
@@ -988,14 +994,25 @@ export function App() {
       </div>
       )}
 
-      {/* the place itself, under the bar and down to the bottom of the window,
-          with everything else floating on top of it */}
+      {/* The place itself, under the bar and down to the bottom of the window,
+          with everything else floating on top of it.
+
+          It clips with `overflow: clip`, which `journey.css` sets over the
+          `overflow-hidden` here - that one stays as the fallback for a browser
+          too old to know `clip`. It is not a tidying. `hidden` makes this box
+          a scroll container, and a scroll container with a scaled child
+          hanging four thousand pixels out of it puts that child's border box
+          somewhere the camera's own arithmetic says it is not: on a phone the
+          scene was drawn a hundred and fifty pixels above where every finger
+          was being measured, so the hand went through the loaf and came up
+          with nothing. `clip` clips without any of that, and the picture and
+          the finger are back in one place. */}
       <div ref={mapRef} className="ruler-map relative min-h-0 flex-1 overflow-hidden">
       {/* the camera: the town and the scene drawn over it move together */}
       <div ref={hand.zoomRef} className="absolute inset-0 origin-top-left">
       <div className="absolute inset-0">
         <CityScape
-          viewport={fit.w < 1000 ? `${-fit.ox / fit.scale} ${-fit.oy / fit.scale} ${fit.w / fit.scale} ${fit.h / fit.scale}` : undefined}
+          viewport={view.narrow ? view.viewBox : undefined}
           /* The camera in on a scene is a composition of its own, and it draws its
              own people: the walking pair standing in it would be the same person
              twice. The layer comes back when the camera pulls out. */
@@ -1099,6 +1116,28 @@ export function App() {
         {card}
         {hand.strip}
       </div>
+
+      {/* The music is not part of the reign, so it does not sit in the row of
+          things the reign is made of. It waits in the corner, the way the
+          switch on a wall does, and is found once and never looked for again.
+
+          In the corner of the picture, not of the window. On a phone the card
+          comes up the full width and the bottom right corner of the window is
+          the middle of its one button, so the volume slider sat across the
+          answer; `journey.css` moves this to the top of the picture there,
+          where there is nothing but sky. It also means the founding, which
+          takes the whole window, is no longer read through a slider.
+
+          Out of the way while the hand is at work either way: the strip that
+          says what to do runs the width of the screen. */}
+      <div
+        className={`ruler-sound-dock absolute bottom-2 right-9 z-30 flex items-center gap-2 transition-opacity ${
+          hand.busy ? 'pointer-events-none opacity-0' : ''
+        }`}
+      >
+        <Soundscape game={game} season={season} ready={handReady} zoomed={hand.zoomed} mapRef={mapRef} />
+        <MusicToggle seed={game.seed} season={season} />
+      </div>
       </div>
 
       {/* The founding, which takes the window.
@@ -1173,21 +1212,6 @@ export function App() {
           onClose={() => setWorldOpen(false)}
         />
       )}
-
-      {/* The music is not part of the reign, so it does not sit in the row of
-          things the reign is made of. It waits in the corner, the way the
-          switch on a wall does, and is found once and never looked for again. */}
-      {/* Out of the way while the hand is at work: the strip that says what to
-          do runs the width of the screen, and its right end ran into the
-          volume slider. */}
-      <div
-        className={`fixed bottom-2 right-9 z-40 flex items-center gap-2 transition-opacity ${
-          hand.busy ? 'pointer-events-none opacity-0' : ''
-        }`}
-      >
-        <Soundscape game={game} season={season} ready={handReady} zoomed={hand.zoomed} mapRef={mapRef} />
-        <MusicToggle seed={game.seed} season={season} />
-      </div>
 
       <BuildBadge />
       <DevToggle on={dev} onToggle={() => setDev((v) => !v)} />

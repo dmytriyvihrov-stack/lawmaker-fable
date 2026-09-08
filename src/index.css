@@ -66,7 +66,13 @@ button:disabled {
 }
 
 /* An answer under the pointer lifts off the page a little and lights its own
-   edge. Hovering used to change nothing at all until the mouse went down. */
+   edge. Hovering used to change nothing at all until the mouse went down.
+
+   Behind `hover: hover`, all of it. A finger has no hover: a touch screen
+   fakes one on the last thing tapped and leaves it lit, so on a phone every
+   answer you had already given stayed glowing as though it were still under
+   something. What a finger gets instead is `:active`, below, which lasts
+   exactly as long as the finger does. */
 .answer {
   transition:
     border-color 140ms ease,
@@ -74,20 +80,63 @@ button:disabled {
     transform 140ms ease;
 }
 
-.answer:hover:not(:disabled) {
-  border-color: var(--color-seal);
-  background-color: color-mix(in srgb, var(--color-seal) 12%, var(--color-ink-soft));
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .answer:hover:not(:disabled) {
+    border-color: var(--color-seal);
+    background-color: color-mix(in srgb, var(--color-seal) 12%, var(--color-ink-soft));
+    transform: translateY(-1px);
+  }
+
+  /* the same manners on the word tiles at the bench, in the bench's colour */
+  .answer-bench:hover:not(:disabled) {
+    border-color: var(--color-bench);
+    background-color: color-mix(in srgb, var(--color-bench) 22%, var(--color-ink-soft));
+  }
 }
 
 .answer:active:not(:disabled) {
   transform: translateY(0);
+  border-color: var(--color-seal);
+  background-color: color-mix(in srgb, var(--color-seal) 12%, var(--color-ink-soft));
 }
 
-/* the same manners on the word tiles at the bench, in the bench's colour */
-.answer-bench:hover:not(:disabled) {
+.answer-bench:active:not(:disabled) {
   border-color: var(--color-bench);
   background-color: color-mix(in srgb, var(--color-bench) 22%, var(--color-ink-soft));
+}
+
+/**
+ * A thumb is not a mouse pointer.
+ *
+ * Anything worth pressing gets the room to be pressed at, and the picture
+ * stops behaving like a document: no word gets selected by a drag across the
+ * town, and no long press on somebody in a scene brings up the copy menu
+ * halfway through carrying them.
+ */
+@media (pointer: coarse) {
+  .answer,
+  .journey-skip {
+    min-height: 44px;
+  }
+
+  .ruler-map,
+  .city-world {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* except the writing on the card, which is there to be read and quoted */
+  .decision-paper,
+  .journey-card {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  /* a slider you can actually catch hold of */
+  input[type='range'] {
+    height: 22px;
+  }
 }
 
 :focus-visible {
@@ -686,8 +735,10 @@ button:disabled {
 }
 
 .city-moment-hit { cursor: pointer; }
-.city-moment-hit:hover .city-moment,
 .city-moment-hit:focus-visible .city-moment { animation: none; opacity: 1; }
+@media (hover: hover) {
+  .city-moment-hit:hover .city-moment { animation: none; opacity: 1; }
+}
 
 /* Somebody is at the door and the ruler is not free. The thing stays where it
    is, because it is in the place and not on a menu, and it stops asking: no

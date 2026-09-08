@@ -9,7 +9,8 @@
 .world-map { display: block; width: 100%; max-height: calc(92dvh - 180px); border-radius: 15px; background: #c5b58e; box-shadow: 0 6px 22px #14201755; }
 .world-country-list { display: none; }
 .atlas-country { cursor: pointer; outline: none; }
-.atlas-country:hover .atlas-territory, .atlas-country:focus-visible .atlas-territory { stroke: #fff6d8; stroke-width: 6; }
+.atlas-country:focus-visible .atlas-territory { stroke: #fff6d8; stroke-width: 6; }
+@media (hover: hover) { .atlas-country:hover .atlas-territory { stroke: #fff6d8; stroke-width: 6; } }
 .atlas-name { font-size: 21px; font-weight: 600; letter-spacing: .025em; }
 .atlas-stance { font-size: 14px; }
 .atlas-home { fill: #fff0c9; font-size: 20px; font-weight: 600; paint-order: stroke; stroke: #6e6747; stroke-width: 4px; }
@@ -24,7 +25,8 @@
 .world-laws summary, .world-peoples summary { cursor: pointer; font-size: 12px; color: #d0ceb0; }
 .world-laws summary span { float: right; color: #e5c788; }
 .world-action { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 8px 12px; border: 1px solid #aab78a66; border-radius: 8px; font-size: 14px; background: #344435; color: #f6e9c7; transition: background 140ms; }
-.world-action:not(:disabled):hover { background: #4c5e43; }
+@media (hover: hover) { .world-action:not(:disabled):hover { background: #4c5e43; } }
+.world-action:not(:disabled):active { background: #4c5e43; }
 .world-action:disabled { opacity: .45; cursor: default; }
 .world-action-icon { font-size: 21px; }
 .world-action-arrow { margin-left: auto; color: #d7c281; }
@@ -39,7 +41,8 @@
 .work-design-card[aria-pressed="true"] { box-shadow: inset 3px 0 #d6b77b; }
 .town-landmark { outline: none; }
 .landmark-name { opacity: 0; transition: opacity 140ms; paint-order: stroke; stroke: #354532; stroke-width: 3px; }
-.town-landmark:hover .landmark-name, .town-landmark:focus-visible .landmark-name { opacity: 1; }
+.town-landmark:focus-visible .landmark-name { opacity: 1; }
+@media (hover: hover) { .town-landmark:hover .landmark-name { opacity: 1; } }
 .town-landmark:focus-visible { filter: drop-shadow(0 0 3px #f0d493); }
 @media (max-width: 850px) {
   .world-backdrop { padding: 8px; }

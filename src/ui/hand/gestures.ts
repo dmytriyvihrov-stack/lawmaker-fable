@@ -43,10 +43,21 @@ export interface Gesture {
 const SHAKE_MS = 300;
 const SHAKE_PX = 18;
 const TAP_MS = 250;
+/**
+ * How far off a thing the hand may land and still have hold of it.
+ *
+ * In screen pixels, and turned into map units where it is used, because a map
+ * unit is a different distance on every screen: three of them are twelve
+ * pixels of slack on a wide window and three on a phone, where a fingertip
+ * covers twenty-odd and the finger is also the thing hiding the target. This
+ * is the room a finger needs; a mouse simply never notices it is there.
+ */
+const REACH_PX = 22;
+const reach = (ctx: GestureCtx): number => REACH_PX * ctx.unitsPerPx();
 /** How far past the stretch a yank has to go to count as a yank. */
 const YANK_PX = 26;
-/** How far the torch may stray from what it is burning. */
-const HOLD_SLACK = 4;
+/** How far past `reach` the torch may stray before the fire goes out. */
+const HOLD_SLACK_PX = 12;
 
 /* what a body does to the hand carrying it */
 const HEAVY_TAU = 165;
@@ -116,7 +127,7 @@ export function makeGesture(
           if (spent()) return;
           const it = sc.get(stepNow().item);
           if (!it.visible || !isFig(it)) return;
-          if (dist(p, it) > it.r + 3) return;
+          if (dist(p, it) > it.r + reach(ctx)) return;
           held = it;
           off = { x: it.x - p.x, y: it.y - p.y };
           goal = { x: it.x, y: it.y };
@@ -140,8 +151,8 @@ export function makeGesture(
             const dy = goal.y - home.y;
             const d = Math.hypot(dx, dy) || 0.0001;
             const slack = r.slack ?? 7;
-            const reach = Math.min(d, slack);
-            it.set(home.x + (dx / d) * reach, home.y + (dy / d) * reach);
+            const stretch = Math.min(d, slack);
+            it.set(home.x + (dx / d) * stretch, home.y + (dy / d) * stretch);
             const yank = YANK_PX * ctx.unitsPerPx();
             if (armed && d > slack + yank) {
               pulls += 1;
@@ -163,7 +174,7 @@ export function makeGesture(
 
           const to = sc.get(stepNow().to);
           const judge = r?.kind === 'drag' ? { x: it.x, y: it.y } : goal;
-          to.hl(dist(judge, to) <= to.r);
+          to.hl(dist(judge, to) <= to.r + reach(ctx));
         },
         frame(dt) {
           if (!held || !goal || spent()) return;
@@ -198,7 +209,7 @@ export function makeGesture(
             if (hd > back) it.set(it.x + (hx / hd) * back, it.y + (hy / hd) * back);
             was = { x: goal.x, y: goal.y };
             const to = sc.get(stepNow().to);
-            to.hl(dist(it, to) <= to.r);
+            to.hl(dist(it, to) <= to.r + reach(ctx));
             return;
           }
 
@@ -235,7 +246,10 @@ export function makeGesture(
           }
           // where the hand let go, except for somebody who has to be got there
           const judge = r?.kind === 'drag' ? { x: it.x, y: it.y } : { x: p.x + off.x, y: p.y + off.y };
-          if (dist(judge, to) <= to.r) {
+          /* The same room the hand was given to pick it up. The ring that
+             lights while it is carried is drawn off this one number, so what
+             the picture promises and what the drop accepts are one thing. */
+          if (dist(judge, to) <= to.r + reach(ctx)) {
             it.set(judge.x, judge.y);
             advance();
           } else {
@@ -251,7 +265,8 @@ export function makeGesture(
       return {
         down(p) {
           const tg = target();
-          if (Math.abs(p.x - tg.x) <= tg.w / 2 + 4 && Math.abs(p.y - tg.y) <= tg.h / 2 + 5) {
+          const slack = reach(ctx);
+          if (Math.abs(p.x - tg.x) <= tg.w / 2 + slack && Math.abs(p.y - tg.y) <= tg.h / 2 + slack) {
             on = true;
             x0 = p.x;
             y0 = p.y;
@@ -289,7 +304,7 @@ export function makeGesture(
       return {
         down(p, e) {
           const tg = target();
-          if (dist(p, tg) <= tg.r + 3) {
+          if (dist(p, tg) <= tg.r + reach(ctx)) {
             hold = true;
             downX = p.x;
             ext = p.x;
@@ -338,11 +353,12 @@ export function makeGesture(
       let on = false;
       let prog = 0;
       let at = { x: 0, y: 0 };
-      const onIt = () => dist(at, target()) <= target().r + HOLD_SLACK;
+      const onIt = () =>
+        dist(at, target()) <= target().r + reach(ctx) + HOLD_SLACK_PX * ctx.unitsPerPx();
       return {
         down(p) {
           at = p;
-          if (dist(p, target()) <= target().r + 4) on = true;
+          if (dist(p, target()) <= target().r + reach(ctx)) on = true;
         },
         move(p) {
           at = p;
@@ -370,7 +386,7 @@ export function makeGesture(
       return {
         down(p, e) {
           const tg = target();
-          if (dist(p, tg) <= tg.r + 3 && e.timeStamp - lastT >= TAP_MS) {
+          if (dist(p, tg) <= tg.r + reach(ctx) && e.timeStamp - lastT >= TAP_MS) {
             lastT = e.timeStamp;
             count += 1;
             ctx.swingTool();

@@ -12,6 +12,10 @@ const signed = movePoints;
  * The build this tab is actually running, so a shared link can be checked
  * against it instead of trusted on faith. Always on, not tied to dev mode:
  * the player standing on a stale pinned link needs it more than anyone.
+ *
+ * It takes no clicks. On a phone the card comes up the full width of the
+ * window and this sat on top of its one button, faint grey lettering across
+ * PRONOUNCE IT, catching thumbs that were aimed at the answer.
  */
 export function BuildBadge() {
   const build = buildId();
@@ -19,7 +23,7 @@ export function BuildBadge() {
     <div
       data-dev-chrome
       title={build}
-      className="fixed bottom-20 right-2 z-40 rounded px-1.5 py-0.5 text-[10px] lowercase tracking-[0.2em] text-parchment-dim opacity-15 hover:opacity-60"
+      className="ruler-corner-chip pointer-events-none fixed bottom-20 right-2 z-40 rounded px-1.5 py-0.5 text-[10px] lowercase tracking-[0.2em] text-parchment-dim opacity-15 hover:opacity-60"
     >
       build {build}
     </div>
@@ -38,7 +42,7 @@ export function DevToggle({ on, onToggle }: { on: boolean; onToggle: () => void 
       onClick={onToggle}
       aria-pressed={on}
       title={UI.dev.on}
-      className={`fixed bottom-2 right-2 z-40 rounded px-1.5 py-0.5 text-[10px] lowercase tracking-[0.2em] transition-opacity ${
+      className={`ruler-corner-chip fixed bottom-2 right-2 z-40 rounded px-1.5 py-0.5 text-[10px] lowercase tracking-[0.2em] transition-opacity ${
         on
           ? 'border border-seal text-seal opacity-90'
           : 'text-parchment-dim opacity-15 hover:opacity-60'

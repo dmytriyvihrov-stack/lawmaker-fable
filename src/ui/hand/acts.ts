@@ -132,6 +132,36 @@ export function actFor(caseId: string, choiceId: string): ActDef | undefined {
   return ACTS[`${caseId}:${choiceId}`];
 }
 
+/**
+ * Everything in a scene that any answer to this case will ask the hand to
+ * touch: what is picked up, what it has to reach, what is cut, shaken, burned
+ * or turned away from, through every act in a chain.
+ *
+ * The camera needs it before the answer is given, which is why it is the
+ * union over the whole case and not one act's list. A loaf that has to be
+ * carried to a cart just off the left edge of the frame is an act that cannot
+ * be finished, and no amount of patience at the screen tells you that.
+ */
+export function touchedBy(caseId: string): string[] {
+  const found = new Set<string>();
+  const walk = (act: ActDef | undefined): void => {
+    if (!act) return;
+    if (act.kind === 'carry') {
+      for (const step of act.steps) {
+        found.add(step.item);
+        found.add(step.to);
+      }
+    } else {
+      found.add(act.target);
+    }
+    walk(act.then);
+  };
+  for (const key of Object.keys(ACTS)) {
+    if (key.startsWith(`${caseId}:`)) walk(ACTS[key]);
+  }
+  return [...found];
+}
+
 /** How this answer pushes back, for the dev list of acts. */
 export function resistOf(act: ActDef | undefined): string | null {
   if (!act) return null;

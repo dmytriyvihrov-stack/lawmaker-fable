@@ -29,6 +29,64 @@ export function fitToMap(fit: MapFit, x: number, y: number): { x: number; y: num
   return { x: (x - fit.ox) / fit.scale, y: (y - fit.oy) / fit.scale };
 }
 
+/**
+ * A window too narrow to hang the whole picture in. Below this the town is
+ * fitted across instead of cropped to the sides, which is a different frame
+ * and not a smaller one.
+ */
+export const NARROW = 1000;
+
+/**
+ * How the picture is put into its box, for an `<svg>` to be told directly.
+ *
+ * Every svg laid over the town has to be given *these two* and not its own
+ * guess at them. A wide window is `xMidYMax slice`, which is what the fit
+ * above works out by hand; a narrow one is not, and an overlay that kept the
+ * slice while the town went to a fitted viewBox was a second coordinate
+ * system on the same pixels. That is exactly what happened to the near
+ * scenes on a phone: the camera flew to a spot the fit knew about and the
+ * scene was drawn three times too big and half a screen to the left of it,
+ * so there was nothing under the finger and nothing on the screen either.
+ */
+export interface MapViewport {
+  viewBox: string;
+  preserveAspectRatio: string;
+  /** The picture is fitted rather than cropped, so it has ground to spare. */
+  narrow: boolean;
+  /** The same four numbers, for anything that has to cover the whole of it. */
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export function mapViewport(fit: MapFit): MapViewport {
+  if (fit.scale <= 0 || fit.w >= NARROW) {
+    return {
+      viewBox: `0 0 ${MAP.w} ${MAP.h}`,
+      preserveAspectRatio: 'xMidYMax slice',
+      narrow: false,
+      x: 0,
+      y: 0,
+      w: MAP.w,
+      h: MAP.h,
+    };
+  }
+  const x = -fit.ox / fit.scale;
+  const y = -fit.oy / fit.scale;
+  const w = fit.w / fit.scale;
+  const h = fit.h / fit.scale;
+  return {
+    viewBox: `${x} ${y} ${w} ${h}`,
+    preserveAspectRatio: 'none',
+    narrow: true,
+    x,
+    y,
+    w,
+    h,
+  };
+}
+
 /** Watches a box and says how the town is sitting inside it, right now. */
 export function useMapFit(ref: RefObject<HTMLElement | null>): MapFit {
   const [fit, setFit] = useState<MapFit>({ scale: 1, ox: 0, oy: 0, w: MAP.w, h: MAP.h });
@@ -57,7 +115,7 @@ export function useMapFit(ref: RefObject<HTMLElement | null>): MapFit {
       const was = measured.current;
       if (was && was.w === w && was.h === h) return;
       measured.current = { w, h };
-      const narrow = w < 1000;
+      const narrow = w < NARROW;
       const scale = narrow ? w / MAP.w : Math.max(w / MAP.w, h / MAP.h);
       // the same rule the picture uses: centred across, hung from the bottom
       setFit({

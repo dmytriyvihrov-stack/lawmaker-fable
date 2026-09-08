@@ -2,9 +2,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import type { MutableRefObject } from 'react';
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { HAND_INSTRUCTIONS, HAND_STRIP } from '../../content/hand';
-import { MAP } from '../components/town/sites';
+import { mapViewport } from '../useMapFit';
 import type { MapFit } from '../useMapFit';
-import { actFor } from './acts';
+import { actFor, touchedBy } from './acts';
 import type { ActDef, Tool } from './acts';
 import { Camera, WIDE } from './camera';
 import { makeGesture } from './gestures';
@@ -30,10 +30,69 @@ export type HandStage = 'wide' | 'zooming' | 'decide' | 'act' | 'hold' | 'after'
 
 /** How close the camera comes, and where in the frame the spot sits. */
 const ZOOM = 4;
+/**
+ * How big a thing in the picture has to end up on the actual glass.
+ *
+ * Four times the wide view is the right closeness on a window the town
+ * already fills, and it is nothing at all on a phone: there the town is
+ * fitted across a narrow box, one map unit is a quarter of a pixel, and four
+ * times that leaves a loaf four pixels wide with a whole valley round it.
+ * What the scene needs is a size, not a multiplier, so the zoom is whatever
+ * puts a map unit at this many screen pixels - and never less than the four
+ * a wide window already gets.
+ */
+const NEAR_PX_PER_UNIT = 2;
+const zoomFor = (fit: MapFit): number =>
+  fit.scale > 0 ? Math.max(ZOOM, NEAR_PX_PER_UNIT / fit.scale) : ZOOM;
+/** Ground left standing either side of the work, so it is in a place. */
+const WORK_MARGIN = 16;
+/** The near layer fades in from 2.2; below this a scene is a ghost. */
+const ZOOM_FLOOR = 3;
 const FRAME = { decide: 0.28, act: 0.5, after: 0.3 };
 const MS = { in: 700, settle: 300, out: 1100, hold: 600, back: 400 };
 /** The thread never lands closer to a corner of the card than this. */
 const TAIL_INSET = 44;
+
+/**
+ * How close the camera comes on a scene, and where it centres.
+ *
+ * Two things have to be true at once, and a phone is where they stop being
+ * the same number. Everything the answers will ask the hand to touch has to
+ * be inside the frame - a loaf that has to reach a cart off the left edge is
+ * an act that cannot be finished, and nothing on the screen says so - and
+ * what is in the frame has to be big enough to put a finger on.
+ *
+ * So: as close as the glass wants, but never closer than the whole of the
+ * work fits across the box; and centred on the spot, slid the least distance
+ * that brings the far end of the work in. On a wide window the spot-centred
+ * four-times frame already holds all of it, so neither rule bites and the
+ * framing there is exactly what it always was.
+ */
+function workFrame(
+  caseId: string,
+  fit: MapFit,
+  spot: { x: number; y: number },
+  off: { x: number; y: number },
+): { at: { x: number; y: number }; zoom: number } {
+  const sc = SCENES[caseId];
+  let lo = spot.x;
+  let hi = spot.x;
+  for (const id of touchedBy(caseId)) {
+    const thing = sc?.get(id);
+    if (!thing) continue;
+    lo = Math.min(lo, thing.x + off.x - thing.r);
+    hi = Math.max(hi, thing.x + off.x + thing.r);
+  }
+  lo -= WORK_MARGIN;
+  hi += WORK_MARGIN;
+  const wide = zoomFor(fit);
+  const across = fit.scale > 0 ? fit.w / (fit.scale * Math.max(hi - lo, 1)) : wide;
+  const zoom = Math.max(ZOOM_FLOOR, Math.min(wide, across));
+  const half = fit.scale > 0 ? fit.w / (fit.scale * zoom) / 2 : 0;
+  // the least slide that brings both ends in, and the middle when it cannot
+  const x = hi - half > lo + half ? (lo + hi) / 2 : Math.min(Math.max(spot.x, hi - half), lo + half);
+  return { at: { x, y: spot.y }, zoom };
+}
 
 const TOOL_SYMBOL: Record<string, string> = {
   hand: '#mgHand',
@@ -138,10 +197,13 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
 
   useEffect(() => {
     camera.fit = fit;
-    const at = open.current?.spot;
+    const on = open.current;
     // a window that changes size under a scene keeps the scene in the frame
-    if (at && (stage === 'decide' || stage === 'after')) {
-      camera.set(camera.frameFor(at, 0.5, stage === 'decide' ? FRAME.decide : FRAME.after, ZOOM));
+    if (on && (stage === 'decide' || stage === 'after')) {
+      const f = workFrame(on.id, fit, on.spot, on.off);
+      camera.set(
+        camera.frameFor(f.at, 0.5, stage === 'decide' ? FRAME.decide : FRAME.after, f.zoom),
+      );
     } else {
       camera.apply();
     }
@@ -226,8 +288,15 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
     },
   };
 
-  const frameFor = (at: { x: number; y: number }, fy: number) =>
-    camera.frameFor(at, 0.5, fy, ZOOM);
+  /* Whatever is open, framed the way `workFrame` says. Every flight in this
+     hook goes through here, so the camera never lands on two different
+     closenesses for the same scene. */
+  const frameFor = (fy: number) => {
+    const on = open.current;
+    if (!on) return camera.frameFor({ x: 0, y: 0 }, 0.5, fy, zoomFor(camera.fit));
+    const f = workFrame(on.id, camera.fit, on.spot, on.off);
+    return camera.frameFor(f.at, 0.5, fy, f.zoom);
+  };
 
   function finishAct(a: Acting) {
     play('rustle');
@@ -239,8 +308,7 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
     window.setTimeout(() => {
       setActing(null);
       setStage('after');
-      const at = open.current?.spot;
-      if (at) camera.flyTo(frameFor(at, FRAME.after), MS.settle);
+      if (open.current) camera.flyTo(frameFor(FRAME.after), MS.settle);
       onAnswer(a.choiceId, a.ruling);
     }, MS.hold);
   }
@@ -293,7 +361,7 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
     SCENES[acting.caseId].reset();
     setActing(null);
     setStage('zooming');
-    camera.flyTo(frameFor(at, FRAME.decide), MS.back, () => setStage('decide'));
+    camera.flyTo(frameFor(FRAME.decide), MS.back, () => setStage('decide'));
   };
 
   /* ---------- what the app calls ---------- */
@@ -313,7 +381,7 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
     sc.setVisible(true);
     open.current = { id: caseId, spot, off: { x: spot.x - sc.home.x, y: spot.y - sc.home.y } };
     setStage('zooming');
-    camera.flyTo(frameFor(spot, FRAME.decide), MS.in, () => setStage('decide'));
+    camera.flyTo(frameFor(FRAME.decide), MS.in, () => setStage('decide'));
   });
 
   const choose = (id: string, choiceId: string, text: string, ruling?: string): boolean => {
@@ -327,7 +395,7 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
     const a: Acting = { caseId: id, choiceId, ruling, text, hooks };
     setActing(a);
     setStage('act');
-    camera.flyTo(frameFor(at, sc.actFy ?? FRAME.act), MS.settle);
+    camera.flyTo(frameFor(sc.actFy ?? FRAME.act), MS.settle);
     beginAct(a, act);
     return true;
   };
@@ -394,10 +462,18 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
   const tailTo =
     zoomed && anchor && tailX !== null ? camera.boxToMap(anchor.left + tailX, anchor.top) : null;
 
+  /* The picture's own box, taken from the fit rather than assumed. The town
+     is hung `xMidYMax slice` in a wide window and fitted in a narrow one, and
+     an overlay that keeps the slice through both is a second coordinate
+     system: on a phone that drew every scene three times too big and half a
+     screen away from the spot the camera had flown to, so there was nothing
+     under the finger and nothing on the screen either. */
+  const box = mapViewport(fit);
+
   const overlay = (
     <svg
-      viewBox={`0 0 ${MAP.w} ${MAP.h}`}
-      preserveAspectRatio="xMidYMax slice"
+      viewBox={box.viewBox}
+      preserveAspectRatio={box.preserveAspectRatio}
       className="absolute inset-0 h-full w-full"
       style={{
         pointerEvents: stage === 'act' ? 'auto' : 'none',
@@ -413,7 +489,18 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
       <g ref={nearRef} opacity="0" />
       {/* while the camera is in, the curtain and the thread are drawn here,
           because the town's own are laid out for the whole picture */}
-      {zoomed && !busy && <rect width={MAP.w} height={MAP.h} fill="#14110d" opacity=".34" />}
+      {/* the whole of whatever this box is showing, and not the whole of the
+          town: on a narrow screen the two are not the same rectangle */}
+      {zoomed && !busy && (
+        <rect
+          x={box.x}
+          y={box.y}
+          width={box.w}
+          height={box.h}
+          fill="#14110d"
+          opacity=".34"
+        />
+      )}
       {zoomed && !busy && spot && tailTo && (
         <path
           d={`M${spot.x} ${spot.y + 30} L${tailTo.x} ${tailTo.y}`}
@@ -431,9 +518,14 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
     </svg>
   );
 
+  /* Three columns on a window that has three columns' worth of width, and two
+     short rows on one that has not. What the hand is being told to do is the
+     one line that has to be read, so on a narrow screen it goes first and full
+     width, and the ruling it came out of and the way back out share the row
+     under it. The two shapes are one grid; `journey.css` turns it. */
   const strip =
     stage === 'act' && acting ? (
-      <div className="pointer-events-auto relative grid w-full max-w-[1140px] grid-cols-[minmax(0,300px)_1fr_auto] items-center gap-5 rounded-2xl border border-bench bg-ink-soft/95 px-6 py-3 shadow-[0_20px_44px_rgba(0,0,0,0.5)] backdrop-blur-[2px]">
+      <div className="hand-strip pointer-events-auto relative grid w-full max-w-[1140px] grid-cols-[minmax(0,300px)_1fr_auto] items-center gap-x-5 gap-y-1.5 rounded-2xl border border-bench bg-ink-soft/95 px-6 py-3 shadow-[0_20px_44px_rgba(0,0,0,0.5)] backdrop-blur-[2px]">
         {/* The ground fading into the bar rather than being cut by it. At 4x
             the scene fills the frame and whoever is standing in the last strip
             of it met a hard edge halfway up their body: a digger sliced off at
@@ -442,7 +534,7 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
           aria-hidden
           className="pointer-events-none absolute inset-x-0 -top-12 block h-12 bg-gradient-to-b from-transparent to-ink-soft/95"
         />
-        <div className="min-w-0">
+        <div className="hand-strip-said min-w-0">
           <div className="text-[9px] uppercase tracking-[0.2em] text-parchment-dim">
             {HAND_STRIP.kicker}
           </div>
@@ -450,13 +542,13 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
             {acting.ruling ?? acting.text}
           </div>
         </div>
-        <div className="text-center text-[17px] tracking-wide text-parchment">
+        <div className="hand-strip-do text-center text-[17px] tracking-wide text-parchment">
           {HAND_INSTRUCTIONS[`${acting.caseId}:${acting.choiceId}`]}
         </div>
         <button
           type="button"
           onClick={putDown}
-          className="rounded-full border border-ink-line px-4 py-1.5 text-[11px] uppercase tracking-[0.15em] text-parchment-dim hover:border-parchment-dim hover:text-parchment"
+          className="hand-strip-out rounded-full border border-ink-line px-4 py-1.5 text-[11px] uppercase tracking-[0.15em] text-parchment-dim hover:border-parchment-dim hover:text-parchment"
         >
           {HAND_STRIP.putDown}
         </button>
