@@ -200,6 +200,19 @@ export type Condition =
    */
   | { kind: 'built'; work: WorkId; level?: number }
   | { kind: 'caseShown'; caseId: string }
+  /**
+   * Years since a scene was ruled on, which is the only clock a person coming
+   * back can be hung on.
+   *
+   * Tam and Marta wait on a plain year because the scenes they come back about
+   * happen in the second or third spring of every reign. Nothing else does:
+   * the girl with the pies arrives anywhere between year eleven and year
+   * twenty five, so "year sixteen" is four years after her scene in one reign
+   * and twenty years before it in another. A schedule cannot do this either,
+   * because a scheduled scene is served before the year's decree, which is
+   * exactly what the keen band was built to stop.
+   */
+  | { kind: 'since'; caseId: string; years: number }
   | { kind: 'turn'; op: 'lte' | 'gte'; value: number }
   | { kind: 'not'; cond: Condition }
   | { kind: 'all'; conds: Condition[] }

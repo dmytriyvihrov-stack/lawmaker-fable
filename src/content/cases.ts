@@ -50,12 +50,14 @@ export const CASES: CaseEvent[] = [
         id: 'cut_his_share',
         text: 'Cut his share, under a law that shares alike.',
         result:
-          'The share is cut in front of four people who have all heard the law. They do not argue. They remember.',
+          'The share is cut in front of four people who have all heard the law. They do not argue. They remember, and by spring each of the four has a fence round their own rows, which is not a thing a law about sharing alike ever asked anybody for.',
         tags: ['utilitarian'],
         effects: { economy: 6, health: -4, mood: -10 },
         exceptionToLaw: 'work_shared',
         beneficiary: 'the four who dig',
         setFlags: ['tam_cut'],
+        cityFlagsOn: ['meadow_fenced'],
+        cityFlagsOff: ['goat_parade'],
       },
       {
         id: 'headman_decides',
@@ -67,10 +69,11 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'his_own_field',
-        text: 'His field, his back. He eats what it gives.',
-        result: 'His field gives less than a field. He eats less than a man. The law is exact about it.',
+        text: 'His field is his own. Let him rent it out and eat the rent.',
+        result:
+          'The four work his strip and a third of what it gives comes back to his door, which is less than a share and a good deal more than nothing. He is out on the lane every morning counting it in. Nobody here calls it charity and nobody here calls it a wage, and the argument about his back is over.',
         tags: ['libertarian'],
-        effects: { economy: 4, health: -10, mood: -12 },
+        effects: { economy: 4, health: -2, mood: 2 },
         setFlags: ['tam_cut'],
       },
     ],
@@ -78,12 +81,16 @@ export const CASES: CaseEvent[] = [
 
   {
     id: 'v2_well',
-    /* A scene about the well cannot arrive in a place with no well in it. */
+    /* The well is in the first sentence of this game: one field, one well. The
+       year of work *lines* it, and an unlined well is exactly the one that
+       gives four buckets and then mud, so waiting on the work put the dry week
+       in year fifteen or in no year at all (24 reigns of 36). It waits on the
+       law and on the place having lived a summer. */
     trigger: {
       kind: 'all',
       conds: [
         { kind: 'lawActive', subject: 'work' },
-        { kind: 'built', work: 'well' },
+        { kind: 'turn', op: 'gte', value: 3 },
       ],
     },
     priority: 2,
@@ -163,7 +170,16 @@ export const CASES: CaseEvent[] = [
       kind: 'all',
       conds: [
         { kind: 'lawActive', subject: 'strangers' },
-        { kind: 'built', work: 'fields' },
+        /* Ground somebody has broken, or enough mouths to be worth grinding
+           for. It waited on the field alone, and the whole of Marta's arc hung
+           on one year of work that half the reigns never spent: 18 of 36. */
+        {
+          kind: 'any',
+          conds: [
+            { kind: 'built', work: 'fields' },
+            { kind: 'souls', op: 'gte', value: 9 },
+          ],
+        },
       ],
     },
     priority: 1,
@@ -171,7 +187,7 @@ export const CASES: CaseEvent[] = [
     title: 'The Mill-Wright',
     question: 'The best plot on the stream is farmed by Marta. A stranger could put a mill on it.',
     scene: [
-      'He has built two mills before and shows his hands to prove it. Marta has farmed that plot for eleven years and shows nothing.',
+      'He has built two mills before and shows his hands to prove it. Marta has farmed that plot longer than anybody here has farmed anything, and shows nothing.',
       'A mill would feed twice the hamlet. Marta feeds Marta.',
     ],
     choices: [
@@ -179,7 +195,7 @@ export const CASES: CaseEvent[] = [
         id: 'marta_keeps',
         text: 'Marta keeps her plot. He builds downstream, or nowhere.',
         result:
-          'He builds downstream, badly, where the water is slow. The mill turns on wet days. Marta brings him bread.',
+          'Marta keeps the field, and what he does about it is his own business. There is slow water downstream and there is the road, and the fence between the two is whatever this place has already decided a fence is for.',
         tags: ['kantian'],
         effects: { crownSanity: 4, economy: 2 },
         setFlags: ['marta_kept'],
@@ -210,21 +226,12 @@ export const CASES: CaseEvent[] = [
         setFlags: ['marta_moved'],
       },
       {
-        id: 'a_roof_and_a_plot',
-        text: 'The law says a roof and a share. A share means the plot. Marta moves.',
-        result:
-          'The law said a share, and a share turned out to mean the best plot. Marta reads the law twice that winter.',
-        tags: ['communitarian'],
-        effects: { economy: 12, crownSanity: -6 },
-        setFlags: ['marta_moved'],
-      },
-      {
         id: 'a_year_first',
-        text: 'He works a year for Marta first. Then we talk.',
+        text: 'He works a year for Marta first. The store carries him while he does.',
         result:
-          'He digs for Marta for a year and builds her a mill on the second, out of gratitude and spite in equal parts.',
+          'He digs for Marta for a year and the store feeds him for it, and on the second year he builds her a mill out of gratitude and spite in equal parts. It stands on her ground, and it is hers, and everybody watched a stranger keep your law to the letter before he got anything at all.',
         tags: ['meritocratic'],
-        effects: { economy: 6, health: 2 },
+        effects: { economy: -4, mood: 8, crownSanity: 8 },
         setFlags: ['marta_kept'],
       },
       {
@@ -286,15 +293,6 @@ export const CASES: CaseEvent[] = [
         setFlags: ['fugitive_given'],
       },
       {
-        id: 'he_has_a_roof',
-        text: 'He was given a roof. A roof is not given back.',
-        result:
-          'You read the law to the riders from the fence. They write it down. It goes to the lord, who reads it twice.',
-        tags: ['communitarian'],
-        effects: { crownSanity: -8, economy: 4 },
-        setFlags: ['fugitive_hidden'],
-      },
-      {
         id: 'his_year_is_owed',
         text: 'He owes a year. The riders can have him in April.',
         result:
@@ -302,17 +300,6 @@ export const CASES: CaseEvent[] = [
         tags: ['meritocratic'],
         effects: { crownSanity: -4, economy: 6 },
         souls: -10,
-      },
-      {
-        id: 'never_here',
-        text: 'He was never here, under a law that says he cannot be.',
-        result:
-          'The gate says strangers are turned away, so there is no stranger, so there is nobody in the hay. The riders check the hay.',
-        tags: ['libertarian'],
-        effects: { crownSanity: -12, economy: 4 },
-        exceptionToLaw: 'strangers_turned_away',
-        beneficiary: 'the man in the hay',
-        setFlags: ['fugitive_hidden'],
       },
     ],
   },
@@ -363,7 +350,7 @@ export const CASES: CaseEvent[] = [
     season: 'winter',
     character: 'healer',
     title: 'The Long Winter: One Hearth',
-    question: 'Snow to the lintels. One woodpile, and the roof has come in on Tam.',
+    question: 'Snow to the tops of the doors. One woodpile, and the roof has come in on Tam.',
     scene: [
       'The pile will warm one house through, or three houses badly.',
       'Tam is standing in the snow with his blanket, waiting to be told which.',
@@ -406,8 +393,8 @@ export const CASES: CaseEvent[] = [
     title: 'The Girl with the Pies',
     question: 'A child has been trading under your law without ever reading it.',
     scene: [
-      'Nine years old. A month at the north gate, and she asked nobody.',
-      'The wardens were her best customers. The wardens are the ones who caught her.',
+      'She is {{age:iva}}. A month at the gate, and she asked nobody.',
+      'The two who keep the gate were her best customers. They are also the ones who caught her.',
     ],
     choices: [
       {
@@ -485,11 +472,15 @@ export const CASES: CaseEvent[] = [
       ],
     },
     priority: 2,
-    character: 'miller',
+    /* The man who built the mill is the man who runs it. There were two of
+       them, `millwright` and `miller`, and the trigger already required his
+       scene to have happened, so the place had met the one and was handed the
+       other with no introduction. */
+    character: 'millwright',
     title: 'The Price of Ash',
     question: 'The granaries burned on Thursday. On Friday bread costs four times.',
     scene: [
-      'The miller is not hiding it. He painted the new price on a board and brought the board with him.',
+      'The man who built the mill is not hiding it. He painted the new price on a board and brought the board with him.',
       'His whole argument is one line: my price is the only reason there is any bread left for Sunday.',
     ],
     choices: [
@@ -563,9 +554,9 @@ export const CASES: CaseEvent[] = [
     priority: 1,
     character: 'lever',
     title: 'The Cart on the Ore Road',
-    question: 'Five men on the track, one deaf man on the siding, and a hand that did not move.',
+    question: 'Five men on the track, one deaf man on the side track, and a hand that did not move.',
     scene: [
-      'The cart came off its brake on the ore road. The lever would have sent it onto the siding, and on the siding stood Bregg, who has been deaf since he was six and did not hear it coming.',
+      'The cart came off its brake on the ore road. The lever would have sent it onto the side track, and on the side track stood Bregg, who has been deaf since he was six and did not hear it coming.',
       'The lever man froze, and the cart went on down the track. Five are dead. The eleven other lever men are standing at the back of the room.',
     ],
     choices: [
@@ -638,8 +629,8 @@ export const CASES: CaseEvent[] = [
     title: 'The Weight on the Bridge',
     question: 'The cooper stopped a runaway wagon with a man who had not agreed to it.',
     scene: [
-      'Nothing on that bridge would have stopped it except the weight of a very large man, and Odo was standing at the rail. The cooper worked that out in a second and a half.',
-      'He pushed. Five people went home to supper. Odo, who mended nets, did not.',
+      'Nothing on that bridge would have stopped it except the weight of a very large man, and Hob was standing at the rail. The cooper worked that out in a second and a half.',
+      'He pushed. Five people went home to supper. Hob, who mended nets, did not.',
     ],
     choices: [
       {
@@ -676,16 +667,6 @@ export const CASES: CaseEvent[] = [
         tags: ['utilitarian'],
         effects: { mood: -16, army: 8 },
         setFlags: ['pusher_freed'],
-      },
-      {
-        id: 'forgiven',
-        text: 'Forgive him the rule, this once.',
-        result:
-          'The room hears the word once. By spring, two other men have asked for their once.',
-        tags: ['communitarian'],
-        effects: { mood: 8, crownSanity: -8 },
-        exceptionToLaw: 'lives_untouchable',
-        beneficiary: 'the cooper',
       },
       {
         id: 'skipped_the_cup',
@@ -733,19 +714,9 @@ export const CASES: CaseEvent[] = [
         id: 'clerk',
         text: 'From now on the dying hear it from a clerk.',
         result:
-          'The clerk has a form, and the form has a line for the estate. The town learns to dread a satchel at the door.',
+          'The clerk has a form, and the form has a line for the estate. The town learns to dread a bag at the door.',
         tags: ['utilitarian'],
         effects: { economy: -8, mood: -8, crownSanity: -8 },
-      },
-      {
-        id: 'forgiven_word',
-        text: 'Forgive her the word.',
-        result:
-          'Forgiven in the same room where your law was read out a month ago. The Chaplain writes to ask which of the two the town should remember.',
-        tags: ['communitarian'],
-        effects: { mood: 8, crownSanity: -8 },
-        exceptionToLaw: 'truth_mandatory',
-        beneficiary: 'the Healer',
       },
       {
         id: 'within_the_law',
@@ -803,14 +774,6 @@ export const CASES: CaseEvent[] = [
           'Asked the same honest question about his own house, he describes the barn behind the counting house, in order, in front of the Chaplain. The warrant is withdrawn before supper.',
         tags: ['communitarian'],
         effects: { mood: 16, crownSanity: 8, army: -8 },
-      },
-      {
-        id: 'asked_again',
-        text: 'Ask her again, with the cellar off the table.',
-        result:
-          'It takes her eleven seconds. Her brother is taken that evening, and the room is silent in the way of a room that got what it asked for.',
-        tags: ['kantian'],
-        effects: { crownSanity: 8, mood: -16 },
       },
       {
         id: 'backdated',
@@ -885,7 +848,7 @@ export const CASES: CaseEvent[] = [
         id: 'open_hall',
         text: 'Open the Guild hall. Everyone sleeps warm.',
         result:
-          'The whole town winters under one roof. The Guild bills the crown for the oak, itemised, in the spring.',
+          'The whole town winters under one roof. The Guild bills the crown for the oak in the spring, line by line.',
         tags: ['communitarian'],
         effects: { health: 16, mood: 8, economy: -16 },
       },
@@ -969,21 +932,11 @@ export const CASES: CaseEvent[] = [
         id: 'their_own_houses',
         text: 'Three houses, three holes, three problems. The law is clear whose they are.',
         result:
-          'Two of the houses manage it. The third is one woman of sixty with a mattock, and the place watches her at it for a day and a half before somebody breaks and helps.',
+          'Two of the houses manage it. The third is one woman of sixty with a pick, and the place watches her at it for a day and a half before somebody breaks and helps.',
         tags: ['libertarian'],
         effects: { economy: 8, mood: -12 },
         setFlags: ['ground_cut'],
         cityFlagsOn: ['graves_in_the_yards'],
-      },
-      {
-        id: 'the_edge_today',
-        text: 'The edge, today, same as the law says, frost or no frost.',
-        result:
-          'The strip at the edge takes them in whatever the ground is doing, because that is what the strip is for, and the work is back on by noon.',
-        tags: ['utilitarian'],
-        effects: { economy: 10, health: 4, mood: -14 },
-        setFlags: ['ground_cut'],
-        cityFlagsOn: ['graves_at_the_edge'],
       },
     ],
   },
@@ -1030,25 +983,6 @@ export const CASES: CaseEvent[] = [
         setFlags: ['road_refused'],
       },
       {
-        id: 'the_day_for_him',
-        text: 'The work stops for him the same as for one of ours.',
-        result:
-          'The law does not say "of this place" anywhere in it, and you read it out at the fence to make the point, and after that nobody argues.',
-        tags: ['egalitarian'],
-        effects: { mood: 14, economy: -8 },
-        setFlags: ['road_buried'],
-        cityFlagsOn: ['graves_at_the_edge'],
-      },
-      {
-        id: 'no_house_no_burial',
-        text: 'He has no house here. Under the law there is nobody to carry him.',
-        result:
-          'The law is followed exactly and the result is a man at a gatepost that the law has nothing to say about, for two days, in August.',
-        tags: ['libertarian'],
-        effects: { economy: 4, mood: -12, health: -6 },
-        setFlags: ['road_refused'],
-      },
-      {
         id: 'edge_same_day',
         text: 'The edge, the same day. The law does not ask where anybody was born.',
         result:
@@ -1071,7 +1005,7 @@ export const CASES: CaseEvent[] = [
     question:
       'Iva found the good ring before anybody was awake, and it is thirty yards inside somebody else\u2019s strip.',
     scene: [
-      'She is nine and she has a basket of them and she has been standing outside since dawn waiting for somebody official to be awake. She has not eaten any.',
+      'She is {{age:iva}} and she has a basket of them and she has been standing outside since dawn waiting for somebody official to be awake. She has not eaten any.',
       'The strip is Marta\u2019s, or was in the spring when the strips were last argued about. Marta is standing behind her with her arms folded, not saying anything, which from Marta is a whole speech.',
     ],
     choices: [
@@ -1105,7 +1039,7 @@ export const CASES: CaseEvent[] = [
         id: 'up_first_wins',
         text: 'The law says whoever finds them. She found them.',
         result:
-          'The decree is read out over a basket of mushrooms to a nine year old and a woman of forty, and by the following dawn there are five people in the wood with lamps.',
+          'The decree is read out over a basket of mushrooms to a child and a woman with a spade, and by the following dawn there are five people in the wood with lamps.',
         tags: ['libertarian'],
         effects: { economy: 6, mood: -4 },
         setIva: 'helped',
@@ -1172,21 +1106,12 @@ export const CASES: CaseEvent[] = [
         setFlags: ['wood_open'],
       },
       {
-        id: 'finders_take_the_risk',
-        text: 'Whoever is up first is up first, and whoever is wrong is wrong.',
-        result:
-          'The decree is quoted back at the Healer by a man who cannot read, correctly, word for word, and she stops arguing and starts keeping her list.',
-        tags: ['libertarian'],
-        effects: { economy: 10, health: -10, mood: -4 },
-        setFlags: ['wood_open'],
-      },
-      {
         id: 'the_scale_decides',
         text: 'Nothing is eaten that has not been over the scale and past her.',
         result:
-          'One person between the wood and every pot in the place, which is slow, and irritating, and the last bad night this place ever has.',
+          'One person between the wood and every pot in the place. Everybody queues, in the rain, holding a basket, to be told a thing most of them already knew, and the baskets that come out of the wood are half what they were because half the pickers cannot be bothered. It is the last bad night this place ever has.',
         tags: ['egalitarian'],
-        effects: { health: 14, mood: 2, economy: -6 },
+        effects: { health: 14, mood: -4, economy: -10 },
         setFlags: ['wood_open'],
       },
       {
@@ -1334,7 +1259,7 @@ export const CASES: CaseEvent[] = [
       'The thing at the woodpile went off into the trees in the autumn, came back in the spring, and did not come back alone.',
     scene: [
       'He answered to a name by the second winter, and walked the fence line at night on his own account, and the fence line was quieter than it used to be.',
-      'Then one morning in the autumn he was not there, and he was not there for two months. He came back in the spring, thin, went straight under the granary steps, and would not come out. There are five of them under there now.',
+      'Then one morning in the autumn he was not there, and he was not there for two months. He came back in the spring, thin, went straight under the long house steps, and would not come out. There are five of them under there now.',
       'He was a she. This happens with anything that furry and nobody is embarrassed about it for long. The pups have never once been afraid of a person, which is a different animal to the one at the woodpile, and the place has started needing a word for it. The rest of the argument is what six of them eat.',
     ],
     choices: [
@@ -1439,7 +1364,7 @@ export const CASES: CaseEvent[] = [
     choices: [
       {
         id: 'walk_out',
-        text: 'Walk into the square alone and have it out with them.',
+        text: 'Walk into the square alone and answer all of it.',
         result:
           'You stand in front of a fire for three hours and answer everything. Nobody touches you, which the Captain calls luck. The town keeps its buildings and loses its awe.',
         tags: ['communitarian'],
@@ -1471,7 +1396,16 @@ export const CASES: CaseEvent[] = [
 
   {
     id: 'x_plague',
-    trigger: { kind: 'stat', stat: 'health', op: 'lte', value: 0 },
+    /* A long room, an east lane, nine physicians off the roads and a vault to
+       pay them out of: all four are things a town has. The hamlet's version of
+       this morning is `x_sick_hut`, below. */
+    trigger: {
+      kind: 'all',
+      conds: [
+        { kind: 'stat', stat: 'health', op: 'lte', value: 0 },
+        { kind: 'stage', stage: 'town' },
+      ],
+    },
     priority: 0,
     character: 'healer',
     title: 'The Long Room Is Full',
@@ -1495,7 +1429,7 @@ export const CASES: CaseEvent[] = [
         id: 'open_the_vault',
         text: 'Buy every physician the roads can reach.',
         result:
-          'Nine physicians arrive over a fortnight and four of them are worth the coin. The vault is thin, and the long room empties by spring.',
+          'Nine physicians arrive over two weeks and four of them are worth the coin. The vault is thin, and the long room empties by spring.',
         tags: ['egalitarian'],
         effects: { health: 20, economy: -24, mood: 8 },
         souls: -8,
@@ -1503,9 +1437,69 @@ export const CASES: CaseEvent[] = [
     ],
   },
 
+  /**
+   * The same morning, in a place of nine.
+   *
+   * `x_plague` above is a long room, an east lane, nine physicians off the
+   * roads and a vault to pay them out of. A hamlet has one big roof, one
+   * bucket and somebody's aunt, and the whole argument is whether the sick are
+   * put somewhere or nursed where they lie. Both answers are kind and both of
+   * them cost, which is what makes this a hamlet scene and not a smaller town
+   * one.
+   */
+  {
+    id: 'x_sick_hut',
+    trigger: {
+      kind: 'all',
+      conds: [
+        { kind: 'stat', stat: 'health', op: 'lte', value: 0 },
+        { kind: 'not', cond: { kind: 'stage', stage: 'town' } },
+      ],
+    },
+    priority: 0,
+    character: 'healer',
+    title: 'One Roof, and All of Us Coughing',
+    question: 'There is one roof big enough to put the sick in, and the people in it are not sick yet.',
+    scene: [
+      'It went through the yards in nine days and there is nobody left in this place who is only looking after themselves. The Healer has been awake for three of those days and has stopped pretending there is anything in the bottle.',
+      'She wants the long house cleared and the sick carried into it, and everybody else out in the barn and the yards until it passes. She has said the other half out loud as well, which is that some of the ones carried in will not be carried out, and that their houses will know exactly which morning it was.',
+    ],
+    choices: [
+      {
+        id: 'one_roof_for_the_sick',
+        text: 'Clear the long house. The sick go in, everybody else stays out.',
+        result:
+          'It is done in an afternoon and it works, and for five weeks the long house is a place people stand outside of and do not go into. Three of them do not come out, and the three houses that carried them in carried them in themselves.',
+        tags: ['utilitarian'],
+        effects: { health: 24, mood: -14, economy: -4 },
+        souls: -6,
+      },
+      {
+        id: 'carry_the_water',
+        text: 'Nobody is moved. Each house nurses its own, and the water comes from above the graves.',
+        result:
+          'Two people walk uphill and back with buckets every day from the thaw to the frost, which is two people the field does not have, all year. Nobody is put anywhere. It takes twice as long to pass and it takes more of them with it, and not one person here was carried out of their own house to die in.',
+        tags: ['communitarian'],
+        effects: { health: 14, economy: -16, mood: 8 },
+        souls: -12,
+      },
+    ],
+  },
+
   {
     id: 'x_ruin',
-    trigger: { kind: 'stat', stat: 'economy', op: 'lte', value: 0 },
+    /* Wages due on Friday, a Guild that lends, crown lands and a plate to sell.
+       Fifteen of the twenty three times this fired over twelve seeds it fired
+       in a hamlet that has none of them, and it is what the kind player dies
+       of in seven reigns of twelve. `x_store_bottom` is that morning in a
+       place of nine. */
+    trigger: {
+      kind: 'all',
+      conds: [
+        { kind: 'stat', stat: 'economy', op: 'lte', value: 0 },
+        { kind: 'stage', stage: 'town' },
+      ],
+    },
     priority: 0,
     character: 'treasurer',
     title: 'The Vault Has An Echo',
@@ -1528,9 +1522,56 @@ export const CASES: CaseEvent[] = [
         id: 'sell_the_crown',
         text: 'Sell the crown lands and the plate.',
         result:
-          'The plate goes first, then the meadow, then the good chairs. The crown is solvent and visibly smaller, and the monarch eats off wood for the rest of your reign.',
+          'The plate goes first, then the meadow, then the good chairs. The crown can pay its way again, and is visibly smaller, and the monarch eats off wood for the rest of your reign.',
         tags: ['egalitarian'],
         effects: { economy: 20, crownSanity: -16, mood: 8 },
+      },
+    ],
+  },
+
+  /**
+   * And the empty store, in a place of nine.
+   *
+   * `x_ruin` above needs a vault to echo in, a Guild that lends and a plate to
+   * sell. Over twelve seeds the store hit the floor twenty three times and
+   * fifteen of those were in a hamlet, so this is the scene that ending is
+   * actually made of. A hamlet has one thing left when the shelf is bare, and
+   * it is next April.
+   */
+  {
+    id: 'x_store_bottom',
+    trigger: {
+      kind: 'all',
+      conds: [
+        { kind: 'stat', stat: 'economy', op: 'lte', value: 0 },
+        { kind: 'not', cond: { kind: 'stage', stage: 'town' } },
+      ],
+    },
+    priority: 0,
+    character: 'treasurer',
+    title: 'The Shelf, and the Seed Bag',
+    question: 'The shelf is bare, and the only food left in this place is next year.',
+    scene: [
+      'The Treasurer has carried the seed bag in and set it on the table, and that is the whole of what he came to say, and he says it anyway: this is what is left, and it is not food. It is the field in April.',
+      'The next valley has grain, and has worked out exactly what a hamlet with an empty store is worth. So has everybody standing in this room, which is why they are all standing in it.',
+    ],
+    choices: [
+      {
+        id: 'borrow_seed',
+        text: 'Send to the next valley and borrow against the harvest.',
+        result:
+          'Two carts come back full, and a man comes with them who writes down what is owed, twice, in front of witnesses. Nobody here goes hungry. For four years afterwards nobody here says the words next valley lightly either.',
+        tags: ['utilitarian'],
+        effects: { economy: 24, crownSanity: -12, mood: 4 },
+      },
+      {
+        id: 'eat_the_seed',
+        text: 'Open the seed bag. April can look after itself.',
+        result:
+          'It is eaten in eleven days and they are the best eleven days anybody has had since the frost. In April there is ground and no seed, and the field comes up half of what it was, and every person here knew that on the first evening and ate anyway.',
+        tags: ['libertarian'],
+        effects: { economy: 20, health: -8, mood: -10 },
+        souls: -8,
       },
     ],
   },
@@ -1594,7 +1635,7 @@ export const CASES: CaseEvent[] = [
         id: 'a_year_free',
         text: 'A year with no dues, and say so from the steps.',
         result:
-          'The vault takes the year on the chin. Six families turn their carts around at the crossroads, and the square learns that the crown can hear.',
+          'The vault swallows the loss of a whole year. Six families turn their carts around at the crossroads, and the square learns that the crown can hear.',
         tags: ['egalitarian'],
         effects: { mood: 24, economy: -20 },
         souls: -8,
@@ -1625,7 +1666,7 @@ export const CASES: CaseEvent[] = [
     trigger: null,
     priority: 1,
     character: 'crowd',
-    title: 'The Deputation',
+    title: 'Nine in the Yard',
     question:
       'Nine of them are outside, in daylight, with nothing in their hands, and they have picked somebody to speak.',
     scene: [
@@ -1682,7 +1723,7 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'let_him_keep',
-        text: 'He keeps it. She is asked to be the bigger person.',
+        text: 'He keeps it. She is asked to let it go.',
         result: 'She agrees, in front of everyone, and does not look at you again that year. The boy is warm.',
         tags: ['communitarian'],
         effects: { mood: 6, economy: -4 },
@@ -1700,6 +1741,7 @@ export const CASES: CaseEvent[] = [
         result: 'The why takes an hour and involves a dead father and a stove that does not draw. Somebody writes the stove down.',
         tags: ['communitarian'],
         effects: { mood: 5, health: 2, economy: -4 },
+        bond: 2,
       },
       {
         id: 'two_coats',
@@ -1728,7 +1770,7 @@ export const CASES: CaseEvent[] = [
     title: 'The Toll Box',
     question: 'The man who counts the crossing money has been counting it short. For years, and not by much.',
     scene: [
-      'The box at the crossing is light, and has been light since before the charter. The Ferrier has not moved house, bought anything, or lied when asked.',
+      'The box at the crossing is light, and has been light since before anybody thought to count it. The Ferryman has not moved house, bought anything, or lied when asked.',
       'What is missing over eleven years is roughly one winter of grain. He is also the only person who knows the river.',
     ],
     choices: [
@@ -1742,14 +1784,14 @@ export const CASES: CaseEvent[] = [
       {
         id: 'pays_the_short',
         text: 'He pays back what is short, and keeps the boat.',
-        result: 'He pays it in instalments and in fish, and rows better than ever out of what looks like spite and is probably shame.',
+        result: 'He pays it back a little at a time, and in fish, and rows better than ever out of what looks like spite and is probably shame.',
         tags: ['egalitarian'],
         effects: { economy: 8, mood: -2 },
       },
       {
         id: 'loses_the_ferry',
         text: 'He loses the box, the boat, and the house that came with them.',
-        result: 'The new ferrier is honest and does not know the river. The crossing closes twice that winter, both times in the dark.',
+        result: 'The new ferryman is honest and does not know the river. The crossing closes twice that winter, both times in the dark.',
         tags: ['meritocratic'],
         effects: { economy: 4, army: 4, mood: -6 },
       },
@@ -1759,6 +1801,7 @@ export const CASES: CaseEvent[] = [
         result: 'The witness is bored by March and the box is honest by June. The two of them are civil, then friendly, then a nuisance at the tavern.',
         tags: ['communitarian'],
         effects: { mood: 6, economy: -2 },
+        bond: 2,
       },
       {
         id: 'pays_it_twice',
@@ -1787,7 +1830,7 @@ export const CASES: CaseEvent[] = [
     question: 'One fair purse, two hats: the tragedy nobody watched, and the worm eater everybody did.',
     scene: [
       "The players rehearsed a tragedy all winter. Eleven people watched it, and four of them were the players' mothers. At the far end of the square a man ate nine worms for a hat that came back heavy.",
-      'Both hats are on the table, and the fair purse pays for one of them. The Fool has recused himself, loudly, and is standing very close.',
+      'Both hats are on the table, and the fair purse pays for one of them. The Fool has said loudly that he will not be judging this one, and is standing very close.',
     ],
     choices: [
       {
@@ -1808,41 +1851,26 @@ export const CASES: CaseEvent[] = [
         setFlags: ['worms_paid'],
       },
       {
-        id: 'split',
-        text: 'Split the purse, and put the two of them on one stage.',
+        /* The third word that is always on this bench.
+           It used to be "split the purse", and under a law that says the hat or
+           nothing every answer about opening the purse crosses the law, which
+           leaves a bench with no clean plain word on it: a trap rather than a
+           dilemma (check 17b). This one is the answer that law actually
+           allows, and it is nobody's favourite, which is the point. */
+        id: 'purse_shut',
+        text: 'Neither of them. The purse stays shut this year.',
         result:
-          'The tragedy runs with a worm interval, and for the first time everyone stays to the end, mostly to see what happens in the interval.',
-        tags: ['communitarian'],
-        effects: { mood: 4, culture: 4, economy: -6 },
+          'The fair purse does not open at all. Both hats are exactly what they were, and the players and the worm man discover over the winter that they have one thing in common, which is you.',
+        tags: ['kantian'],
+        effects: { economy: 4, mood: -6, culture: -4 },
       },
       {
         id: 'hall_judges',
-        text: 'The hall sits, and judges, and pays whatever it calls worthy.',
+        text: 'The hall sits, and judges, and finds neither of them worthy.',
         result:
-          'The hall judges the tragedy worthy and the worms not, in writing, and pins the writing to the door, where the worm man reads it to his crowd in a funny voice.',
+          'The hall sits on the Thursday, considers a tragedy and nine worms at some length, and awards the purse to neither, in writing, and pins the writing to the door. The purse goes back in the box for a better year. The worm man reads the writing to his crowd in a funny voice and the players do not come out at all.',
         tags: ['meritocratic'],
-        effects: { culture: 10, mood: -8 },
-        setFlags: ['players_paid'],
-      },
-      {
-        id: 'counted',
-        text: 'Count the crowd. The purse follows the count.',
-        result:
-          'The count is two hundred to eleven and the purse goes where the law said it would. The players do not argue with arithmetic; they leave a note saying so.',
-        tags: ['utilitarian'],
-        effects: { mood: 10, culture: -8, economy: 2 },
-        setFlags: ['worms_paid'],
-      },
-      {
-        id: 'purse_anyway',
-        text: 'The purse pays the players anyway, under a law that says the hat is all.',
-        result:
-          'The purse opens for the players in front of the worm man, who says nothing, and passes his hat round the square one more time, slowly, looking at you.',
-        tags: ['communitarian'],
-        effects: { culture: 8, mood: -4 },
-        exceptionToLaw: 'song_by_hat',
-        beneficiary: 'the players',
-        setFlags: ['players_paid'],
+        effects: { economy: 6, culture: 4, mood: -10 },
       },
     ],
   },
@@ -1863,9 +1891,9 @@ export const CASES: CaseEvent[] = [
         id: 'pay_him',
         text: 'Pay him. It is a good song.',
         result:
-          'He is paid from the purse and thanked from the steps, and writes a sixth verse about that, which is kinder, and which nobody sings.',
+          'He is paid out of the purse and thanked from the steps, and writes a sixth verse about that, which is kinder, and which nobody sings.',
         tags: ['communitarian'],
-        effects: { culture: 8, crownSanity: -6 },
+        effects: { culture: 8, crownSanity: -6, economy: -6 },
       },
       {
         id: 'let_it',
@@ -1888,17 +1916,17 @@ export const CASES: CaseEvent[] = [
         id: 'judged_worthy',
         text: 'The hall judges it, and it is worthy, and your worst year goes into the book.',
         result:
-          'The hall enters the ballad in the book of worthy things, with your name in it twice, and the clerk asks how to spell the well.',
+          'The hall enters the ballad in the book of worthy things, with your name in it twice, and the clerk asks how to spell the well. Nobody is paid a copper. The square works out inside a week that the book is now the place its own bad winter is kept, and reads it.',
         tags: ['meritocratic'],
-        effects: { culture: 10, crownSanity: -8 },
+        effects: { culture: 10, crownSanity: -8, mood: -8 },
       },
       {
         id: 'by_the_crowd',
         text: 'Count the crowd. It is the largest the square has held.',
         result:
-          'The count is the whole town less one, and the purse pays him by the head, and the one who did not come is upstairs.',
+          'The count is the whole town less one, and the purse pays him by the head of it, which is the dearest song this place has ever bought. The one who did not come is upstairs, and hears about the sum before the song.',
         tags: ['utilitarian'],
-        effects: { mood: 8, culture: 4, crownSanity: -6 },
+        effects: { economy: -8, mood: 8, culture: 4, crownSanity: -6 },
       },
       {
         id: 'buy_the_hat',
@@ -1932,7 +1960,7 @@ export const CASES: CaseEvent[] = [
     question:
       'The spring race is to the far field and back. A boy with a bad leg wants to run it from a cart.',
     scene: [
-      'Every spring the place races to the far field and back, and whoever is first carries the first sheaf home. Wat has a leg that has never worked and a pony that does, and he asks to ride the stretches between the milestones.',
+      'Every spring the place races to the far field and back, and whoever is first carries the first sheaf of corn home. Wat has a leg that has never worked and a pony that does, and he asks to ride the stretches between the milestones.',
       'The other runners say the walking is the race. Wat says the race is who gets there. Everybody is looking at you, and so is the pony.',
     ],
     choices: [
@@ -1981,7 +2009,7 @@ export const CASES: CaseEvent[] = [
     },
     priority: 16,
     character: 'healer',
-    title: 'The Swarm in the Eaves',
+    title: 'The Swarm Under the Roof',
     question: 'A swarm has settled in the eaves of the long house, and it is not leaving.',
     scene: [
       'It came up the valley on Tuesday and chose the one roof nobody can spare. Two people have been stung, one of them twice, and the Healer has been asked to have an opinion.',
@@ -2101,7 +2129,7 @@ export const CASES: CaseEvent[] = [
         id: 'split_them',
         text: 'Split the herd. A goat to every house that will keep one.',
         result:
-          'Every yard has a goat in it by Sunday and every house is pleased with you for a fortnight. Four of them are back on the common by Friday, standing where Odo usually stands, and he has taken a basket to the beeches instead.',
+          'Every yard has a goat in it by Sunday and every house is pleased with you for two weeks. Four of them are back on the common by Friday, standing where Odo usually stands, and he has taken a basket to the beeches instead.',
         tags: ['egalitarian'],
         effects: { mood: 6, economy: 2 },
       },
@@ -2127,17 +2155,17 @@ export const CASES: CaseEvent[] = [
         id: 'by_the_law_shared',
         text: "By the law of the work: the herd is everybody's, and so is his day.",
         result:
-          'Nobody argues, because the arguing was done years ago. {{law:work_shared}} is read out once, over the noise of goats, and put away. He walks them, and the place drinks the milk.',
+          'Nobody argues, because the arguing was done years ago. {{law:work_shared}} is read out once, over the noise of goats, and put away. He walks them, and the place drinks the milk, and for once in this reign nobody has to be told anything by you at all.',
         tags: ['egalitarian', 'communitarian'],
-        effects: { mood: 4, economy: 1 },
+        effects: { mood: 4, economy: 1, crownSanity: 8 },
       },
       {
         id: 'by_the_law_owned',
         text: 'By the law of the work: what his hands raised is his.',
         result:
-          '{{law:work_owned}} says it before you have to, which saves a speech. The two houses that carried water up there in the dry month say nothing about it, at some length.',
+          '{{law:work_owned}} says it before you have to, which saves a speech and saves you a decision. The two houses that carried water up there in the dry month say nothing about it, at some length.',
         tags: ['libertarian'],
-        effects: { economy: 4, mood: -1 },
+        effects: { economy: 4, mood: -1, crownSanity: 8 },
       },
     ],
   },
@@ -2317,7 +2345,7 @@ export const CASES: CaseEvent[] = [
     question:
       'Your brother has spent three years sober and has started painting the place, badly, in the middle of the square.',
     scene: [
-      'He made the frame himself out of a broken hurdle and the colours out of whatever the Healer was throwing away. The first one was unrecognisable. The fourth one is the hill, and it is the hill.',
+      'He made the frame himself out of a broken gate and the colours out of whatever the Healer was throwing away. The first one was unrecognisable. The fourth one is the hill, and it is the hill.',
       'He stands out there most of the day now, which is a day nobody is getting work out of him, and half the place has stopped on the way past to look over his shoulder.',
     ],
     choices: [
@@ -2426,7 +2454,7 @@ export const CASES: CaseEvent[] = [
     title: 'The Wind, and No Fence',
     question: 'Every fence is down, the stock is in the corn, and the one man who knows the fence is not speaking to you.',
     scene: [
-      'A night of wind in October took every fence post in the valley that nobody had looked at, and nobody had looked at any of them, because the one who used to was told {{ago:v1_idle_hand}} that he eats when he digs. He dug. The fence did not get looked at.',
+      'A night of wind in October took every fence post in the valley that nobody had looked at, and nobody had looked at any of them, because the one who used to was left to himself {{ago:v1_idle_hand}}, and has been ever since. The fence did not get looked at.',
       'Tam knows that fence better than anybody alive. He is standing at the biggest gap this morning with his arms folded, watching the goats come through it, and he has not said a word to you since that spring.',
     ],
     choices: [
@@ -2534,7 +2562,7 @@ export const CASES: CaseEvent[] = [
         id: 'take_it_as_before',
         text: "It is the place's ground. Take it, as before.",
         result:
-          'She goes down the road in the spring with her mattock over her shoulder, and two houses go with her, and the mill grinds for a smaller place. Nobody here uses the word ground in front of you again.',
+          'She goes down the road in the spring with her spade over her shoulder, and two houses go with her, and the mill grinds for a smaller place. Nobody here uses the word ground in front of you again.',
         tags: ['utilitarian'],
         effects: { economy: 8, mood: -12, crownSanity: -6 },
         souls: -8,
@@ -2550,16 +2578,273 @@ export const CASES: CaseEvent[] = [
     ],
   },
 
+  /* ------------------------------------------ and the ones who come back next
+
+     The same rules as Tam and Marta above, and the same shape: a flag the
+     first scene left, years since that scene rather than a year of the reign,
+     the scene said out loud with `{{ago:}}`, and the same person at the door.
+
+     `since` rather than `turn` because none of these first scenes happens on a
+     schedule. The girl with the pies arrives anywhere between year eleven and
+     year twenty five, so a plain year is four years after her in one reign and
+     twenty years before her in another.
+     ------------------------------------------------------------------------ */
+
+  {
+    id: 'r3_iva_stall',
+    trigger: {
+      kind: 'all',
+      conds: [
+        { kind: 'flag', flag: 'girl_spared' },
+        { kind: 'since', caseId: 'd1_pies', years: 6 },
+      ],
+    },
+    priority: 6,
+    character: 'iva',
+    title: 'The Girl at the Gate, and the Girl at the Gate',
+    question: 'Iva has caught a child trading off the end of her own stall, and has brought her here instead of settling it.',
+    scene: [
+      'She is {{age:iva}} now, and the gate stall has been hers since you gave it to her {{ago:d1_pies}}. She runs it properly. There is a slate, and a box with a lid, and a girl who helps on market days.',
+      'The girl who helps has been selling her own buns off the end of the stall for a month and keeping what they made. Iva found out on Tuesday and has brought her here rather than dealing with it herself, which she is perfectly able to do. She has not said which way she wants it to go. She is watching you do it.',
+    ],
+    choices: [
+      {
+        id: 'a_corner_of_her_own',
+        text: 'She gets a corner of the stall, the same as somebody once got a stall.',
+        result:
+          'The corner is measured out with a stick in front of both of them and it is a very small corner. Iva says nothing at all about the arithmetic, and pays for the child’s flour out of the box that afternoon.',
+        tags: ['communitarian'],
+        effects: { mood: 10, economy: -4 },
+        bond: 1,
+      },
+      {
+        id: 'ivas_to_settle',
+        text: 'It is Iva’s stall. Iva settles it.',
+        result:
+          'She takes the month’s money back, puts the child on a wage, and writes the wage on the slate where anybody can read it. It is almost exactly what the Guild offered her when she was nine. She has thought about that, and she does it anyway.',
+        tags: ['libertarian'],
+        effects: { crownSanity: 8, economy: 4, mood: -2 },
+      },
+      {
+        id: 'the_toll_at_nine',
+        text: 'She pays what any trader pays, at nine, the same as anybody.',
+        result:
+          'The child pays at the desk and gets a receipt and keeps it, which is a thing that has happened at this gate before. Iva watches the whole of it from behind her own stall and does not step in, because nobody stepped in for her.',
+        tags: ['kantian'],
+        effects: { economy: 8, mood: -8 },
+        bond: -1,
+      },
+    ],
+  },
+
+  {
+    id: 'r3_iva_basket',
+    trigger: {
+      kind: 'all',
+      conds: [
+        { kind: 'flag', flag: 'basket_burned' },
+        { kind: 'since', caseId: 'd1_pies', years: 6 },
+      ],
+    },
+    priority: 6,
+    character: 'iva',
+    title: 'The Basket, Again',
+    question: 'Iva is at the gate with a basket and a daughter, and she wants the bar said out loud in front of the child.',
+    scene: [
+      'She is {{age:iva}}. You burned her basket at noon in a full square {{ago:d1_pies}} and barred her from the market, and she went back into the beeches and has lived out of them since, which the wood has been quietly good about.',
+      'She is at the gate this morning with a basket she is not selling and a girl of about nine holding the other handle. She has come to ask whether the bar is still on. She has brought the child so that you have to answer it where the child can hear.',
+    ],
+    choices: [
+      {
+        id: 'lift_the_bar',
+        text: 'The bar is lifted. Both of them may trade.',
+        result:
+          'It is lifted in the same square, at the same hour, with rather fewer people watching. She thanks you once, correctly, and is at the gate with a full basket the following Tuesday and every Tuesday after that.',
+        tags: ['communitarian'],
+        effects: { mood: 12, economy: 4 },
+        bond: 1,
+      },
+      {
+        id: 'the_bar_stands',
+        text: 'The bar stands. It was a ruling, and rulings are not weather.',
+        result:
+          'She takes it without a word, turns the child round by the shoulder and walks her back up the beech path. The bar has now outlasted the basket, the square that watched it burn, and both of the wardens who held her.',
+        tags: ['kantian'],
+        effects: { crownSanity: 8, mood: -10 },
+        bond: -1,
+      },
+      {
+        id: 'the_child_only',
+        text: 'The child may trade. The mother may not.',
+        result:
+          'The girl has a stall by autumn and is good at it, and her mother carries the basket down to the gate every Tuesday and stops at the post, and stands there, and does not come in.',
+        tags: ['utilitarian'],
+        effects: { economy: 8, mood: -4, crownSanity: -4 },
+      },
+    ],
+  },
+
+  {
+    id: 'r4_healer_kept',
+    trigger: {
+      kind: 'all',
+      conds: [
+        { kind: 'flag', flag: 'kind_lie_pardoned' },
+        { kind: 'since', caseId: 'd5_deathbed', years: 5 },
+      ],
+    },
+    priority: 6,
+    character: 'healer',
+    title: 'The Same Question, From a Child',
+    question: 'A boy has asked the Healer whether his mother will get better, and she has come to you before answering him.',
+    scene: [
+      'You thanked her in open court {{ago:d5_deathbed}} for telling a dying man he would see the spring, and she kept the voice you let her keep, and has used it on half this town since, and half this town is glad of it.',
+      'A boy of eleven asked her a question this morning about his mother, who has about two weeks. She has not answered him. She has come here first, which she has never done in her life, to find out whether what you decided that day was meant to cover children as well.',
+    ],
+    choices: [
+      {
+        id: 'tell_him_true',
+        text: 'He is told the truth, in words a boy of eleven can carry.',
+        result:
+          'It takes her most of an afternoon and she does it in the yard rather than the corridor. He is with his mother every day of those two weeks, which he would not have been, and he is eleven, and he knows exactly what he is doing there.',
+        tags: ['kantian'],
+        effects: { health: 6, mood: -6, culture: 4 },
+        bond: 1,
+      },
+      {
+        id: 'tell_him_kind',
+        text: 'He is told she will see the spring.',
+        result:
+          'He believes it, because he is eleven and because she is very good at this. He is out playing on the day it happens, and somebody has to go and find him, and the person who goes is her.',
+        tags: ['communitarian'],
+        effects: { mood: 10, health: -6, crownSanity: -6 },
+      },
+      {
+        id: 'let_her_choose',
+        text: 'She has been doing this longer than you have. She chooses.',
+        result:
+          'She goes out and shuts the door behind her, and nobody in this room ever finds out which one she picked, including you. The boy is all right in the end, more or less, in the way people are.',
+        tags: ['libertarian'],
+        effects: { crownSanity: 10, mood: 4 },
+        bond: 1,
+      },
+    ],
+  },
+
+  {
+    id: 'r4_healer_yes',
+    trigger: {
+      kind: 'all',
+      conds: [
+        { kind: 'flag', flag: 'kind_lie_punished' },
+        { kind: 'since', caseId: 'd5_deathbed', years: 5 },
+      ],
+    },
+    priority: 6,
+    character: 'healer',
+    title: 'The Corridor Voice',
+    question: 'A boy was answered in the corridor, flatly, and his mother had been dead since Tuesday.',
+    scene: [
+      'She paid the estate for a kind word {{ago:d5_deathbed}} and has answered every question about dying with the word yes ever since, in corridors, flatly, to everybody. She is extremely good at it and it costs her something every single time.',
+      'A boy of eleven asked her yesterday whether his mother would get better and got the word yes, in the corridor, flatly. His mother had been dead since Tuesday and nobody had told him. He is outside the door. She is inside it. Neither of them is going to start.',
+    ],
+    choices: [
+      {
+        id: 'she_says_it_herself',
+        text: 'She goes out and says it to him herself, in her own words.',
+        result:
+          'She is out there a long time and comes back in with her face rearranged. It is the first sentence she has said about dying in years that was not the word yes, and the corridor is a slightly different place from that afternoon on.',
+        tags: ['communitarian'],
+        effects: { mood: 8, health: 4, crownSanity: -4 },
+        bond: 1,
+      },
+      {
+        id: 'the_clerk_tells_him',
+        text: 'A clerk tells him, with the form.',
+        result:
+          'The clerk is kind, and has a form, and reads the boy the line the form keeps for it. Everything in that room is done correctly. Two people who watched it go home and say nothing about it at supper.',
+        tags: ['utilitarian'],
+        effects: { crownSanity: 6, mood: -10, culture: -4 },
+      },
+      {
+        id: 'the_rule_is_lifted',
+        text: 'The rule is lifted, for the dying and for the very young.',
+        result:
+          'You say out loud, in front of her, that what you fined her for was not the whole of it, which is as close as this room has come to a lawmaker taking something back. She does not thank you. She starts talking to people again, which is the thanks.',
+        tags: ['egalitarian'],
+        effects: { mood: 10, crownSanity: -8, health: 4 },
+        bond: 2,
+      },
+    ],
+  },
+
+  {
+    id: 'r8_wat_ponies',
+    trigger: {
+      kind: 'all',
+      conds: [
+        { kind: 'flag', flag: 'race_cart' },
+        { kind: 'since', caseId: 'w_race', years: 5 },
+      ],
+    },
+    priority: 6,
+    character: 'runner',
+    title: 'Six Ponies, and Nobody Watching the First Race',
+    question: 'The race you let Wat ride in has quietly eaten the race he was riding in.',
+    scene: [
+      'You let him ride the stretches between the stones {{ago:w_race}}, and he came fourth, and was carried the last stretch home by the three who beat him.',
+      'There are six ponies in the second race now and it has a name of its own and it is the one the square stands in the rain for. The runners of the first race have asked, in writing and without a great deal of dignity, for the second one to be stopped.',
+    ],
+    choices: [
+      {
+        id: 'one_race_again',
+        text: 'One race. Legs and ponies together, and whoever gets there.',
+        result:
+          'It is chaos for two springs and then it settles, and the sheaf is carried home by a pony in the third year and by a girl on her own legs in the fourth. Nobody has worked out how to bet on it, which is the only real complaint.',
+        tags: ['egalitarian'],
+        effects: { mood: 8, economy: 2 },
+        bond: 1,
+      },
+      {
+        id: 'the_sheaf_and_the_crowd',
+        text: 'The first race keeps the sheaf. The second keeps the crowd.',
+        result:
+          'Both of them run, and the one that matters and the one people watch are two different races from then on, which everybody involved says they are perfectly happy with, at length, for years.',
+        tags: ['kantian'],
+        effects: { mood: 4, crownSanity: 4 },
+      },
+      {
+        id: 'stop_the_second',
+        text: 'The second race is stopped.',
+        result:
+          'The first race is run in front of about eleven people the following spring. Wat does not come and watch it. The ponies are still in the field beside the road, and everybody looks at them on the way past.',
+        tags: ['utilitarian'],
+        effects: { mood: -10, crownSanity: 4 },
+        bond: -2,
+      },
+    ],
+  },
+
   {
     id: 'tr_accused',
-    trigger: { kind: 'lawActive', subject: 'crime' },
+    /* The scene quotes "the voice he used about his back, years ago", so the
+       reign has to have heard about his back. It named the granary as well,
+       in seventeen of the twenty nine reigns that reached it with no granary
+       standing; it is the store now, which every place has. */
+    trigger: {
+      kind: 'all',
+      conds: [
+        { kind: 'lawActive', subject: 'crime' },
+        { kind: 'caseShown', caseId: 'v1_idle_hand' },
+      ],
+    },
     priority: 6,
     character: 'tam',
-    accused: { name: 'Tam', charge: 'the granary door, and what went through it' },
+    accused: { name: 'Tam', charge: 'the store door, and what went through it' },
     title: 'The One They Are Sure About',
     question: 'You wrote down what happens to a hand that takes. Now somebody has to say whose hand it was.',
     scene: [
-      'The granary door was open in the night and it is not open now, and there is less in there than the count says. Two people put Tam on that path at that hour. They agree about the hour.',
+      'The store door was open in the night and it is not open now, and there is less in there than the count says. Two people put Tam on that path at that hour. They agree about the hour.',
       'He says he could not sleep and was walking. It is the voice he used about his back, years ago, in front of most of the same faces, and his back was the first thing this place ever decided about him.',
       '{{lean}}',
       'That is all there is. Nobody is going to find any more of it, and everyone is waiting for you to say which way it falls.',
@@ -2602,7 +2887,7 @@ export const CASES: CaseEvent[] = [
     title: 'The Count, Read Again',
     question: 'Nobody is asking you for anything. The Clerk has simply brought the book.',
     scene: [
-      'The Clerk has been back through four winters of the granary book and found the same hand adding the same column wrong, in the same direction, every year, from long before the night the door was open.',
+      'The Clerk has been back through four winters of what went in and out of the store and found the same hand adding the same column wrong, in the same direction, every year, from long before the night the door was open.',
       'The hand belongs to a man who has never been suspected of anything and is not now, because he has been dead since the thaw, and because nobody wants to say the next part out loud.',
       'What was done to Tam under your law was done four years ago, in front of everybody, and it cannot be undone in front of anybody.',
     ],
@@ -2723,7 +3008,16 @@ export const CASES: CaseEvent[] = [
 
   {
     id: 'rr_apprentice',
-    trigger: { kind: 'souls', op: 'gte', value: 30 },
+    /* The Mill-Wright is the man at this bench, so the place has to have met
+       him. It came round five times in a reign in reigns where he had never
+       walked in at all. */
+    trigger: {
+      kind: 'all',
+      conds: [
+        { kind: 'souls', op: 'gte', value: 30 },
+        { kind: 'caseShown', caseId: 'v3_millwright' },
+      ],
+    },
     priority: 14,
     character: 'millwright',
     title: 'The Place at the Bench',
@@ -2768,7 +3062,7 @@ export const CASES: CaseEvent[] = [
     title: 'At the Gate in November',
     question: 'There is a family at the gate with a cart, and it is too late in the year to be travelling.',
     scene: [
-      'Four of them and a cart with a bad wheel. They are going somewhere and they will not say where, and the road they want is shut by weather in a fortnight. They are asking for the winter and offering the work of two pairs of hands.',
+      'Four of them and a cart with a bad wheel. They are going somewhere and they will not say where, and the road they want is shut by weather in two weeks. They are asking for the winter and offering the work of two pairs of hands.',
       'Two pairs of hands are worth having. Four mouths in a hard year are four mouths, and everybody at this gate has counted both.',
     ],
     choices: [
@@ -2823,7 +3117,7 @@ export const CASES: CaseEvent[] = [
         id: 'the_list',
         text: 'The list. Every small broken thing on it, this month.',
         result:
-          'A gate, two roofs, the causeway and the pump, in three weeks, by people who have been walking past all of them since April. Nothing about the place is different and everything about it works.',
+          'A gate, two roofs, the path over the marsh and the pump, in three weeks, by people who have been walking past all of them since April. Nothing about the place is different and everything about it works.',
         tags: ['meritocratic'],
         effects: { economy: -3, health: 3, mood: 1 },
       },

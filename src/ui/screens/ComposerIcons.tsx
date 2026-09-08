@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { ACTIONS, STATS, SUBJECTS } from '../../content/meta';
+import { ACTIONS, PLACE_NAMES, STATS, SUBJECTS } from '../../content/meta';
 import { UI } from '../../content/ui-strings';
-import { getProposal } from '../../engine/registry';
+import { getProposal, getWork } from '../../engine/registry';
 import { threadsOf } from '../../engine/story';
 import { characterMeta } from '../../content/meta';
 import type { ActionId, GameState, StatId, SubjectId } from '../../engine/types';
@@ -42,7 +42,7 @@ export function ComposerIcons({ state, onSeal }: Props) {
       if (total !== 0) arrows.push({ stat: stat.id, up: total > 0 });
     }
   }
-  const threads = option ? threadsOf(option) : [];
+  const threads = option ? threadsOf(option, 3, state) : [];
 
   const chooseSubject = (id: SubjectId) => {
     if (!openSubjects.has(id)) return;
@@ -157,6 +157,14 @@ export function ComposerIcons({ state, onSeal }: Props) {
                       {thread.kind === 'proposal' && (
                         <span className="text-[11px] text-parchment-dim">
                           {UI.story.laterDecree}
+                        </span>
+                      )}
+                      {thread.needs && (
+                        <span className="text-[11px] text-parchment-dim">
+                          {UI.story.whenBuilt.replace(
+                            '{what}',
+                            PLACE_NAMES[thread.needs] ?? getWork(thread.needs)?.name ?? '',
+                          )}
                         </span>
                       )}
                     </li>

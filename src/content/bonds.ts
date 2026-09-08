@@ -59,6 +59,29 @@ export function bondWord(level: BondLevel): BondWord {
 }
 
 /**
+ * What a ruling does to the person it was about, when they were not the one
+ * doing the talking.
+ *
+ * The engine reads the weight of an answer to work out what the person at the
+ * door made of it, which is right for them and says nothing about anybody
+ * else in the room. Taking Marta's field is a good year for the store and a
+ * good day for the Mill-Wright, and the only person it is actually about is
+ * standing in the field.
+ *
+ * Keyed `case:answer`, in rungs, the same scale the register is on.
+ */
+export const CHOICE_BOND_OTHERS: Record<string, Record<string, number>> = {
+  'v3_millwright:marta_keeps': { marta: 1 },
+  'v3_millwright:share_the_stream': { marta: 1 },
+  'v3_millwright:plot_to_the_mill': { marta: -1 },
+  'v3_millwright:a_year_first': { marta: 1 },
+  'v7_beeches:the_strip_owns': { marta: 1 },
+  'v7_beeches:the_child_keeps': { marta: -1 },
+  'v7_beeches:up_first_wins': { marta: -1 },
+  'v7_beeches:split_them': { marta: -1 },
+};
+
+/**
  * The two things a lawmaker can actually do about how somebody feels.
  *
  * A gift is small, cheap and slow: two off the store, one rung, and not again

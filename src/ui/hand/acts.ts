@@ -116,8 +116,6 @@ export const ACTS: Record<string, ActDef> = {
     tool: 'hand',
     steps: [{ item: 'man', to: 'stone', resist: HEAVY }],
   },
-  'v6_road_dead:the_day_for_him': { kind: 'carry', tool: 'hand', steps: [{ item: 'law', to: 'post' }] },
-  'v6_road_dead:no_house_no_burial': { kind: 'turn_away', tool: null, target: 'man' },
   'v6_road_dead:edge_same_day': {
     kind: 'carry',
     tool: 'hand',

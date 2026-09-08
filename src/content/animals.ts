@@ -37,7 +37,7 @@ export const DOGS_KEPT: AnimalKeep = {
  *
  * The other half of the wolf's shape, turned the right way up. The wolf is a
  * cost now and a gift later; the herd is the answer that pays most on the day
- * paying least afterwards. Split between the houses it gives a fortnight of
+ * paying least afterwards. Split between the houses it gives two weeks of
  * goodwill and then nothing at all, which is why it has no entry here: a goat
  * in a yard is a goat in a yard, and there is nothing standing to count.
  *

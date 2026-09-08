@@ -77,7 +77,7 @@ export const CHARACTERS: Record<string, { label: string; emoji: string }> = {
   fool: { label: 'The Fool', emoji: '🃏' },
   crowd: { label: 'The Square', emoji: '🔥' },
   lark: { label: 'Lark', emoji: '🧥' },
-  ferrier: { label: 'The Ferrier', emoji: '🛶' },
+  ferrier: { label: 'The Ferryman', emoji: '🛶' },
   wolf: { label: 'The Wolf', emoji: '🐺' },
   players: { label: 'The Players', emoji: '🎭' },
   singer: { label: 'The Singer', emoji: '🪕' },
@@ -86,6 +86,25 @@ export const CHARACTERS: Record<string, { label: string; emoji: string }> = {
   aunt: { label: 'Nell', emoji: '🛏️' },
   digger: { label: 'The Digger', emoji: '⛏️' },
   odo: { label: 'Odo', emoji: '🐐' },
+};
+
+/**
+ * Who else is in a scene, besides the one doing the talking.
+ *
+ * A scene has one person at the door, and the register, the town, the ages and
+ * the bonds all read that one person off the log. Marta stood in her own field
+ * for the whole of the Mill-Wright's scene and none of the four knew she
+ * existed until she came back eight years later, so a reign that took her plot
+ * moved *his* opinion of you and not hers.
+ *
+ * Only people who are actually named and actually there. This is not a cast
+ * list; it is the second person the ruling lands on.
+ */
+export const ALSO_IN_SCENE: Record<string, string[]> = {
+  /* her plot, her stream, and a stranger doing all of the talking */
+  v3_millwright: ['marta'],
+  /* the strip the ring came up on is hers, and she is standing behind the child */
+  v7_beeches: ['marta'],
 };
 
 export const STATS: { id: StatId; label: string; emoji: string }[] = [
@@ -175,6 +194,9 @@ export const CASE_SPOTS: Record<string, { x: number; y: number }> = {
   x_revolt: { x: 770, y: 424 },
   x_plague: { x: 1052, y: 268 },
   x_ruin: { x: 1014, y: 356 },
+  /* the same two mornings in a hamlet: the shelf, and the long house */
+  x_store_bottom: { x: 1014, y: 356 },
+  x_sick_hut: { x: 546, y: 440 },
   /* the milestone that points at the capital */
   x_abdication: { x: 1206, y: 524 },
   x_flight: { x: 1252, y: 534 },
@@ -217,6 +239,13 @@ export const CASE_SPOTS: Record<string, { x: number; y: number }> = {
   r1_tam_fed: { x: 640, y: 262 },
   r1_tam_cut: { x: 640, y: 262 },
   r2_marta_kept: { x: 1000, y: 452 },
+  /* and the second wave, each one where its own first scene happened: the
+     gate, the long room, and the far field the race runs to */
+  r3_iva_stall: { x: 756, y: 248 },
+  r3_iva_basket: { x: 756, y: 248 },
+  r4_healer_kept: { x: 546, y: 440 },
+  r4_healer_yes: { x: 546, y: 440 },
+  r8_wat_ponies: { x: 966, y: 420 },
   r2_marta_moved: { x: 1000, y: 452 },
   /* the trials, which are heard where a decree is read */
   tr_accused: { x: 709, y: 417 },

@@ -1,9 +1,9 @@
 import {
-  AGES, CASE_DOING, CHOICE_DOING, FOUNDING_HAIR, FOUNDING_HEADS, KIT_DOING, LEAVING_KIT,
-  STATIONS, WINTER_DOING, folkLook,
+  AGES, CASE_DOING, CHOICE_DOING, CHOICE_DOING_OTHERS, FOUNDING_HAIR, FOUNDING_HEADS,
+  KIT_DOING, LEAVING_KIT, STATIONS, WINTER_DOING, folkLook,
 } from '../content/folk';
 import type { Doing, FolkLook } from '../content/folk';
-import { characterMeta } from '../content/meta';
+import { ALSO_IN_SCENE, characterMeta } from '../content/meta';
 import { getCase } from './registry';
 import { rand01 } from './rng';
 import type { GameState, Season } from './types';
@@ -41,14 +41,40 @@ export interface FolkPin {
  */
 const NOT_IN_THE_PICTURE = ['monarch', 'crowd', 'wolf'];
 
+/** One appearance: the scene, the answer, the year, and whether they spoke. */
+interface Appearance {
+  caseId: string;
+  choiceId: string;
+  turn: number;
+  /** False for somebody the scene was about who was not doing the talking. */
+  atDoor: boolean;
+}
+
+/** Everybody a logged scene put in the room, the one at the door first. */
+function inScene(caseId: string): { character: string; atDoor: boolean }[] {
+  const event = getCase(caseId);
+  if (!event) return [];
+  const out = event.character ? [{ character: event.character, atDoor: true }] : [];
+  for (const other of ALSO_IN_SCENE[caseId] ?? []) {
+    if (other === event.character) continue;
+    out.push({ character: other, atDoor: false });
+  }
+  return out;
+}
+
 /** The last scene each person was in, and what they answered to it. */
-function lastScene(s: GameState): Map<string, { caseId: string; choiceId: string; turn: number }> {
-  const out = new Map<string, { caseId: string; choiceId: string; turn: number }>();
+function lastScene(s: GameState): Map<string, Appearance> {
+  const out = new Map<string, Appearance>();
   for (const entry of s.log) {
     if (entry.kind !== 'case') continue;
-    const event = getCase(entry.refId);
-    if (!event?.character) continue;
-    out.set(event.character, { caseId: entry.refId, choiceId: entry.choiceId, turn: entry.turn });
+    for (const { character, atDoor } of inScene(entry.refId)) {
+      out.set(character, {
+        caseId: entry.refId,
+        choiceId: entry.choiceId,
+        turn: entry.turn,
+        atDoor,
+      });
+    }
   }
   return out;
 }
@@ -65,10 +91,13 @@ function lastScene(s: GameState): Map<string, { caseId: string; choiceId: string
 export function doingsNow(s: GameState, season?: Season): Map<string, Doing> {
   const out = new Map<string, Doing>();
   for (const [character, scene] of lastScene(s)) {
-    const settled =
-      CHOICE_DOING[`${scene.caseId}:${scene.choiceId}`] ??
-      CASE_DOING[scene.caseId] ??
-      folkLook(character).doing;
+    const key = `${scene.caseId}:${scene.choiceId}`;
+    /* The scene's own doing belongs to whoever was at the door. The one who
+       was standing in the field goes on doing what they were doing, unless
+       the ruling was the kind that changes a life. */
+    const settled = scene.atDoor
+      ? CHOICE_DOING[key] ?? CASE_DOING[scene.caseId] ?? folkLook(character).doing
+      : CHOICE_DOING_OTHERS[key]?.[character] ?? folkLook(character).doing;
     // Winter moves the work, never the person who has stopped working: the
     // table has no entry for sitting down, so sitting down survives the frost.
     out.set(character, season === 'winter' ? (WINTER_DOING[settled] ?? settled) : settled);
@@ -87,9 +116,9 @@ export function agesNow(s: GameState): Map<string, number> {
   const first = new Map<string, number>();
   for (const entry of s.log) {
     if (entry.kind !== 'case') continue;
-    const event = getCase(entry.refId);
-    if (!event?.character) continue;
-    if (!first.has(event.character)) first.set(event.character, entry.turn);
+    for (const { character } of inScene(entry.refId)) {
+      if (!first.has(character)) first.set(character, entry.turn);
+    }
   }
 
   const doings = doingsNow(s);

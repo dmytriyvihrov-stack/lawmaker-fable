@@ -7,11 +7,13 @@ import { MONARCHS } from '../src/content/monarchs';
 import { CASE_VERDICTS, VERDICT_OBJECTS, VERDICT_VERBS } from '../src/content/verdict-words';
 import { lawGatedChoiceIds } from '../src/engine/verdict';
 import { PROPOSALS } from '../src/content/proposals';
-import { CHARACTERS, CITY_LABELS, MOOD_FACES, moodFace } from '../src/content/meta';
+import { ALSO_IN_SCENE, CHARACTERS, CITY_LABELS, MOOD_FACES, moodFace } from '../src/content/meta';
+import { CHOICE_BOND_OTHERS } from '../src/content/bonds';
 import {
   AGES,
   CASE_DOING,
   CHOICE_DOING,
+  CHOICE_DOING_OTHERS,
   DOING_LINES,
   FOLK,
   STATIONS,
@@ -112,6 +114,11 @@ function echoConditions(): Condition[] {
 
 function templatesIn(text: string): string[] {
   return [...text.matchAll(/\{\{law:([a-z_]+)\}\}/g)].map((m) => m[1]);
+}
+
+/** The people a text says the age of out loud, rather than writing a number. */
+function ageIn(text: string): string[] {
+  return [...text.matchAll(/\{\{age:([a-z0-9_]+)\}\}/g)].map((m) => m[1]);
 }
 
 /** The scenes a text says "you did this to me {{ago:...}}" about. */
@@ -222,6 +229,10 @@ describe('content validator', () => {
       if (cond.kind === 'caseShown') {
         expect(caseIds.has(cond.caseId), cond.caseId).toBe(true);
       }
+      if (cond.kind === 'since') {
+        expect(caseIds.has(cond.caseId), cond.caseId).toBe(true);
+        expect(cond.years, JSON.stringify(cond)).toBeGreaterThan(0);
+      }
       if (cond.kind === 'lawActive' || cond.kind === 'lawEver') {
         expect(
           cond.subject !== undefined || cond.action !== undefined,
@@ -298,6 +309,11 @@ describe('content validator', () => {
       for (const t of texts) {
         for (const law of templatesIn(t)) expect(knownLawIds.has(law), `${c.id}: ${law}`).toBe(true);
         for (const id of agoIn(t)) expect(caseIds.has(id), `${c.id}: ago ${id}`).toBe(true);
+        // a scene that says how old somebody is reads it off the register,
+        // because the same scene is played in year three and in year twenty
+        for (const who of ageIn(t)) {
+          expect(AGES[who], `${c.id}: nobody called ${who} has an age`).toBeGreaterThan(0);
+        }
         expect(t.includes('{{casualty}}'), c.id).toBe(false);
       }
     }
@@ -335,6 +351,91 @@ describe('content validator', () => {
           templatesIn(t).includes(lawId),
         );
         expect(byCondition || byTemplate, `${p.id}: ${lawId} has no echo`).toBe(true);
+      }
+    }
+  });
+
+  /**
+   * A word a law puts on the bench has to do something no plain word on that
+   * bench does.
+   *
+   * The promise of the whole mechanic is that writing a law *changes the
+   * bench*: it makes one of the three plain answers cost something (17b) and
+   * it adds a word of its own. What twenty of them did instead was say a plain
+   * word again in legal language. Under a law that turns strangers away, the
+   * man in the hay could be HIDDEN or he could have BEEN NEVER HERE, with the
+   * same numbers to the point and the same flag, and the only difference was
+   * which line the Codex wrote it on. That is a receipt, not a choice.
+   *
+   * So: same flags, same layers on the town, same kind of extra (souls, a
+   * return, a decree, a step of Iva's, a verdict, somebody thinking better of
+   * you), no board moving in opposite directions, and every board within six
+   * points, and the two are the same answer. Whether one of them is lawful and
+   * the other is a breach does NOT save the pair: that difference is the
+   * crown's bill, and a bill is not a dilemma.
+   *
+   * A granted word earns its place with a flag none of the plain words sets, a
+   * layer on the town, a person coming back, souls, a decree, a bond, a board
+   * none of them touches, or a sign none of them has.
+   */
+  it('35. no word a law puts on a bench is a plain word said again in law', () => {
+    /* The ones that stay, and why. Each of these is the law's own sentence
+       read back to the person standing there, which is the point of the law
+       having been written, and each one lands somewhere the numbers cannot
+       show. */
+    const ALLOWED: Record<string, string> = {
+      'c1_lark:two_coats':
+        'the law says twice, and his mother sews the second one out of a blanket',
+      'c1_lark:spare_the_child':
+        'the rope refused for a child, under a decree that names the rope: one of the two benches a reign can end on',
+      'c2_toll:pays_it_twice': 'the law says twice, and the second half is read out at the fountain',
+      'c2_toll:hangs_for_coins':
+        'the sentence the crossroads decree actually names, carried out where the box is',
+    };
+
+    const near = (a: number, b: number) => Math.abs(a - b) <= 6;
+    const marks = (ch: CaseChoice) =>
+      [
+        [...(ch.setFlags ?? [])].sort().join(','),
+        [...(ch.cityFlagsOn ?? [])].sort().join(','),
+        [...(ch.cityFlagsOff ?? [])].sort().join(','),
+        ch.souls ?? 0,
+        ch.schedule?.caseId ?? '',
+        ch.enactLaw ? 'decree' : '',
+        ch.setIva ?? '',
+        ch.verdict ?? '',
+        ch.bond ?? 0,
+      ].join('|');
+
+    const twin = (a: CaseChoice, b: CaseChoice): boolean => {
+      if (marks(a) !== marks(b)) return false;
+      for (const stat of STAT_IDS) {
+        const x = a.effects[stat] ?? 0;
+        const y = b.effects[stat] ?? 0;
+        if (x * y < 0) return false;
+        if (!near(x, y)) return false;
+      }
+      return true;
+    };
+
+    for (const c of CASES) {
+      const grammar = CASE_VERDICTS[c.id];
+      if (!grammar) continue;
+      const byId = new Map(c.choices.map((ch) => [ch.id, ch]));
+      for (const granted of grammar.rulings) {
+        if (granted.needsLaw === undefined) continue;
+        const g = byId.get(granted.choiceId);
+        if (!g) continue;
+        for (const plain of grammar.rulings) {
+          if (plain.needsLaw !== undefined || plain.choiceId === granted.choiceId) continue;
+          const p = byId.get(plain.choiceId);
+          if (!p || !twin(g, p)) continue;
+          const key = `${c.id}:${granted.choiceId}`;
+          expect(
+            ALLOWED[key],
+            `${key} is ${c.id}:${plain.choiceId} in legal language, and nothing else`,
+          ).toBeTruthy();
+        }
       }
     }
   });
@@ -496,7 +597,14 @@ describe('content validator', () => {
       walkConditions(c.trigger, conds);
       const flags = conds.filter((k) => k.kind === 'flag');
       expect(flags.length, `${c.id} waits on no memory`).toBeGreaterThanOrEqual(1);
-      expect(conds.some((k) => k.kind === 'turn' && k.op === 'gte'), `${c.id} comes back at once`).toBe(true);
+      /* It waits. Either on a plain year, which is honest for a scene that
+         always happens in the first three springs, or on years since the scene
+         it is about, which is the only clock that works for one that can
+         arrive in year eleven or in year twenty five. */
+      const waits = conds.some(
+        (k) => (k.kind === 'turn' && k.op === 'gte') || k.kind === 'since',
+      );
+      expect(waits, `${c.id} comes back at once`).toBe(true);
       const remembered = c.scene.join(' ');
       const named = agoIn(remembered);
       expect(named.length, `${c.id} never says when it was`).toBeGreaterThanOrEqual(1);
@@ -944,6 +1052,53 @@ describe('the people in the picture', () => {
         `${caseId} has no answer called ${choiceId}`,
       ).toBe(true);
       expect(DOINGS, `${key} does something nobody can draw`).toContain(doing);
+    }
+  });
+
+  /**
+   * The second person in a scene is a real person, in a real scene, and the
+   * ruling that lands on them is a real answer. Everything that reads the log
+   * to work out who you have met now reads this table as well, so a name
+   * misspelled here is somebody who never gets remembered.
+   */
+  it('knows who else was standing in the room', () => {
+    for (const [caseId, others] of Object.entries(ALSO_IN_SCENE)) {
+      const event = CASES.find((c) => c.id === caseId);
+      expect(event, `${caseId} is not a scene`).toBeDefined();
+      for (const who of others) {
+        expect(FOLK[who], `no look for ${who}`).toBeDefined();
+        expect(AGES[who], `no age for ${who}`).toBeDefined();
+        expect(CHARACTERS[who], `nothing to call ${who}`).toBeDefined();
+        expect(who, `${caseId} lists the one at the door as well`).not.toBe(event!.character);
+        // and they are actually named in it, or nobody could tell they were there
+        const said = [event!.title, event!.question ?? '', ...event!.scene].join(' ');
+        expect(said, `${caseId} never names ${who}`).toContain(CHARACTERS[who].label);
+      }
+    }
+    for (const [key, doings] of Object.entries(CHOICE_DOING_OTHERS)) {
+      const [caseId, choiceId] = key.split(':');
+      const event = CASES.find((c) => c.id === caseId)!;
+      expect(event, `${caseId} is not a scene`).toBeDefined();
+      expect(event.choices.some((c) => c.id === choiceId), `${key} is not an answer`).toBe(true);
+      for (const [who, doing] of Object.entries(doings)) {
+        expect(ALSO_IN_SCENE[caseId] ?? [], `${key}: ${who} is not in that room`).toContain(who);
+        expect(DOINGS, `${key} does something nobody can draw`).toContain(doing);
+      }
+    }
+    for (const [key, moves] of Object.entries(CHOICE_BOND_OTHERS)) {
+      const [caseId, choiceId] = key.split(':');
+      const event = CASES.find((c) => c.id === caseId)!;
+      expect(event, `${caseId} is not a scene`).toBeDefined();
+      expect(event.choices.some((c) => c.id === choiceId), `${key} is not an answer`).toBe(true);
+      for (const [who, delta] of Object.entries(moves)) {
+        /* Only the ones who were not doing the talking. What the person at the
+           door made of a ruling is read off the answer's own weight, and
+           naming them here as well moves them twice. */
+        expect(ALSO_IN_SCENE[caseId] ?? [], `${key}: ${who} spoke for themselves`).toContain(who);
+        expect(Math.abs(delta), `${key} moves ${who} more than a reign should`)
+          .toBeLessThanOrEqual(2);
+        expect(delta, `${key} moves ${who} not at all`).not.toBe(0);
+      }
     }
   });
 

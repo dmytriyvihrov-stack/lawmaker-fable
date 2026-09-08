@@ -862,25 +862,6 @@ function roadScene(): Scene {
           F.chaplain.setPose('mgWatch');
         },
       },
-      the_day_for_him: {
-        arm() {
-          P.law.show(true);
-        },
-        step() {
-          P.law.show(false);
-          pinned.setAttribute('opacity', '1');
-          F.f1.setPose('mgWatch').setFlip(false);
-          F.f2.setPose('mgWatch');
-          later(700, () => {
-            P.tag.show(false);
-            P.man.moveTo(940, 452, 1200, () => {
-              buried();
-              everybodyStands();
-            });
-          });
-        },
-      },
-      no_house_no_burial: {},
       edge_same_day: {
         grab(i) {
           if (i === 0) P.tag.show(false);

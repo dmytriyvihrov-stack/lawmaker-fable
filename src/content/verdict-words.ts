@@ -88,15 +88,12 @@ export const VERDICT_VERBS: WordTile[] = [
   { id: 'stays_with_marta', text: 'STAYS WITH MARTA' },
   { id: 'is_split', text: 'IS SPLIT, MILL AND FIELD' },
   { id: 'goes_to_the_mill', text: 'GOES TO THE MILL' },
-  { id: 'is_his_share', text: 'IS HIS SHARE, BY THE LAW' },
   { id: 'waits_a_year', text: 'WAITS A YEAR' },
   { id: 'gets_a_mill_anyway', text: 'GETS A MILL ANYWAY' },
   { id: 'is_hidden', text: 'IS HIDDEN' },
   { id: 'is_warned', text: 'IS WARNED, AND LEFT TO CHOOSE' },
   { id: 'is_handed_over', text: 'IS HANDED OVER' },
-  { id: 'keeps_his_roof', text: 'KEEPS HIS ROOF' },
   { id: 'owes_a_year', text: 'OWES A YEAR FIRST' },
-  { id: 'was_never_here', text: 'WAS NEVER HERE' },
   { id: 'gets_a_square', text: 'GETS A SQUARE FIRST' },
   { id: 'is_counted', text: 'IS COUNTED AND SENT' },
   { id: 'gets_a_wall', text: 'GETS A WALL FIRST' },
@@ -165,7 +162,7 @@ export const VERDICT_VERBS: WordTile[] = [
   { id: 'stands', text: 'STANDS' },
   { id: 'is_shamed', text: 'IS NAILED UP BESIDE THE OLD ONE' },
   { id: 'is_capped', text: 'IS FIXED WHERE IT WAS' },
-  { id: 'is_tithed', text: 'IS TITHED TO THE CROWN' },
+  { id: 'is_tithed', text: 'PAYS THE CROWN ITS TENTH' },
   { id: 'is_set_by_the_guild', text: 'IS SET BY THE GUILD' },
 
   // the lever man
@@ -181,20 +178,17 @@ export const VERDICT_VERBS: WordTile[] = [
   { id: 'is_convicted', text: 'IS CONVICTED' },
   { id: 'is_honoured_and_fined', text: 'IS HONOURED AND FINED' },
   { id: 'counted_right', text: 'COUNTED CORRECTLY' },
-  { id: 'is_forgiven_the_rule', text: 'IS FORGIVEN THE RULE' },
   { id: 'skipped_the_cup', text: 'SKIPPED THE CUP' },
 
   // the healer
   { id: 'is_thanked', text: 'IS THANKED' },
   { id: 'pays_the_estate', text: 'PAYS THE ESTATE' },
   { id: 'is_replaced_by_a_clerk', text: 'IS REPLACED BY A CLERK' },
-  { id: 'is_forgiven_the_word', text: 'IS FORGIVEN THE WORD' },
   { id: 'was_within_the_law', text: 'WAS WITHIN THE LAW' },
   { id: 'is_sold_a_licence', text: 'IS SOLD A LICENCE' },
 
   // the widow
   { id: 'the_hunter_is_asked', text: 'IS BELIEVED, AND THE HUNTER IS ASKED THE SAME' },
-  { id: 'is_asked_again', text: 'IS ASKED AGAIN, WITHOUT THE CELLAR' },
   { id: 'is_licensed_backdated', text: 'IS LICENSED, DATED SUNDAY' },
 
   // the winter
@@ -216,15 +210,18 @@ export const VERDICT_VERBS: WordTile[] = [
   { id: 'is_carried_upstairs', text: 'IS CARRIED UPSTAIRS BY HAND' },
   { id: 'is_read_in_the_square', text: 'IS READ ALOUD IN THE SQUARE' },
   { id: 'is_forgiven_a_year', text: 'IS FORGIVEN A YEAR OF DUES' },
+  // and the same two mornings in a place of nine
+  { id: 'is_filled_on_credit', text: "IS FILLED ON THE NEXT VALLEY'S CREDIT" },
+  { id: 'is_the_seed_bag_opened', text: 'IS THE SEED BAG, OPENED' },
+  { id: 'is_put_under_one_roof', text: 'IS PUT UNDER ONE ROOF' },
+  { id: 'is_nursed_where_it_lies', text: 'IS NURSED WHERE IT LIES' },
   { id: 'is_shut', text: 'IS SHUT' },
 
   // the fair purse, and the ballad
   { id: 'goes_to_the_players', text: 'GOES TO THE PLAYERS' },
   { id: 'goes_to_the_worm_eater', text: 'GOES TO THE WORM EATER' },
-  { id: 'is_split_one_stage', text: 'IS SPLIT, AND THERE IS ONE STAGE' },
+  { id: 'stays_shut', text: 'STAYS SHUT THIS YEAR' },
   { id: 'goes_where_the_hall_says', text: 'GOES WHERE THE HALL SAYS WORTH IS' },
-  { id: 'follows_the_count', text: 'FOLLOWS THE COUNT OF THE CROWD' },
-  { id: 'pays_the_players_anyway', text: 'PAYS THE PLAYERS ANYWAY' },
   { id: 'is_paid_and_thanked', text: 'IS PAID, AND THANKED FROM THE STEPS' },
   { id: 'sings_on', text: 'SINGS IT, AND NOBODY SAYS A WORD' },
   { id: 'sings_outside', text: 'SINGS IT OUTSIDE THE WALL, OR NOT AT ALL' },
@@ -249,12 +246,9 @@ export const VERDICT_VERBS: WordTile[] = [
   { id: 'goes_under_stones', text: 'GOES UNDER STONES, ABOVE THE FROST' },
   { id: 'is_dug_by_all_of_us', text: 'IS DUG BY ALL OF US, TWO DAYS' },
   { id: 'is_each_house_its_own', text: 'IS EACH HOUSE ITS OWN HOLE' },
-  { id: 'goes_to_the_edge_today', text: 'GOES TO THE EDGE, TODAY' },
   { id: 'is_ours_now', text: 'IS OURS NOW, AND GOES IN HERE' },
   { id: 'waits_for_an_answer', text: 'WAITS WHILE THE NAME GOES DOWN THE ROAD' },
   { id: 'goes_past_the_boundary', text: 'GOES OVER THE BOUNDARY' },
-  { id: 'stops_the_work_the_same', text: 'STOPS THE WORK, THE SAME AS ONE OF OURS' },
-  { id: 'has_no_house_here', text: 'HAS NO HOUSE HERE, AND SO NO ONE TO CARRY HIM' },
   { id: 'goes_to_the_edge_the_same_day', text: 'GOES TO THE EDGE, THE SAME DAY, LIKE ANY OF US' },
 
   // the ring in the beeches, and the long night
@@ -267,7 +261,6 @@ export const VERDICT_VERBS: WordTile[] = [
   { id: 'is_shut_every_september', text: 'IS SHUT EVERY SEPTEMBER' },
   { id: 'is_taught_every_autumn', text: 'IS TAUGHT, EVERY AUTUMN, TO EVERYBODY' },
   { id: 'is_their_own_lookout', text: 'IS THEIR OWN LOOKOUT' },
-  { id: 'is_first_come_and_wrong_is_wrong', text: 'IS FIRST COME, AND WRONG IS WRONG' },
   { id: 'passes_the_healer_first', text: 'PASSES THE HEALER BEFORE ANY POT' },
   { id: 'settles_it_for_the_cart', text: 'SETTLES IT: IT ALL GOES ON THE CART' },
 
@@ -310,6 +303,23 @@ export const VERDICT_VERBS: WordTile[] = [
   { id: 'names_her_price', text: 'NAMES HER PRICE, AND IT IS PAID' },
   { id: 'loses_it_as_before', text: 'LOSES IT, AS BEFORE' },
   { id: 'is_paid_by_the_mill', text: 'IS PAID BY THE MILL' },
+  // and the ones who come back next: the gate, the corridor, and a race that
+  // quietly ate the race it was part of
+  { id: 'gets_a_corner', text: 'GETS A CORNER OF THE STALL' },
+  { id: 'is_ivas_to_settle', text: "IS IVA'S TO SETTLE" },
+  { id: 'pays_at_nine', text: 'PAYS THE TOLL, AT NINE' },
+  { id: 'is_lifted', text: 'IS LIFTED' },
+  { id: 'stands_still', text: 'STANDS' },
+  { id: 'covers_the_child_only', text: 'COVERS THE CHILD, AND NOT HER MOTHER' },
+  { id: 'is_told_true', text: 'IS TOLD, TRUE' },
+  { id: 'is_told_kind', text: 'IS TOLD, KIND' },
+  { id: 'is_hers_to_answer', text: 'IS HERS TO ANSWER' },
+  { id: 'says_it_herself', text: 'SAYS IT HERSELF, IN HER OWN WORDS' },
+  { id: 'is_left_to_the_clerk', text: 'IS LEFT TO THE CLERK AND THE FORM' },
+  { id: 'is_lifted_for_the_young', text: 'IS LIFTED, FOR THE DYING AND THE YOUNG' },
+  { id: 'is_one_race_again', text: 'IS ONE RACE AGAIN' },
+  { id: 'keeps_the_sheaf', text: 'KEEPS THE CORN, AND THE OTHER KEEPS THE CROWD' },
+  { id: 'is_stopped', text: 'IS STOPPED' },
 ];
 
 /** No tone words. A word on this bench either changes the ruling or is not here. */
@@ -488,7 +498,6 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
           },
         ],
       },
-      { verb: 'is_his_share', choiceId: 'a_roof_and_a_plot', needsLaw: 'strangers_welcomed' },
       { verb: 'waits_a_year', choiceId: 'a_year_first', needsLaw: 'strangers_earned' },
       { verb: 'gets_a_mill_anyway', choiceId: 'stays_anyway', needsLaw: 'strangers_turned_away' },
     ],
@@ -549,9 +558,7 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
           },
         ],
       },
-      { verb: 'keeps_his_roof', choiceId: 'he_has_a_roof', needsLaw: 'strangers_welcomed' },
       { verb: 'owes_a_year', choiceId: 'his_year_is_owed', needsLaw: 'strangers_earned' },
-      { verb: 'was_never_here', choiceId: 'never_here', needsLaw: 'strangers_turned_away' },
     ],
   },
 
@@ -656,10 +663,9 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
         against: [
           {
             law: 'trade_free',
-            how: 'breaks',
-            beneficiary: 'the bread queue',
+            how: 'bends',
             result:
-              'The crown in the flour market with a purse, setting a price, under a law that says trade pays nothing and answers to nobody. Every trader on the row learns what free means.',
+              'The crown in the flour market with a purse of its own, under a law that says trade is free and answers to nobody. It is buying, which the law allows anybody to do, at a price nobody else could have paid.',
           },
           {
             law: 'trade_taxed',
@@ -799,7 +805,7 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
           {
             law: 'lives_by_count',
             how: 'breaks',
-            beneficiary: 'Odo',
+            beneficiary: 'Hob',
             result:
               'He saved five for one and is convicted for it, under a law that says the greater number is saved. The five pay his fine at the door and read the gate on the way out.',
           },
@@ -824,7 +830,6 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
         ],
       },
       { verb: 'counted_right', choiceId: 'counted_right', needsLaw: 'lives_by_count' },
-      { verb: 'is_forgiven_the_rule', choiceId: 'forgiven', needsLaw: 'lives_untouchable' },
       { verb: 'skipped_the_cup', choiceId: 'skipped_the_cup', needsLaw: 'lives_by_lot' },
     ],
   },
@@ -891,7 +896,6 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
           },
         ],
       },
-      { verb: 'is_forgiven_the_word', choiceId: 'forgiven_word', needsLaw: 'truth_mandatory' },
       { verb: 'was_within_the_law', choiceId: 'within_the_law', needsLaw: 'truth_kind_lies' },
       { verb: 'is_sold_a_licence', choiceId: 'sold_a_licence', needsLaw: 'truth_licensed' },
     ],
@@ -934,7 +938,6 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
         ],
       },
       { verb: 'the_hunter_is_asked', choiceId: 'ask_the_hunter' },
-      { verb: 'is_asked_again', choiceId: 'asked_again', needsLaw: 'truth_mandatory' },
       { verb: 'is_licensed_backdated', choiceId: 'backdated', needsLaw: 'truth_licensed' },
     ],
   },
@@ -978,6 +981,26 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
     rulings: [
       { verb: 'borrows_from_guild', choiceId: 'borrow' },
       { verb: 'sells_the_plate', choiceId: 'sell_the_crown' },
+    ],
+  },
+
+  x_sick_hut: {
+    subject: 'THE SICKNESS',
+    verbs: ['is_put_under_one_roof', 'is_nursed_where_it_lies'],
+    objects: [],
+    rulings: [
+      { verb: 'is_put_under_one_roof', choiceId: 'one_roof_for_the_sick' },
+      { verb: 'is_nursed_where_it_lies', choiceId: 'carry_the_water' },
+    ],
+  },
+
+  x_store_bottom: {
+    subject: 'THE STORE',
+    verbs: ['is_filled_on_credit', 'is_the_seed_bag_opened'],
+    objects: [],
+    rulings: [
+      { verb: 'is_filled_on_credit', choiceId: 'borrow_seed' },
+      { verb: 'is_the_seed_bag_opened', choiceId: 'eat_the_seed' },
     ],
   },
 
@@ -1143,7 +1166,7 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
   },
 
   c2_toll: {
-    subject: 'THE FERRIER',
+    subject: 'THE FERRYMAN',
     verbs: ['box_forgotten', 'pays_the_short', 'loses_the_ferry'],
     objects: [],
     rulings: [
@@ -1217,7 +1240,7 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
 
   s1_worms: {
     subject: 'THE FAIR PURSE',
-    verbs: ['goes_to_the_players', 'goes_to_the_worm_eater', 'is_split_one_stage'],
+    verbs: ['goes_to_the_players', 'goes_to_the_worm_eater', 'stays_shut'],
     objects: [],
     rulings: [
       {
@@ -1230,6 +1253,13 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
             beneficiary: 'the players',
             result:
               'The purse to eleven against two hundred, under a law that pays by the crowd. The worm man counts his crowd aloud and reads the law to it.',
+          },
+          {
+            law: 'song_by_hat',
+            how: 'breaks',
+            beneficiary: 'the players',
+            result:
+              'The purse the law shut, opened for the quieter of the two hats. The worm man says nothing at all, and passes his own hat round the square one more time, slowly, looking at you.',
           },
         ],
       },
@@ -1254,32 +1284,25 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
         ],
       },
       {
-        verb: 'is_split_one_stage',
-        choiceId: 'split',
+        verb: 'stays_shut',
+        choiceId: 'purse_shut',
         against: [
           {
             law: 'song_worthy',
             how: 'bends',
             result:
-              'Half a purse to something the hall never judged, under a law that says the hall judges. The hall judges the interval, later, in writing.',
+              'The hall never sat, and the law says the hall decides what is worth paying for. It cannot decide about a purse that did not open, and says so, in writing, on the door.',
           },
           {
             law: 'song_by_crowd',
-            how: 'bends',
+            how: 'breaks',
+            beneficiary: 'the fair purse',
             result:
-              'Half to a crowd of eleven, under a law that counts crowds. The arithmetic is done in the square, and it does not come out to half.',
-          },
-          {
-            law: 'song_by_hat',
-            how: 'bends',
-            result:
-              'A shut purse, half opened, under a law that says the hat or nothing. Half of nothing is argued about for a year.',
+              'Two hundred people counted at one end of the square and nothing paid to anybody, under a law that pays a song by the size of its crowd. The count is done anyway, by the worm man, out loud.',
           },
         ],
       },
       { verb: 'goes_where_the_hall_says', choiceId: 'hall_judges', needsLaw: 'song_worthy' },
-      { verb: 'follows_the_count', choiceId: 'counted', needsLaw: 'song_by_crowd' },
-      { verb: 'pays_the_players_anyway', choiceId: 'purse_anyway', needsLaw: 'song_by_hat' },
     ],
   },
 
@@ -1501,7 +1524,6 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
       },
       { verb: 'is_dug_by_all_of_us', choiceId: 'all_of_us_dig', needsLaw: 'dead_with_a_day' },
       { verb: 'is_each_house_its_own', choiceId: 'their_own_houses', needsLaw: 'dead_by_the_house' },
-      { verb: 'goes_to_the_edge_today', choiceId: 'the_edge_today', needsLaw: 'dead_at_the_edge' },
     ],
   },
 
@@ -1567,8 +1589,6 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
           },
         ],
       },
-      { verb: 'stops_the_work_the_same', choiceId: 'the_day_for_him', needsLaw: 'dead_with_a_day' },
-      { verb: 'has_no_house_here', choiceId: 'no_house_no_burial', needsLaw: 'dead_by_the_house' },
       {
         verb: 'goes_to_the_edge_the_same_day',
         choiceId: 'edge_same_day',
@@ -1713,11 +1733,6 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
         ],
       },
       {
-        verb: 'is_first_come_and_wrong_is_wrong',
-        choiceId: 'finders_take_the_risk',
-        needsLaw: 'mushrooms_finders',
-      },
-      {
         verb: 'passes_the_healer_first',
         choiceId: 'the_scale_decides',
         needsLaw: 'mushrooms_weighed',
@@ -1826,6 +1841,61 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
       { verb: 'is_half_given', choiceId: 'the_half_she_offers' },
       { verb: 'is_taken_kept_or_not', choiceId: 'kept_once_not_forever' },
       { verb: 'is_left_and_other_ground_paid_for', choiceId: 'other_ground' },
+    ],
+  },
+
+  r3_iva_stall: {
+    subject: 'THE GIRL WITH THE BUNS',
+    verbs: ['gets_a_corner', 'is_ivas_to_settle', 'pays_at_nine'],
+    objects: [],
+    rulings: [
+      { verb: 'gets_a_corner', choiceId: 'a_corner_of_her_own' },
+      { verb: 'is_ivas_to_settle', choiceId: 'ivas_to_settle' },
+      { verb: 'pays_at_nine', choiceId: 'the_toll_at_nine' },
+    ],
+  },
+
+  r3_iva_basket: {
+    subject: 'THE BAR',
+    verbs: ['is_lifted', 'stands_still', 'covers_the_child_only'],
+    objects: [],
+    rulings: [
+      { verb: 'is_lifted', choiceId: 'lift_the_bar' },
+      { verb: 'stands_still', choiceId: 'the_bar_stands' },
+      { verb: 'covers_the_child_only', choiceId: 'the_child_only' },
+    ],
+  },
+
+  r4_healer_kept: {
+    subject: 'THE BOY',
+    verbs: ['is_told_true', 'is_told_kind', 'is_hers_to_answer'],
+    objects: [],
+    rulings: [
+      { verb: 'is_told_true', choiceId: 'tell_him_true' },
+      { verb: 'is_told_kind', choiceId: 'tell_him_kind' },
+      { verb: 'is_hers_to_answer', choiceId: 'let_her_choose' },
+    ],
+  },
+
+  r4_healer_yes: {
+    subject: 'THE HEALER',
+    verbs: ['says_it_herself', 'is_left_to_the_clerk', 'is_lifted_for_the_young'],
+    objects: [],
+    rulings: [
+      { verb: 'says_it_herself', choiceId: 'she_says_it_herself' },
+      { verb: 'is_left_to_the_clerk', choiceId: 'the_clerk_tells_him' },
+      { verb: 'is_lifted_for_the_young', choiceId: 'the_rule_is_lifted' },
+    ],
+  },
+
+  r8_wat_ponies: {
+    subject: 'THE SPRING RACE',
+    verbs: ['is_one_race_again', 'keeps_the_sheaf', 'is_stopped'],
+    objects: [],
+    rulings: [
+      { verb: 'is_one_race_again', choiceId: 'one_race_again' },
+      { verb: 'keeps_the_sheaf', choiceId: 'the_sheaf_and_the_crowd' },
+      { verb: 'is_stopped', choiceId: 'stop_the_second' },
     ],
   },
 

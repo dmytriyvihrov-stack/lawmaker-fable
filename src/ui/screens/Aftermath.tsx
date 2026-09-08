@@ -1,4 +1,4 @@
-import { characterMeta, CITY_LABELS } from '../../content/meta';
+import { characterMeta, CITY_LABELS, PLACE_NAMES } from '../../content/meta';
 import { UI } from '../../content/ui-strings';
 import { getCase, getProposal, getWork } from '../../engine/registry';
 import { causeLawOf, lastTownChanges, threadsOf } from '../../engine/story';
@@ -69,7 +69,7 @@ export function Aftermath({ state, dev = false, onContinue }: Props) {
           (o) => `${o.subject}_${o.action}` === last.choiceId,
         )
       : undefined;
-  const opened = sealed ? threadsOf(sealed) : [];
+  const opened = sealed ? threadsOf(sealed, 3, state) : [];
 
   /**
    * What a mark left on this screen is a mark on.
@@ -208,6 +208,14 @@ export function Aftermath({ state, dev = false, onContinue }: Props) {
               <li key={thread.id} className={`flex items-center gap-2 ${TYPE.note}`}>
                 <span aria-hidden>{characterMeta(thread.who).emoji}</span>
                 <span className="text-parchment/90">{thread.title}</span>
+                {thread.needs && (
+                  <span className="text-parchment-dim">
+                    {UI.story.whenBuilt.replace(
+                      '{what}',
+                      PLACE_NAMES[thread.needs] ?? getWork(thread.needs)?.name ?? '',
+                    )}
+                  </span>
+                )}
               </li>
             ))}
           </ul>

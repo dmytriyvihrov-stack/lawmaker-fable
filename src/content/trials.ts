@@ -18,8 +18,8 @@ import type { Verdict } from '../engine/types';
 export const TRIAL_LEANS: Record<string, Record<Verdict, string>> = {
   tr_accused: {
     guilty:
-      'His slate at the alehouse was cleared on the Friday, all of it at once. He says the money came from his sister down the valley. His sister has been dead two years and half the room knows it.',
+      'His slate at the tavern was cleared on the Friday, all of it at once. He says the money came from his sister down the valley. His sister has been dead two years and half the room knows it.',
     innocent:
-      'His slate at the alehouse is longer than it was on the Friday, and he has been drinking on it in the open. The woman who keeps the slate says so without being asked, twice, in the voice of somebody who is owed.',
+      'His slate at the tavern is longer than it was on the Friday, and he has been drinking on it in the open. The woman who keeps the slate says so without being asked, twice, in the voice of somebody who is owed.',
   },
 };

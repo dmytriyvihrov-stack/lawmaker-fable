@@ -123,14 +123,19 @@ describe('golden playthroughs', () => {
 
   /**
    * A scene about a building cannot arrive in a place that has not built one.
-   * The well runs dry only where a well was lined, nobody is thrown off a
-   * bridge before there is a bridge, and no cart comes off the ore road until
-   * somebody has cut into the crag.
+   * Nobody is thrown off a bridge before there is a bridge, no cart comes off
+   * the ore road until somebody has cut into the crag, and nothing burns in a
+   * granary that was never raised.
+   *
+   * The well is not in this list and used to be. The place has a well in the
+   * first sentence of the game: the year of work *lines* it, and an unlined
+   * well is exactly the one that gives four buckets and then mud. Waiting on
+   * the work put the dry week in year fifteen or in no year at all, in 24
+   * reigns of 36. The mill is not in it either, because a mill wants mouths
+   * as much as it wants broken ground, and its trigger now says so.
    */
   it('a case about a building waits for the building', () => {
     const gated: [string, string][] = [
-      ['case:v2_well', 'well'],
-      ['case:v3_millwright', 'fields'],
       ['case:d4_bridge', 'bridge'],
       ['case:d3_cart', 'mine'],
       ['case:d2_ashes', 'granary'],

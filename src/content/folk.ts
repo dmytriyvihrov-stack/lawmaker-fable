@@ -271,6 +271,8 @@ export const CASE_DOING: Record<string, Doing> = {
   w_corner: 'resting',
   x_plague: 'tending',
   x_ruin: 'counting',
+  x_store_bottom: 'counting',
+  x_sick_hut: 'tending',
   c1_lark: 'resting',
   c2_toll: 'ferrying',
   s1_worms: 'playing',
@@ -294,6 +296,11 @@ export const CASE_DOING: Record<string, Doing> = {
   r1_tam_fed: 'mending',
   r1_tam_cut: 'limping',
   r2_marta_kept: 'tending',
+  r3_iva_stall: 'trading',
+  r3_iva_basket: 'foraging',
+  r4_healer_kept: 'tending',
+  r4_healer_yes: 'tending',
+  r8_wat_ponies: 'running',
   r2_marta_moved: 'resting',
 };
 
@@ -341,8 +348,26 @@ export const CHOICE_DOING: Record<string, Doing> = {
   'r2_marta_moved:take_it_as_before': 'gone',
   'r2_marta_moved:her_price': 'tending',
   'r2_marta_moved:the_mill_pays': 'tending',
+  // the bar lifted puts her back at the gate; the bar standing keeps her in
+  // the wood, with a daughter who now has a stall of her own
+  'r3_iva_basket:lift_the_bar': 'trading',
+  'r3_iva_basket:the_bar_stands': 'foraging',
+  'r3_iva_basket:the_child_only': 'foraging',
 };
 
+
+/**
+ * And the same, for the person a scene was about who was not at the door.
+ *
+ * Keyed the same way and read the same way, except that the fallback is what
+ * they were already doing rather than what the scene left its speaker doing:
+ * the Mill-Wright's scene leaves the Mill-Wright building, and it must not
+ * leave Marta building.
+ */
+export const CHOICE_DOING_OTHERS: Record<string, Record<string, Doing>> = {
+  // her plot went to the mill, and she ate the flour, and did not plant again
+  'v3_millwright:plot_to_the_mill': { marta: 'resting' },
+};
 
 /**
  * What the cold does to a day's work.

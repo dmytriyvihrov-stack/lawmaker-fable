@@ -61,7 +61,7 @@ export const FLAG_LINES: Partial<Record<StoryFlag, string>> = {
   girl_spared: 'A nine year old was the first person your court let alone. It set the tone more than anything you sealed.',
   miller_capped: 'The miller still trades, at a price that was set for him, and mentions it to strangers.',
   miller_stands: 'The miller was allowed his price and has since bought the building next door.',
-  lever_praised: 'Nobody works the old siding now. The lever is oiled every month, by rota, by men who will not discuss it.',
+  lever_praised: 'Nobody works the old side track now. The lever is oiled every month, by rota, by men who will not discuss it.',
   lever_condemned: 'The eleven levers have eleven men on them who know that whatever happens, it will not be their doing.',
   pusher_freed: 'The cooper was let go and has not been on the market bridge since.',
   pusher_condemned: 'The cooper paid, and the five he saved paid the fine between them, quietly, at the door.',

@@ -1,7 +1,15 @@
 import { evaluate } from './conditions';
-import { characterMeta } from '../content/meta';
+import { ALSO_IN_SCENE, characterMeta } from '../content/meta';
 import { allCases, allProposals, getCase, getProposal } from './registry';
-import type { CaseEvent, CityFlag, Condition, GameState, LawId, LawOption } from './types';
+import type {
+  CaseEvent,
+  CityFlag,
+  Condition,
+  GameState,
+  LawId,
+  LawOption,
+  WorkId,
+} from './types';
 
 /**
  * The chain the player should see: which law brought this scene, and what the
@@ -147,6 +155,54 @@ export interface Thread {
   title: string;
   /** Who turns up: a case character or the advisor who brings the next decree. */
   who: string;
+  /**
+   * A building this scene waits on that the place has not put up. The table
+   * promised "The Cart on the Ore Road" to a town with no cut in the crag and
+   * "The Weight on the Bridge" to a town with no bridge, because the promise
+   * read the law out of the trigger and nothing else out of it.
+   */
+  needs?: WorkId;
+}
+
+/**
+ * Whether this scene could still arrive under the law being written, and what
+ * it is waiting for.
+ *
+ * `null` means it cannot: it waits on a scene that has not happened or a flag
+ * nobody set, and neither of those is something sealing this law changes. A
+ * `WorkId` means it waits on a building. `undefined` means nothing is in the
+ * way but the year.
+ *
+ * A count of souls, a year, a stage or a board is not in the way of anything:
+ * those arrive on their own, and dropping a thread for one of them would be
+ * the table under-promising as badly as it used to over-promise.
+ */
+function waitingOn(
+  event: CaseEvent,
+  s: GameState,
+  option: LawOption,
+): { reachable: boolean; needs?: WorkId } {
+  if (event.trigger === null) return { reachable: true };
+  const conds =
+    event.trigger.kind === 'all' ? event.trigger.conds : [event.trigger];
+  let needs: WorkId | undefined;
+  for (const cond of conds) {
+    if (cond.kind === 'lawActive' || cond.kind === 'lawEver') {
+      const isThisOne =
+        (cond.subject === undefined || cond.subject === option.subject) &&
+        (cond.action === undefined || cond.action === option.action);
+      if (!isThisOne && !evaluate(cond, s)) return { reachable: false };
+      continue;
+    }
+    if (cond.kind === 'built' && !evaluate(cond, s)) {
+      needs = needs ?? cond.work;
+      continue;
+    }
+    if ((cond.kind === 'caseShown' || cond.kind === 'flag') && !evaluate(cond, s)) {
+      return { reachable: false };
+    }
+  }
+  return { reachable: true, ...(needs ? { needs } : {}) };
 }
 
 /**
@@ -154,7 +210,7 @@ export interface Thread {
  * Read straight off the triggers, so the promise on the drafting table is the
  * same rule the scheduler uses later.
  */
-export function threadsOf(option: LawOption, limit = 3): Thread[] {
+export function threadsOf(option: LawOption, limit = 3, s?: GameState): Thread[] {
   const matches = (cond: LawCondition): boolean =>
     (cond.subject === undefined || cond.subject === option.subject) &&
     (cond.action === undefined || cond.action === option.action);
@@ -165,11 +221,14 @@ export function threadsOf(option: LawOption, limit = 3): Thread[] {
     const conds: LawCondition[] = [];
     lawConditions(event.trigger, conds);
     if (conds.some(matches)) {
+      const gate = s ? waitingOn(event, s, option) : { reachable: true };
+      if (!gate.reachable) continue;
       out.push({
         kind: 'case',
         id: event.id,
         title: event.title,
         who: event.character ?? 'monarch',
+        ...(gate.needs ? { needs: gate.needs } : {}),
       });
     }
   }
@@ -217,18 +276,23 @@ export function metCharacters(s: GameState): MetCharacter[] {
   for (const entry of s.log) {
     if (entry.kind !== 'case') continue;
     const event = getCase(entry.refId);
-    // the monarch is not a stranger, and the square is not one person
     if (!event || !event.character) continue;
-    if (event.character === 'monarch' || event.character === 'crowd') continue;
     const choice = event.choices.find((c) => c.id === entry.choiceId);
     if (!choice) continue;
-    const meta = characterMeta(event.character);
-    let met = byCharacter.get(event.character);
-    if (!met) {
-      met = { character: event.character, label: meta.label, emoji: meta.emoji, entries: [] };
-      byCharacter.set(event.character, met);
+    /* Whoever spoke, and whoever the ruling was actually about. Marta stood in
+       her own field through the whole of the Mill-Wright's scene. */
+    const present = [event.character, ...(ALSO_IN_SCENE[event.id] ?? [])];
+    for (const character of present) {
+      // the monarch is not a stranger, and the square is not one person
+      if (character === 'monarch' || character === 'crowd') continue;
+      const meta = characterMeta(character);
+      let met = byCharacter.get(character);
+      if (!met) {
+        met = { character, label: meta.label, emoji: meta.emoji, entries: [] };
+        byCharacter.set(character, met);
+      }
+      met.entries.push({ turn: entry.turn, title: event.title, decision: choice.text });
     }
-    met.entries.push({ turn: entry.turn, title: event.title, decision: choice.text });
   }
   // whoever first came to the door leads the book
   return [...byCharacter.values()].sort((a, b) => a.entries[0].turn - b.entries[0].turn);

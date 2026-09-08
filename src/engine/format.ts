@@ -1,5 +1,7 @@
+import { AGES } from '../content/folk';
 import { TRIAL_LEANS } from '../content/trials';
 import { UI } from '../content/ui-strings';
+import { agesNow } from './folk';
 import { truthOf } from './verdict';
 ﻿import type { ActionId, GameState, LawId, SubjectId } from './types';
 
@@ -147,6 +149,22 @@ export function agoWords(years: number | null): string {
 }
 
 /**
+ * How old somebody is this year.
+ *
+ * A scene that says a number out loud ("nine years old") is written once and
+ * read in year three or in year twenty five, and the register has known the
+ * answer since the year they walked in. On the very first meeting the log has
+ * no entry yet, because the scene is drawn before it is answered, so the age
+ * they walked in at is the answer that morning.
+ */
+export function ageOf(s: GameState, character: string): number | null {
+  const now = agesNow(s).get(character);
+  if (now !== undefined && now > 0) return now;
+  const born = AGES[character];
+  return born === undefined || born === 0 ? null : born;
+}
+
+/**
  * Options for the one template that has a second reading.
  *
  * `spoken` is the law that is on the screen already, in full, a line above the
@@ -166,6 +184,10 @@ export function renderTemplate(text: string, s: GameState, opts: TemplateOptions
       opts.spoken === id ? (at === 0 ? 'It' : 'it') : formatLaw(s, id as LawId),
     )
     .replace(/\{\{ago:([a-z0-9_]+)\}\}/g, (_m, id: string) => agoWords(yearsSince(s, id)))
+    .replace(/\{\{age:([a-z0-9_]+)\}\}/g, (_m, id: string) => {
+      const years = ageOf(s, id);
+      return years === null ? UI.ago.numbers[0] : String(years);
+    })
     .replace(/\{\{casualty\}\}/g, () => casualtyName(s))
     .replace(/\{\{lean\}\}/g, () => leaningDetail(s));
 }

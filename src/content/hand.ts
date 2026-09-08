@@ -38,8 +38,6 @@ export const HAND_INSTRUCTIONS: Record<string, string> = {
   'v6_road_dead:ours_now': 'Carry him in, to the edge.',
   'v6_road_dead:send_word': 'Give the rider the name from his coat.',
   'v6_road_dead:past_the_boundary': 'Carry him past the marker.',
-  'v6_road_dead:the_day_for_him': 'Pin the law to the post.',
-  'v6_road_dead:no_house_no_burial': 'Walk away.',
   'v6_road_dead:edge_same_day': 'Him to the edge. His coat to the pile.',
 };
 

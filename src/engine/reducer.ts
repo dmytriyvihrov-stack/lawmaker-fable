@@ -1,4 +1,4 @@
-import { BOND_UI } from '../content/bonds';
+import { BOND_UI, CHOICE_BOND_OTHERS } from '../content/bonds';
 import {
   bondFromChoice,
   giftBlock,
@@ -516,6 +516,13 @@ export function chooseCase(
   // 5b. and what the person standing there now thinks of the person who said
   // it. A ruling is a policy to the place and a morning to them.
   if (isPerson(ev.character)) nudgeBond(draft, ev.character, bondFromChoice(choice));
+  /* And whoever the ruling was actually about, when that is somebody else.
+     The engine reads the weight of an answer to work out what the person at
+     the door made of it, which says nothing at all about the woman standing
+     in the field it was her field. */
+  for (const [who, delta] of Object.entries(CHOICE_BOND_OTHERS[`${ev.id}:${choice.id}`] ?? {})) {
+    nudgeBond(draft, who, delta);
+  }
 
   // 6. a delayed consequence
   const schedule = (caseId: string, inTurns: number): void => {

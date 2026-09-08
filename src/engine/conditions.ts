@@ -46,6 +46,19 @@ export function evaluate(cond: Condition, s: GameState): boolean {
     case 'caseShown':
       return s.shownCases.includes(cond.caseId);
 
+    /* Off the log rather than out of the save, the same way the register and
+       `{{ago:}}` read it, so nothing new is stored and a loaded reign answers
+       the same. A scene that never happened is not "long ago", it is never. */
+    case 'since': {
+      for (let i = s.log.length - 1; i >= 0; i--) {
+        const entry = s.log[i];
+        if (entry.kind === 'case' && entry.refId === cond.caseId) {
+          return s.turn - entry.turn >= cond.years;
+        }
+      }
+      return false;
+    }
+
     case 'turn':
       return cond.op === 'lte' ? s.turn <= cond.value : s.turn >= cond.value;
 

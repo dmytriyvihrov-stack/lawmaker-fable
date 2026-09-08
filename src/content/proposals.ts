@@ -336,7 +336,7 @@ export const PROPOSALS: Proposal[] = [
       line: "Draw for it. I have done the counting before and the counting is the part that stays with you.",
     },
     problem: [
-      'Eleven men in this town stand next to levers on the ore road, and a runaway cart goes wherever the lever sends it.',
+      'Every loaded cart in this town comes down one hill, and where a brake fails there is a man at a lever who decides which way it goes.',
       'They are not asking what is right. They are asking what happens to them afterwards.',
     ],
     options: [

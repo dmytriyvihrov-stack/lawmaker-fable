@@ -332,7 +332,7 @@ export const UI = {
     pickPrompt: 'Pick the subject, then what it says. That is the whole law.',
     pickPromptMany: 'Pick the subject, then what it says. The subject you pick is this year’s law.',
     locked: 'Not on the table today.',
-    pickSubjectFirst: 'Pick the subject first, and the predicates follow.',
+    pickSubjectFirst: 'Pick the subject first, and what it can say follows.',
     seal: 'SEAL IT',
     effectsLabel: 'What moves',
     reopenLine: 'The law is opened again. The place remembers the first one.',
@@ -565,6 +565,8 @@ export const UI = {
     growthRate: '{n}% a year',
     watchNote: 'It reads differently once somebody here carries a pike.',
     opened: 'This law has opened',
+    /** A scene this law opens that is waiting on a building. */
+    whenBuilt: 'once {what} stands',
     laterDecree: 'a later decree',
   },
 

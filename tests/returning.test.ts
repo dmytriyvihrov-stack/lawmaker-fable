@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { AGES } from '../src/content/folk';
+import { bondLevel } from '../src/engine/bonds';
+import { agesNow, doingsNow } from '../src/engine/folk';
 import { agoWords, renderTemplate, yearsSince } from '../src/engine/format';
 import { chooseCase, newGame } from '../src/engine/reducer';
 import { getCase } from '../src/engine/registry';
+import { evaluate } from '../src/engine/conditions';
 import { pickEvent } from '../src/engine/scheduler';
+import { metCharacters } from '../src/engine/story';
 import type { GameState, StoryFlag } from '../src/engine/types';
 
 /**
@@ -95,6 +100,123 @@ describe('Tam, and the fence, four autumns on', () => {
     // and the fence comes back once: a shown return is not eligible again
     const again = pickEvent({ ...asked, turn: 8, current: null }, { lawAllowed: false });
     expect(again?.kind === 'case' ? again.id : null).not.toBe('r1_tam_cut');
+  });
+});
+
+/**
+ * The scene about Marta's plot is brought by the man who wants it, so for four
+ * versions the register learned about the Mill-Wright and never about her: a
+ * reign that took her field moved his opinion of you upward, because the
+ * answer was good for the store, and hers not at all. She came into the book
+ * eight years later as a stranger with a grievance.
+ */
+/**
+ * The five who come back next, and the clock they come back on.
+ *
+ * Tam and Marta wait on a plain year of the reign because the scenes they are
+ * about happen in the second or third spring of every reign. None of these do:
+ * the girl with the pies arrives anywhere between year eleven and year twenty
+ * five, so these wait on years since their own first scene instead.
+ */
+describe('the second wave', () => {
+  const WAVE: [string, string, string, number][] = [
+    ['d1_pies', 'reward', 'r3_iva_stall', 6],
+    ['d1_pies', 'barred', 'r3_iva_basket', 6],
+    ['d5_deathbed', 'thank_her', 'r4_healer_kept', 5],
+    ['d5_deathbed', 'pays', 'r4_healer_yes', 5],
+    ['w_race', 'rides', 'r8_wat_ponies', 5],
+  ];
+
+  /** A reign that answered the first scene in year `at`, and is now in `now`. */
+  function reign(firstCase: string, choiceId: string, at: number, now: number): GameState {
+    const s = newGame(11);
+    s.turn = at;
+    s.current = { kind: 'case', id: firstCase };
+    const after = chooseCase(s, firstCase, choiceId);
+    return { ...after, turn: now, current: null, phase: 'case' };
+  }
+
+  it('waits the years out from its own first scene, not from the first spring', () => {
+    for (const [firstCase, choiceId, back, years] of WAVE) {
+      const trigger = getCase(back)!.trigger!;
+      // late in a long reign, and the scene it is about happened last year
+      const tooSoon = reign(firstCase, choiceId, 20, 20 + years - 1);
+      expect(evaluate(trigger, tooSoon), `${back} came back early`).toBe(false);
+      const due = reign(firstCase, choiceId, 20, 20 + years);
+      expect(evaluate(trigger, due), `${back} never comes back`).toBe(true);
+      // and a reign that never met them never hears from them
+      const nobody = { ...newGame(11), turn: 30 };
+      expect(evaluate(trigger, nobody), `${back} came to a stranger`).toBe(false);
+    }
+  });
+
+  it('comes back the way you left them, and only that way', () => {
+    for (const [firstCase, choiceId, back, years] of WAVE) {
+      const due = reign(firstCase, choiceId, 20, 20 + years);
+      for (const [, otherChoice, otherBack] of WAVE) {
+        if (otherBack === back || otherChoice === choiceId) continue;
+        const trigger = getCase(otherBack)!.trigger!;
+        if (getCase(otherBack)!.character !== getCase(back)!.character) continue;
+        expect(evaluate(trigger, due), `${otherBack} arrived instead of ${back}`).toBe(false);
+      }
+    }
+  });
+
+  it('says what you did, and how old they are, with nothing left over', () => {
+    for (const [firstCase, choiceId, back, years] of WAVE) {
+      const due = reign(firstCase, choiceId, 20, 20 + years);
+      const scene = getCase(back)!.scene.map((p) => renderTemplate(p, due)).join(' ');
+      expect(scene, `${back} leaves a template on the screen`).not.toContain('{{');
+      expect(scene, `${back} never says when it was`).toContain('years ago');
+    }
+  });
+
+  it('is keen, never urgent: it takes a slot and never a decree', () => {
+    for (const [, , back] of WAVE) {
+      const event = getCase(back)!;
+      expect(event.priority, `${back} can be crowded out for ever`).toBeLessThanOrEqual(6);
+      expect(event.priority, `${back} would push a decree back a year`).toBeGreaterThan(5);
+    }
+  });
+});
+
+describe('the woman the scene was about', () => {
+  function afterMill(choiceId: string): GameState {
+    const base = newGame(3);
+    base.turn = 4;
+    base.current = { kind: 'case', id: 'v3_millwright' };
+    return chooseCase(base, 'v3_millwright', choiceId);
+  }
+
+  it('puts her in the register the year it happened, not eight years later', () => {
+    const taken = afterMill('plot_to_the_mill');
+    const met = metCharacters(taken).map((m) => m.character);
+    expect(met).toContain('marta');
+    expect(met).toContain('millwright');
+    const marta = metCharacters(taken).find((m) => m.character === 'marta')!;
+    expect(marta.entries[0].turn).toBe(4);
+    expect(marta.entries[0].title).toBe('The Mill-Wright');
+  });
+
+  it('knows how old she is from that year on', () => {
+    const taken = afterMill('plot_to_the_mill');
+    expect(agesNow(taken).get('marta')).toBe(AGES.marta);
+    expect(agesNow({ ...taken, turn: taken.turn + 6 }).get('marta')).toBe(AGES.marta + 6);
+  });
+
+  it('moves her opinion of you, and not only his', () => {
+    const taken = afterMill('plot_to_the_mill');
+    expect(bondLevel(taken, 'marta')).toBe(-1);
+    expect(bondLevel(taken, 'millwright')).toBe(1);
+
+    const kept = afterMill('marta_keeps');
+    expect(bondLevel(kept, 'marta')).toBe(1);
+  });
+
+  it('leaves her doing what the ruling left her doing, not what he is doing', () => {
+    const taken = afterMill('plot_to_the_mill');
+    expect(doingsNow(taken).get('marta')).toBe('resting');
+    expect(doingsNow(taken).get('millwright')).toBe('building');
   });
 });
 

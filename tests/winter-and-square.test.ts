@@ -172,11 +172,28 @@ describe('the brother', () => {
 describe('the idle hand', () => {
   it('cutting a man off in a place of six is felt by the square', () => {
     const tam = CASES.find((c) => c.id === 'v1_idle_hand')!;
-    for (const id of ['no_work_no_bread', 'cut_his_share', 'his_own_field']) {
+    for (const id of ['no_work_no_bread', 'cut_his_share']) {
       const choice = tam.choices.find((c) => c.id === id)!;
       expect(choice.effects.mood, id).toBeLessThan(0);
     }
     // and the kind answers are not punished for being kind
     expect(tam.choices.find((c) => c.id === 'feed_him')!.effects.mood).toBeUndefined();
+  });
+
+  /**
+   * The answer the law about owning gives is not a third way of saying "he is
+   * cut off". It used to be: same flag as "he eats when he digs", four points
+   * apart on every board, and nothing on the card to tell them apart. His
+   * field is let to the four and he lives on the rent, which is a settlement
+   * the place is quietly relieved by, and the square reads it that way.
+   */
+  it('renting his field out is not the same answer as cutting him off', () => {
+    const tam = CASES.find((c) => c.id === 'v1_idle_hand')!;
+    const rent = tam.choices.find((c) => c.id === 'his_own_field')!;
+    const cut = tam.choices.find((c) => c.id === 'no_work_no_bread')!;
+    expect(rent.effects.mood!).toBeGreaterThan(0);
+    expect(cut.effects.mood!).toBeLessThan(0);
+    // he is still off the common share, and the fence still comes back to him
+    expect(rent.setFlags).toContain('tam_cut');
   });
 });
