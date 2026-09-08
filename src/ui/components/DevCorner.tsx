@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { STATS } from '../../content/meta';
 import { UI } from '../../content/ui-strings';
 import { CONFIG } from '../../engine/config';
+import type { DialId } from '../../engine/dev';
 import { movePoints } from '../../engine/format';
 import { keepsWatch, lawWeight, nextTech, yearlyChange } from '../../engine/simulation';
-import type { Effects, GameState, StatId } from '../../engine/types';
+import type { Effects, GameState, Stage, StatId } from '../../engine/types';
 import { buildId } from '../motion';
+import { DevDials } from './DevDials';
 
 const signed = movePoints;
 
@@ -62,18 +65,31 @@ export function DevToggle({ on, onToggle }: { on: boolean; onToggle: () => void 
  * fresh reign, which is the thing a playtester wanted most and had to do by
  * hand in the console, because the preview pane eats `window.confirm` and the
  * player's own "Begin a reign" silently did nothing over an existing save.
+ *
+ * `dials` drops the third switch's panel out from under the strip (see
+ * `DevDials`): the same six facts, with a hand on them, and the three stages
+ * to be standing in instead. It is a panel rather than another row because
+ * the strip is read at a glance and a row of buttons is not read at all.
  */
 export function DevBar({
   state,
   editText,
   onEditText,
   onWipe,
+  onTurn,
+  onOpenBoard,
+  onBeginAt,
 }: {
   state: GameState;
   editText: boolean;
   onEditText: () => void;
   onWipe: () => void;
+  onTurn: (dial: DialId, delta: number) => void;
+  onOpenBoard: (board: StatId) => void;
+  /** Absent on a bench that has no reign to leave. See `DevDials`. */
+  onBeginAt?: (chapter: Stage, samePlace: boolean) => void;
 }) {
+  const [dials, setDials] = useState(false);
   const next = nextTech(state);
   const facts: [string, string][] = [
     [UI.dev.weight, `x${lawWeight(state)}`],
@@ -85,32 +101,54 @@ export function DevBar({
   ];
 
   return (
-    <div data-dev-chrome className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-sm border border-seal/40 bg-seal/5 px-2 py-1">
-      {facts.map(([label, value]) => (
-        <span key={label} className="text-[10px] lowercase tracking-wide text-parchment-dim">
-          {label}: <span className="tabular-nums text-seal">{value}</span>
-        </span>
-      ))}
+    <div data-dev-chrome className="relative">
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-sm border border-seal/40 bg-seal/5 px-2 py-1">
+        {facts.map(([label, value]) => (
+          <span key={label} className="text-[10px] lowercase tracking-wide text-parchment-dim">
+            {label}: <span className="tabular-nums text-seal">{value}</span>
+          </span>
+        ))}
 
-      <span className="ml-auto flex items-center gap-2">
-        <label
-          title={UI.dev.editTextOn}
-          className={`flex cursor-pointer items-center gap-1 text-[10px] lowercase tracking-wide ${
-            editText ? 'text-seal' : 'text-parchment-dim'
-          }`}
-        >
-          <input type="checkbox" checked={editText} onChange={onEditText} />
-          {UI.dev.editText}
-        </label>
-        <button
-          type="button"
-          onClick={onWipe}
-          title={UI.dev.wipeHint}
-          className="rounded-sm border border-seal/50 px-1.5 py-0.5 text-[10px] lowercase tracking-wide text-parchment-dim hover:text-seal"
-        >
-          {UI.dev.wipe}
-        </button>
-      </span>
+        <span className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setDials((v) => !v)}
+            aria-pressed={dials}
+            title={UI.dev.dialsHint}
+            className={`rounded-sm border px-1.5 py-0.5 text-[10px] lowercase tracking-wide ${
+              dials ? 'border-seal text-seal' : 'border-seal/50 text-parchment-dim hover:text-seal'
+            }`}
+          >
+            {UI.dev.dials}
+          </button>
+          <label
+            title={UI.dev.editTextOn}
+            className={`flex cursor-pointer items-center gap-1 text-[10px] lowercase tracking-wide ${
+              editText ? 'text-seal' : 'text-parchment-dim'
+            }`}
+          >
+            <input type="checkbox" checked={editText} onChange={onEditText} />
+            {UI.dev.editText}
+          </label>
+          <button
+            type="button"
+            onClick={onWipe}
+            title={UI.dev.wipeHint}
+            className="rounded-sm border border-seal/50 px-1.5 py-0.5 text-[10px] lowercase tracking-wide text-parchment-dim hover:text-seal"
+          >
+            {UI.dev.wipe}
+          </button>
+        </span>
+      </div>
+
+      {dials && (
+        <DevDials
+          state={state}
+          onTurn={onTurn}
+          onOpenBoard={onOpenBoard}
+          onBeginAt={onBeginAt}
+        />
+      )}
     </div>
   );
 }

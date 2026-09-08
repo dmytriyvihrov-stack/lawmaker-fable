@@ -17,6 +17,7 @@ import {
   takeMoment,
 } from '../engine/reducer';
 import { beginAt } from '../engine/chapters';
+import { turnDial, type DialId } from '../engine/dev';
 import type { WorldAction } from '../engine/world';
 import { freePlots, needsPlacement } from '../engine/plots';
 import { getMoment, momentsNow } from '../engine/moments';
@@ -109,6 +110,7 @@ type Action =
   | { type: 'moment'; id: string }
   | { type: 'world'; action: WorldAction; target: string }
   | { type: 'begin'; chapter: Stage; seed: number }
+  | { type: 'dial'; dial: DialId; delta: number }
   | { type: 'advance' }
   | { type: 'reset' };
 
@@ -143,6 +145,8 @@ function appReducer(game: GameState | null, action: Action): GameState | null {
       return nameTown(game, action.name);
     case 'openBoard':
       return openBoard(game, action.board);
+    case 'dial':
+      return turnDial(game, action.dial, action.delta);
     case 'reopen':
       return reopenLaw(game, action.proposalId);
     case 'advance':
@@ -580,6 +584,56 @@ export function App() {
     dispatch(action);
   }, [journey.snapshot.errands.length]);
   useEffect(() => { deferredYear.current = null; }, [game?.seed]);
+
+  /**
+   * A reign is being replaced by another one, and none of the last one is news.
+   *
+   * The four things above that only speak up when something *changes* keep
+   * what they last saw in a ref, and a ref does not know a reign ended. They
+   * reset themselves when there is no reign at all, which is the path through
+   * the title screen and the only path there used to be. A dev jump goes from
+   * one reign straight into another without passing through nothing, so the
+   * forgetting is done here instead: otherwise landing a fixture in year 20
+   * announces a long winter that the reign you left was two years short of.
+   */
+  const forgetTheLastReign = useCallback(() => {
+    knownTechs.current = 0;
+    treeWasOpen.current = undefined;
+    knownEpithet.current = undefined;
+    epithetIntroduced.current = false;
+    namedOn.current = -99;
+    knownWinter.current = undefined;
+    deferredYear.current = null;
+    openOnly(null);
+    setIdle(null);
+    setWorked(null);
+    setNamed(null);
+    setWinterAhead(null);
+    setTreeOpened(false);
+    setSaid(null);
+    setPreview(null);
+    setPicked(null);
+    setPlot(null);
+    setPlotHover(null);
+  }, [openOnly]);
+
+  /**
+   * The same place, ten years on, without playing the ten years.
+   *
+   * `beginAt` is the fixture the title screen and `?chapter=` have always
+   * opened; what is new is opening one from inside a running reign, which is
+   * where the question is actually asked. Keeping the seed keeps the valley,
+   * the crown and the name, so what changes on the screen is the stage and
+   * nothing else - which is the only way to see whether the town reads.
+   *
+   * The walk is stopped by hand because the journey resets on the seed, and
+   * the whole point of this is a jump that does not change it.
+   */
+  const jumpTo = (chapter: Stage, samePlace: boolean) => {
+    forgetTheLastReign();
+    journey.skip();
+    dispatch({ type: 'begin', chapter, seed: samePlace && game ? game.seed : freshSeed() });
+  };
   /* The card is up for it: the years are not drifting and nobody is knocking. */
   const handReady = handCaseId !== null && game?.phase === 'case' && idle === null && journeyReady;
   const hand = useHand({
@@ -933,9 +987,22 @@ export function App() {
       {/* Not while the founding is open. Every dial in the header and the whole
           crown panel stood behind the glass on the one screen where there is
           nothing yet to count and nobody has been asked anything: noise on the
-          first thing a player ever reads. The valley itself stays. */}
-      {game.phase !== 'intro' && (
-      <div className="relative z-30 shrink-0">
+          first thing a player ever reads. The valley itself stays.
+
+          The dev strip is the exception, because it is not something a player
+          is ever shown: it came away with the header, which left the one
+          screen with the most prose on it - the brief, four answers and the
+          footnote, all of them wired for a pencil - as the one screen where
+          "edit any text" could not be switched on. The dials go the same way
+          for the same reason: a jump to the hamlet lands here, and a panel you
+          cannot get back to is not a way out. */}
+      {(game.phase !== 'intro' || dev) && (
+      /* The founding is a `fixed inset-0` sheet at z-40, so on that one screen
+         the strip has to be lifted over it or it is drawn and unclickable,
+         which is worse than not being drawn. Nothing else is on the screen
+         then: the moment cards that share this level all come later. */
+      <div className={`relative shrink-0 ${game.phase === 'intro' ? 'z-50' : 'z-30'}`}>
+        {game.phase !== 'intro' && (<>
         <TopBar
           state={game}
           season={season}
@@ -966,12 +1033,16 @@ export function App() {
             {!hand.zoomed && <RulerDoing control={journey} className="ruler-doing-strip" />}
           </div>
         </div>
+        </>)}
         {dev && (
           <div className="mx-auto w-full max-w-3xl px-4">
             <DevBar
               state={game}
               editText={editText}
               onEditText={() => setEditText((v) => !v)}
+              onTurn={(dial, delta) => dispatch({ type: 'dial', dial, delta })}
+              onOpenBoard={(board) => dispatch({ type: 'openBoard', board })}
+              onBeginAt={jumpTo}
               /* No `window.confirm` here on purpose: the preview pane eats it
                  and answers false, which is exactly how "Begin a reign" over
                  an existing save came to do nothing at all. The switch is
@@ -983,6 +1054,7 @@ export function App() {
                    not come back as an empty object a moment later. */
                 clearAllDevEdits();
                 forgetEverything();
+                forgetTheLastReign();
                 setSaved(null);
                 setStaleSave(false);
                 setEditText(false);
