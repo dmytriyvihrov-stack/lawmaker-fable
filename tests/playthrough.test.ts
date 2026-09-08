@@ -97,11 +97,20 @@ function play(seed: number, pick: Pick, declared: PhilTag): Run {
 describe('golden playthroughs', () => {
   const open = play(5, 'first', 'kantian');
   const closed = play(101, 'last', 'libertarian');
-  // reseeded when the crag became a town work and a hamlet's fair stopped
-  // buying culture: on 101 the middling player held a fair every year for
-  // fourteen years and was walked out on anyway, which is the new numbers
-  // working rather than failing
-  const middling = play(100, 'middle', 'utilitarian');
+  /* Reseeded twice. First when the crag became a town work and a hamlet's
+     fair stopped buying culture: on 101 the middling player held a fair every
+     year for fourteen years and was walked out on anyway, which is the new
+     numbers working rather than failing.
+     
+     And again when resting left the first year. This driver picks the middle
+     of the list, so a shelf of three became a shelf of two and the middle of
+     it moved from the woodcutter's cabin to the house: on 100 that one
+     substitution is a reign of six years, because a player who never builds
+     anything that earns has one early engine and it is the cabin. Nothing
+     else moved with it - `best` 34.6 to 34.8 years, `human` 32.4 to 35.7,
+     `first` and `last` identical to the digit - so what this seed was showing
+     was an index, not a difficulty. */
+  const middling = play(121, 'middle', 'utilitarian');
 
   it('both reigns reach a portrait inside the turn cap', () => {
     for (const run of [open, closed]) {
@@ -150,8 +159,14 @@ describe('golden playthroughs', () => {
     }
   });
 
-  it('an open hamlet becomes a town and writes every law', () => {
-    expect(open.state.stage).toBe('town');
+  /* Not "is a town": is chartered. A hamlet that opens its fence grows past a
+     hundred and gets three more boards, and a reign long enough can grow past
+     three hundred as well and get a crown, which every new game has been
+     allowed to do since `kingdom_open` stopped being the dev door's alone.
+     This one now does: seed 5 taking the first answer to everything ends at
+     326 souls in year 40. What the test is about is the charter. */
+  it('an open hamlet becomes a chartered place and writes every law', () => {
+    expect(open.state.stage).not.toBe('village');
     expect(open.events).toContain('case:t_town');
     expect(open.laws.length).toBeGreaterThanOrEqual(5);
     for (const id of [
@@ -256,7 +271,9 @@ describe('golden playthroughs', () => {
       const portrait = computePortrait(run.state);
       expect(portrait.headline.length).toBeGreaterThan(0);
       expect(portrait.soulsLine).toContain(String(run.state.population));
-      expect(portrait.shownStats.length).toBe(run.state.stage === 'town' ? 6 : 4);
+      /* Six boards for anywhere that has been chartered, three of which a
+         hamlet does not have and a kingdom keeps. */
+      expect(portrait.shownStats.length).toBe(run.state.stage === 'village' ? 4 : 6);
       for (const value of Object.values(run.state.stats)) {
         expect(value).toBeGreaterThanOrEqual(CONFIG.statMin);
         expect(value).toBeLessThanOrEqual(CONFIG.statMax);

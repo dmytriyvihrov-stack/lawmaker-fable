@@ -14,6 +14,7 @@ import {
   reopenLaw,
   sendAbroad,
   takeLover,
+  visitLover,
   takeMoment,
 } from '../engine/reducer';
 import { beginAt } from '../engine/chapters';
@@ -21,7 +22,7 @@ import { turnDial, type DialId } from '../engine/dev';
 import type { WorldAction } from '../engine/world';
 import { freePlots, needsPlacement } from '../engine/plots';
 import { getMoment, momentsNow } from '../engine/moments';
-import { clearSave, forgetEverything, readSave, saveGame } from '../engine/save';
+import { clearSave, forgetEverything, hasSeenNote, hasSeenWiring, markNoteSeen, markWiringSeen, readSave, saveGame } from '../engine/save';
 import type {
   GameState,
   PhilTag,
@@ -52,9 +53,13 @@ import { setTextEditMode } from './dev/textEditMode';
 import { FolkGallery } from './dev/FolkGallery';
 import { previewReign } from './previewReign';
 import { Interlude } from './components/Interlude';
+import { LoverMoment } from './components/LoverMoment';
 import { MonarchPanel } from './components/MonarchPanel';
 
 import { Popup } from './components/Popup';
+import { Primer } from './components/Primer';
+import { DoorNote } from './components/DoorNote';
+import { SmallThingNote } from './components/SmallThingNote';
 import { StandingLaws } from './components/StandingLaws';
 import { TopBar } from './components/TopBar';
 import { SealMoment } from './components/SealMoment';
@@ -106,6 +111,7 @@ type Action =
   | { type: 'build'; id: WorkId; plot?: PlotId }
   | { type: 'gift'; character: string }
   | { type: 'lover'; character: string }
+  | { type: 'visit'; character: string }
   | { type: 'nameTown'; name: string }
   | { type: 'openBoard'; board: StatId }
   | { type: 'reopen'; proposalId: string }
@@ -143,6 +149,8 @@ function appReducer(game: GameState | null, action: Action): GameState | null {
       return giveGift(game, action.character);
     case 'lover':
       return takeLover(game, action.character);
+    case 'visit':
+      return visitLover(game, action.character);
     case 'nameTown':
       return nameTown(game, action.name);
     case 'openBoard':
@@ -213,6 +221,8 @@ export function App() {
   const [game, dispatch] = useReducer(appReducer, null);
   const [codexOpen, setCodexOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
+  /** Who is up at the house right now, when the one you took has been asked. */
+  const [visiting, setVisiting] = useState<string | null>(null);
   const [worldOpen, setWorldOpen] = useState(false);
   const [treeOpen, setTreeOpen] = useState(false);
   /** The books, and the rule that there is only ever one of them open. */
@@ -281,6 +291,22 @@ export function App() {
   const namedOn = useRef(-99);
   /** The year of a long winter that somebody has come to warn you about. */
   const [winterAhead, setWinterAhead] = useState<number | null>(null);
+  /* What the four boards are, said once before anything is spent. A fact
+     about this browser rather than about this reign, so it uses the same note
+     the four-dial lecture used when it lived on the seal. */
+  const [primer, setPrimer] = useState(() => !hasSeenWiring());
+  /* The two later notes, on the same terms as the primer: a fact about this
+     browser and not about this reign, so a second reign is not a second
+     lecture, and `clear history` puts both of them back.
+
+     Neither can be said on the primer's own screen. One is about the person at
+     the door and the other about a thing out on the meadow, and on the day the
+     primer is read there is neither, so each waits for the thing it explains
+     to be on the screen in front of the reader. */
+  const [doorNote, setDoorNote] = useState(() => !hasSeenNote('door'));
+  const [smallNote] = useState(() => !hasSeenNote('smallThing'));
+  /** The year the small thing was named in. The year turning takes it down. */
+  const [smallNoteTurn, setSmallNoteTurn] = useState<number | null>(null);
   /** The year the workshops opened, waiting to be mentioned to you once. */
   const [treeOpened, setTreeOpened] = useState(false);
   /** undefined until the first state is seen, so a loaded save is not news. */
@@ -428,7 +454,16 @@ export function App() {
        when there is no distance there is no drift. */
     const from = seasonOf(before.phase, before.turn);
     const to = seasonOf(game.phase, game.turn, sceneSeasonOf(game));
-    const span = (WHEEL.indexOf(to) - WHEEL.indexOf(from) + WHEEL.length) % WHEEL.length;
+    const step = (WHEEL.indexOf(to) - WHEEL.indexOf(from) + WHEEL.length) % WHEEL.length;
+    /* Leaving the first year is the one walk that goes all the way round.
+     
+       The first year of work is decided in the spring the place was founded
+       in, and the drafting table it hands over to is a spring as well, so the
+       distance between them is nought and the wheel would not turn at all: a
+       whole year of building a house, and the weather never changed. The
+       first season out of that year is the summer the house went up in, and
+       then the autumn, and then the winter, and then the seal. */
+    const span = step === 0 && before.turn === 1 && game.turn > 1 ? WHEEL.length : step;
     if (span === 0) {
       setIdle('waiting');
       return;
@@ -557,7 +592,7 @@ export function App() {
     visit: game && visitEvent && visitAt && (idle === null || idle === 'waiting')
       ? { key: visitKey, id: visitEvent.id, character: visitEvent.character, at: onFoot(visitAt) } : null,
     speed: CONFIG.speeds[speed] ?? 1,
-    paused: !game || game.phase === 'intro' || game.phase === 'portrait' || codexOpen || registerOpen || treeOpen || worldOpen || worked !== null || named !== null || treeOpened || winterAhead !== null || (!!game && (openableBoard(game) !== null || (!game.townName && game.turn >= CONFIG.townName.fromYear))),
+    paused: !game || primer || game.phase === 'intro' || game.phase === 'portrait' || codexOpen || registerOpen || treeOpen || worldOpen || worked !== null || named !== null || treeOpened || winterAhead !== null || (!!game && (openableBoard(game) !== null || (!game.townName && game.turn >= CONFIG.townName.fromYear))),
     instant: dev && instantJourneys,
     /* The day is made of the jobs this valley has. Nobody tends a field that
        nobody has cleared yet, the ruler included: `fields` joins the round the
@@ -894,7 +929,7 @@ export function App() {
     }
     if (game.phase === 'composer') {
       return (
-        <Popup tone="seal" tailX={tailX} cardRef={cardRef}>
+        <Popup tone="seal" tailX={tailX} wide tall cardRef={cardRef}>
           <Composer
             state={game}
             dev={dev}
@@ -940,7 +975,7 @@ export function App() {
     }
     if (game.phase === 'works') {
       return (
-        <Popup tone="seal" tailX={tailX} cardRef={cardRef}>
+        <Popup tone="seal" tailX={tailX} wide tall cardRef={cardRef}>
           <Works
             /* A new year is a new card. The pick lives in `Works`'s own state,
                and in a year with neither a law nor a case the works card opens
@@ -1022,6 +1057,53 @@ export function App() {
   const markable = dev && momentsShown
     ? [...moments, ...(saidNow && !moments.some((m) => m.id === saidNow.id) ? [saidNow] : [])]
     : [];
+
+  /**
+   * What a dilemma is, said once, when the first one is on the table.
+   *
+   * Not one screen earlier. `caseOpen` is already the moment the walk has
+   * ended, the caller is standing there and the card is up, which is the first
+   * time the three sentences on this note are about something the reader can
+   * see.
+   *
+   * On `busy` and not on `zoomed`. Most of the scenes worth teaching this on
+   * have a hand scene under them, and the camera is in on one for the whole of
+   * `decide`, which is to say for the whole of the reading and the choosing:
+   * waiting for the wide shot meant waiting for a screen that never comes, and
+   * the first cut of this note never appeared at all. `busy` is the camera
+   * actually flying, or a pair of hands actually doing something, which are
+   * the two frames nothing may be drawn over.
+   */
+  const doorNoteUp = doorNote && caseOpen && !primer && !hand.busy;
+
+  /**
+   * And the small thing, named beside the first one that is out there.
+   *
+   * It waits for `townIsPokeable`, which is the game's own word for "the ruler
+   * is free to walk over there": a note that says you can stop for this, on a
+   * screen where you cannot, teaches the wrong thing. It goes once the player
+   * has set off for one, and the year it went up is the only year it is up.
+   */
+  const noteMoment =
+    smallNote &&
+    (smallNoteTurn === null || smallNoteTurn === game.turn) &&
+    townIsPokeable &&
+    !primer &&
+    !doorNoteUp &&
+    journey.snapshot.errands.length === 0
+      ? (momentsNow(game, season)[0] ?? null)
+      : null;
+  const noteAtRaw = noteMoment ? fitToScreen(fit, noteMoment.x, noteMoment.y) : null;
+  /* And only while the thing it names is actually on screen.
+     
+     The card comes up over the near meadow and two of the four small things
+     stand in it, so on the years those are dealt the tag was drawn above the
+     card with its corner pointing at the paper: a note about a thing, pointing
+     at a card, about something else. It waits for a year it can point at the
+     thing instead. `anchor.top` is the card's own measured edge, so this
+     follows a card that grew with the answer picked. */
+  const noteAt =
+    noteAtRaw && (anchor === null || noteAtRaw.y < anchor.top - 24) ? noteAtRaw : null;
 
   return (
     <div className="ruler-edition flex h-dvh w-full flex-col overflow-hidden bg-ink">
@@ -1164,6 +1246,28 @@ export function App() {
           }}
         />
 
+        {/* What the small things are, once, beside the first one out there.
+
+            Above the receipt in the source because they can never both be up:
+            the receipt is what is left after one is taken, and taking one is
+            what puts the note away for good. */}
+        {noteMoment && noteAt && (
+          <SmallThingNote
+            /* Clear of the crown, which is 176 wide against the right edge and
+               is painted after the map: a note that runs under it is a note
+               with its last two words missing. Only where the crown is
+               actually drawn, which is Tailwind's `lg` and no narrower: below
+               that the column is hidden and holding the note off an edge that
+               has nothing on it only moves it away from the thing it names. */
+            left={Math.max(125, Math.min(fit.w - (fit.w >= 1024 ? 340 : 125), noteAt.x))}
+            top={Math.max(140, noteAt.y - 30)}
+            onShown={() => {
+              markNoteSeen('smallThing');
+              setSmallNoteTurn(game.turn);
+            }}
+          />
+        )}
+
         {/* What came of stopping, over the spot it happened at, and then gone.
 
             It used to be a card three lines deep with the whole sentence in
@@ -1241,12 +1345,25 @@ export function App() {
           there is no game information down there, there is the town. */}
       {game.phase !== 'intro' && (
       <div className="pointer-events-none absolute right-5 top-[18px] z-20 hidden w-[176px] flex-col gap-4 lg:flex">
-        <div className="pointer-events-auto">
-          <MonarchPanel state={game} variant="card" dev={dev} />
-          {/* and what you are doing while they sit up there, in one line */}
-          {!hand.zoomed && <RulerDoing control={journey} />}
+        {/* Both cards carry `backdrop-blur`, and a backdrop filter makes a
+            stacking context: the crown's hovers are `z-50` inside its own card
+            and were therefore trapped in it, so the laws card, being the later
+            sibling, painted its whole 176 by 92 over the bottom half of the
+            sentence about the monarch's mood. What decides the order is these
+            two numbers, not the ones inside the cards. */}
+        <div className="pointer-events-auto relative z-20">
+          {/* And what you are doing while they sit up there, in one line, on
+              the card rather than under it. Loose on the meadow it read as a
+              caption on the grass; it belongs to the face above it, and it is
+              the one line on this card that answers to a click. */}
+          <MonarchPanel
+            state={game}
+            variant="card"
+            dev={dev}
+            doing={hand.zoomed ? undefined : <RulerDoing control={journey} />}
+          />
         </div>
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto relative z-10">
           {/* "1 being written now" used to go up the moment the phase changed,
               which is while the wheel is still turning and the drafting table
               is minutes away. It says it when the table is actually open. */}
@@ -1257,7 +1374,7 @@ export function App() {
 
 
       {/* the card, floating over the near meadow, which is what the meadow is for */}
-      <div className="ruler-card-dock pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-5">
+      <div className="ruler-card-dock pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-4">
         {card}
         {hand.strip}
       </div>
@@ -1298,6 +1415,30 @@ export function App() {
             onDeclare={(tag) => dispatch({ type: 'declare', tag })}
           />
         </div>
+      )}
+
+      {/* And then, before the first year is spent, what the four marks in the
+          corner actually are. Not while the founding is still up: it is one
+          question at a time, and the question up there is who you are. */}
+      {primer && game.phase !== 'intro' && (
+        <Primer
+          onDone={() => {
+            markWiringSeen();
+            setPrimer(false);
+          }}
+        />
+      )}
+
+      {/* And the first time somebody is actually at the door, what that is:
+          an answer that lands once, that nothing warned you about, on a bench
+          your own laws have already been writing on. */}
+      {doorNoteUp && (
+        <DoorNote
+          onDone={() => {
+            markNoteSeen('door');
+            setDoorNote(false);
+          }}
+        />
       )}
 
       {sealing && <SealMoment state={game} onDone={() => dispatch({ type: 'nextInYear' })} />}
@@ -1347,8 +1488,19 @@ export function App() {
           season={season}
           onGift={(character) => dispatch({ type: 'gift', character })}
           onTake={(character) => dispatch({ type: 'lover', character })}
+          /* The register closes behind them: what happens next happens in the
+             house, not on a page of names. */
+          onVisit={(character) => {
+            dispatch({ type: 'visit', character });
+            setRegisterOpen(false);
+            setVisiting(character);
+          }}
           onClose={() => setRegisterOpen(false)}
         />
+      )}
+
+      {visiting !== null && (
+        <LoverMoment state={game} character={visiting} onDone={() => setVisiting(null)} />
       )}
 
       {treeOpen && <TechTree state={game} onClose={() => setTreeOpen(false)} />}

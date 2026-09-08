@@ -95,17 +95,41 @@ export function JourneyLayer({ control, stage, monarch }: { control: JourneyCont
 }
 
 /**
- * What the ruler is doing, in one line, under the crown.
+ * What the ruler is doing, in one line, and the one way to change it.
  *
  * It used to be a panel of its own in the opposite corner: an icon, an
  * eyebrow saying "you, out in the town", the job, and a note underneath
- * counting the errands. Four pieces of furniture to carry three words, in the
- * top left, as far from the person they are about as the window allows. It is
- * a caption on the picture and never a control, so it is a caption: the line
- * itself, under the face it belongs to, and nothing else.
+ * counting the errands. Four pieces of furniture to carry three words, as far
+ * from the person they are about as the window allows. Then it was a caption
+ * under the crown's card, floating on the meadow with nothing round it, which
+ * read as a label on the grass rather than on the face above it.
+ *
+ * It is a line inside the card now, under the face whose day it is, and it is
+ * a button: pressing it moves the ruler on to the next thing the place has to
+ * do. Nothing about a board changes. This is the one control in the game that
+ * costs nothing and decides nothing, which is exactly why it is allowed to sit
+ * where every real decision is refused.
+ *
+ * A job the place has not built is not in the round (`openJobs`), so a valley
+ * with no field cannot be sent to tend one, and with one job open the line is
+ * not a button at all: a control with one setting is furniture.
  */
 export function RulerDoing({ control, className }: { control: JourneyControl; className?: string }) {
-  return <p className={`ruler-doing-line ${className ?? ''}`}>{JOURNEY.jobs[control.snapshot.job]}</p>;
+  const { job, open } = control.snapshot;
+  const round = open.length ? open : [job];
+  const only = round.length <= 1;
+  const next = round[(round.indexOf(job) + 1) % round.length];
+  if (only) return <p className={`ruler-doing-line ${className ?? ''}`}>{JOURNEY.jobs[job]}</p>;
+  return (
+    <button
+      type="button"
+      onClick={() => control.job(next)}
+      title={JOURNEY.doingSwitch.replace('{next}', JOURNEY.jobs[next])}
+      className={`ruler-doing-line ruler-doing-switch ${className ?? ''}`}
+    >
+      {JOURNEY.jobs[job]}
+    </button>
+  );
 }
 
 /**

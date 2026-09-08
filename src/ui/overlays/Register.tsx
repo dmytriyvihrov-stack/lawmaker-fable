@@ -9,6 +9,8 @@ import {
   bondOf,
   giftAgainAt,
   giftBlock,
+  visitAgainAt,
+  visitBlock,
   isLover,
   isPerson,
   loverBlock,
@@ -25,6 +27,8 @@ interface Props {
   onGift: (character: string) => void;
   /** And the one that is not bought, only admitted. */
   onTake: (character: string) => void;
+  /** The one you took, coming up to the house. Costs nothing, every other year. */
+  onVisit: (character: string) => void;
   onClose: () => void;
 }
 
@@ -38,7 +42,7 @@ interface Props {
  * one person rather than about the place, and this is the only page where a
  * lawmaker can spend anything on somebody instead of on something.
  */
-export function Register({ state, season, onGift, onTake, onClose }: Props) {
+export function Register({ state, season, onGift, onTake, onVisit, onClose }: Props) {
   const people = metCharacters(state);
   // what each of them is up to now, which is the same reading the town draws,
   // in the same weather the town is drawing it in
@@ -98,6 +102,7 @@ export function Register({ state, season, onGift, onTake, onClose }: Props) {
             const mine = isLover(state, who);
             const gift = giftBlock(state, who);
             const take = loverBlock(state, who);
+            const visit = visitBlock(state, who);
             const canBeLiked = isPerson(who) && doings.get(who) !== 'gone';
 
             const giftWhy =
@@ -213,6 +218,33 @@ export function Register({ state, season, onGift, onTake, onClose }: Props) {
                           {CONFIG.bond.loverCost}
                         </span>
                       </button>
+                      {/* And the one that only ever appears beside one face in
+                          the whole register: the one you took, and only every
+                          other year. It costs nothing, which is why it is the
+                          only button here with no number on it. */}
+                      {mine && (
+                        <button
+                          type="button"
+                          disabled={visit !== null}
+                          onClick={() => onVisit(who)}
+                          title={
+                            visit === null
+                              ? BOND_UI.kissLine
+                              : visit === 'waiting'
+                                ? BOND_UI.kissWait.replace('{n}', String(visitAgainAt(state, who)))
+                                : visit === 'gone'
+                                  ? BOND_UI.giftGone
+                                  : BOND_UI.kissNotYours
+                          }
+                          className={`${act} ${
+                            visit === null
+                              ? 'border-seal/60 bg-seal/15 text-parchment'
+                              : 'border-ink-line text-parchment-dim'
+                          }`}
+                        >
+                          {BOND_UI.kissMark} {BOND_UI.kissLabel}
+                        </button>
+                      )}
                       {/* and never the store line here: it is over the list */}
                       {!(storePoor && !mine && gift === 'poor') && (
                         <span className="text-[10px] leading-snug text-hair">

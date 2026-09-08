@@ -3,14 +3,14 @@ import { PAINT } from '../components/town/paint';
 import { useState } from 'react';
 import { PLOT_NAMES, STATS, SUBJECTS, WORK_ICONS } from '../../content/meta';
 import { UI } from '../../content/ui-strings';
-import { CardFoot, PopupHead } from '../components/Popup';
+import { CARD_BUTTON, CardFoot, PopupHead } from '../components/Popup';
 import { getProposal } from '../../engine/registry';
 import { reopenableProposals } from '../../engine/reducer';
 import { storeCap, workCost, workOnce, workSubsidised, worksFor } from '../../engine/simulation';
 import { DevEffects } from '../components/DevCorner';
 import { MovedBoards } from '../components/MovedBoards';
 import { WORKS } from '../../content/works';
-import { freePlots, needsPlacement, occupantOf, PLOT_IDS } from '../../engine/plots';
+import { freePlots, needsPlacement, occupantOf, plotsFor } from '../../engine/plots';
 import type { GameState, PlotId, Season, WorkDef, WorkId } from '../../engine/types';
 import { TYPE } from '../type';
 
@@ -210,8 +210,12 @@ export function Works({
                  twelve and ten out of forty are not the same decision, and
                  "costs 10 from the store" was the same sentence for both. */
               <span
-                className={`flex items-baseline gap-1 ${
-                  tooDear ? 'text-bad' : subsidised ? 'text-good' : 'text-parchment-dim'
+                className={`flex items-baseline gap-1 rounded border px-1.5 ${
+                  tooDear
+                    ? 'border-bad/50 text-bad'
+                    : subsidised
+                      ? 'border-good/50 text-good'
+                      : 'border-ink-line text-parchment-dim'
                 }`}
                 title={UI.works.costLabel}
               >
@@ -242,7 +246,6 @@ export function Works({
         kicker={`${UI.works.heading} · ${UI.popup.ofYear
           .replace('{season}', UI.seasons[season])
           .replace('{n}', String(state.turn))}`}
-        note={UI.works.prompt}
       />
       <div className="p-4">
 
@@ -266,7 +269,7 @@ export function Works({
               <p className={`mt-2 ${TYPE.note} leading-snug text-bad`}>{UI.works.whereNone}</p>
             ) : (
               <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
-                {PLOT_IDS.map((id) => {
+                {plotsFor(state).map((id) => {
                   const taken = occupantOf(state, id);
                   const free = taken === null;
                   const on = plot === id;
@@ -314,7 +317,17 @@ export function Works({
           </p>
         )}
 
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        {/* Three across, not two.
+           
+            The shelf is the tallest thing in this game and the card it lives
+            in comes up over the town: at two columns a village shelf of eight
+            works is four rows deep, and four rows plus the run below them is
+            the whole of the settlement behind glass. Three columns is the same
+            eight works in three rows, and what that buys is the huts and the
+            well back on screen while the year is being decided. Two on a
+            laptop, one on a phone: a card three across at 900 pixels is three
+            columns of one word each. */}
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {works.map((work) => (
             <WorkCard key={work.id} work={work} />
           ))}
@@ -329,7 +342,7 @@ export function Works({
               </span>
               <span className={`${TYPE.note} italic text-hair`}>{UI.works.groupLine}</span>
             </div>
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {chainShown.map((work) => (
                 <WorkCard key={work.id} work={work} />
               ))}
@@ -415,7 +428,7 @@ export function Works({
               if (picked.kind === 'work') onBuild(picked.id, plot ?? undefined);
               else onReopen(picked.id);
             }}
-            className="min-h-[48px] w-full rounded-lg bg-timber px-5 py-2 text-[17px] tracking-[0.2em] text-ink disabled:opacity-30"
+            className={`${CARD_BUTTON} bg-timber text-ink`}
           >
             {asking && plot !== null
               ? UI.works.whereOn.replace('{where}', PLOT_NAMES[plot].label.toUpperCase())

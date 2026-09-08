@@ -18,6 +18,13 @@
 .world-legend span::before { content: ''; display: inline-block; width: 20px; margin-right: 7px; border-top: 3px solid #a9bb7d; vertical-align: middle; }
 .world-legend .atlas-neutral::before { border-color: #b6aa86; border-top-style: dashed; }
 .world-legend .atlas-hostile::before { border-color: #bb8171; border-top-style: dotted; }
+/* What is on the road, going the way it would really go: out of their ground
+   and most of the way to the capital, then round again. */
+@keyframes atlas-travel { 0% { translate: 0 0; opacity: 0; } 12%, 88% { opacity: 1; } 100% { translate: var(--dx, 0) var(--dy, 0); opacity: 0; } }
+.atlas-traffic { animation: atlas-travel 11s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .atlas-traffic { animation: none; translate: calc(var(--dx, 0px) * .5) calc(var(--dy, 0px) * .5); }
+}
 .world-card { padding: 18px; border: 1px solid #a8ad8650; border-radius: 13px; background: #1e2923; }
 .world-card > div:first-child { flex-wrap: wrap; }
 .world-card > div:first-child > span:first-child { font-size: 23px; }
@@ -30,7 +37,10 @@
 .world-action:disabled { opacity: .45; cursor: default; }
 .world-action-icon { font-size: 21px; }
 .world-action-arrow { margin-left: auto; color: #d7c281; }
-.world-action-cost { margin: 5px 1px 12px; color: #b9bba0; font-size: 11px; line-height: 1.45; }
+.world-action-cost { margin: 5px 1px 2px; color: #b9bba0; font-size: 11px; line-height: 1.45; }
+/* What everybody else makes of it, under what it costs and dimmer than it:
+   the cost is the decision, this is the weather afterwards. */
+.world-action-after { margin: 0 1px 12px; color: #8f9179; font-size: 11px; line-height: 1.45; font-style: italic; }
 .world-peoples { padding: 10px 15px; border: 1px solid #a8ad8630; border-radius: 9px; }
 .world-peoples > div { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 16px; margin-top: 10px; font-size: 11px; color: #c8c8af; }
 .world-peoples b { color: #ecd49f; font-weight: normal; }

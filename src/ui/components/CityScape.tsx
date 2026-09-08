@@ -15,6 +15,7 @@ import { GroundWashes, MeadowDetails, River } from './town/atmosphere';
 import { TownDog } from './town/parts';
 import type { Moment } from '../../content/moments';
 import {
+  Bonfire,
   BreadBoard,
   Bridge,
   BridgeWorks,
@@ -66,6 +67,11 @@ import {
   WOOD_HAUL,
   WOOD_TRUNKS,
   WORK_SITES,
+  GATE_POSTS,
+  WINTER_FIRE,
+  FIRE_RING,
+  CAMP_FIRE,
+  CAMP_RING,
   homeDoor,
   siteOf,
 } from './town/sites';
@@ -287,10 +293,22 @@ export function CityScape({
   /* Roofs come with the count, and with the years spent on putting one up:
      a house is the one work whose whole point is that there is one more of
      them, so every floor of it is another roof standing here. */
-  const huts = Math.max(
-    1,
-    Math.min(HUT_SITES.length, 1 + level('house') + Math.floor((population - 5) / 12)),
+  const huts = Math.min(
+    HUT_SITES.length,
+    level('house') + Math.floor((population - 5) / 12),
   );
+
+  /**
+   * Nobody has built anything yet, so nothing is built.
+   *
+   * The count of roofs used to start at one whatever the reign had done, which
+   * put a finished house on the first spring of every reign - in the same year
+   * whose entire decision is whether to raise one. Five people who walked out
+   * of somewhere last month are under what they walked in with, and the roof
+   * arrives the year it is paid for, or the year there are enough of them to
+   * have thrown one up on their own.
+   */
+  const camping = huts === 0;
 
   /**
    * One figure is one person while a person can still be picked out.
@@ -301,14 +319,27 @@ export function CityScape({
    * sharing a figure and the street goes on filling at half speed instead of
    * turning into a carpet of dots.
    */
-  const COUNTED = 15;
-  const dots = Math.max(
-    1,
-    Math.min(
-      84,
-      population <= COUNTED ? population : COUNTED + Math.ceil((population - COUNTED) / 2),
-    ),
-  );
+  /**
+   * One figure is one person while a person can still be picked out, and after
+   * that a figure is a rougher and rougher count of them.
+   *
+   * Up to ten souls the picture counts heads exactly: the year a sixth arrives
+   * you can see the sixth standing there. Past that nobody is counting anyway,
+   * and the rate of sharing steps down as the place grows, because the
+   * difference between two hundred and two hundred and five is not a
+   * difference anybody can see from up here. One figure per two souls to
+   * thirty, per three to fifty, and per five after that. The old rule was a
+   * flat one per two forever, which drew seventy three figures on a town of a
+   * hundred and thirty and made the place hard to read and hard to click in.
+   */
+  const COUNTED = 10;
+  const figuresFor = (pop: number): number => {
+    if (pop <= COUNTED) return Math.round(pop);
+    if (pop <= 30) return COUNTED + Math.ceil((pop - COUNTED) / 2);
+    if (pop <= 50) return 20 + Math.ceil((pop - 30) / 3);
+    return 27 + Math.ceil((pop - 50) / 5);
+  };
+  const dots = Math.max(1, Math.min(84, figuresFor(population)));
 
   const mood = stats.mood;
   const spirit =
@@ -359,30 +390,67 @@ export function CityScape({
   const post = (job: CrowdJob, n: number) => {
     if (n > 0) wanted.push([job, n]);
   };
+  /* A lane is a line between doors and a yard is the ground beside one, so
+     before the first roof is up neither of them is anywhere: both are the same
+     open grass, and a soul posted to either stood in a field bowing at nothing
+     and strolling eighteen pixels back and forth while doing it. Two of them
+     were on screen in the first spring of every reign. Until there is a roof
+     the whole settlement is the two tents and the fire. */
+  const indoors: CrowdJob = camping ? 'camp' : 'yard';
+  const together: CrowdJob = camping ? 'camp' : 'square';
   if (working) {
-    if (fieldLevel > 0) post('field', 5 + fieldLevel * 2);
+    // and the corner that was already broken when they arrived has somebody in it
+    post('field', fieldLevel > 0 ? 5 + fieldLevel * 2 : 2);
     /* A square is a thing a town has. Before there is one, the people posted
        here were standing in open grass in the middle of the valley, which is
        what "these people are doing something unclear" looks like from the
        other side of the screen. In a hamlet they are on the lane instead,
        which is a real line between real doors, and there are fewer of them. */
-    post('square', town ? 5 : 2);
+    post(together, town ? 5 : 2);
     post('wood', 3);
-    post('yard', town ? 3 : 2);
+    post(indoors, town ? 3 : 2);
     // somebody is always with the animals, and the animals are always there
     post('pen', 2);
-    // nobody stands at a river that is a lid
-    if (!paint.ice) post('fish', 2);
+    /* Nobody stands at a river that is a lid. When it is not one, the bank is
+       worth more to a town than it is to a hamlet: two rods feed five people
+       and do not feed a hundred and thirty, and the five seats on it were
+       drawing three men on the biggest place in the game. */
+    if (!paint.ice) post('fish', town ? 5 : 2);
     post('haul', 2);
     if (roadLevel > 0) post('road', 2 + roadLevel);
-    if (wellLevel > 0) post('water', 2);
+    // and somebody is at the well from the first spring, because there is one
+    post('water', wellLevel > 0 ? 2 : 1);
+    /* Somebody is in the apple trees whenever there are apples on them, and
+       in the autumn everybody who can be spared is. */
+    post('orchard', season === 'autumn' ? 3 : 1);
   } else {
-    post('yard', 5);
-    post('square', 3);
+    post(indoors, 4);
+    post(together, 2);
     post('wood', 2);
     post('haul', 1);
+    /* The cold is not a season with nothing in it. It is the one season with
+       somewhere everybody goes, and this is that somewhere. */
+    post('warm', 6);
   }
   if (raisingOf && WORK_SITES[raisingOf]) post('site', 4);
+
+  /* A hole in the crag is backs in the hole, in every season: the one job here
+     the weather cannot stop. */
+  if (level('mine') > 0) post('mine', 2 + level('mine'));
+
+  /* And the three a town has because it is a town. A watch is men standing at
+     a gate, which is what a watch looks like and what nothing else in this
+     picture looks like; songs and a painted board are what a place does with
+     the part of a year it did not have to spend on staying alive. */
+  if (town) {
+    const watching = level('watch_house') > 0 || stats.army >= 55;
+    if (watching) post('guard', 2 + level('watch_house'));
+    if (stats.culture >= 25) post('music', 1 + Math.floor(stats.culture / 45));
+    /* A fiddle at the winter fire is exactly where a fiddle should be. An
+       easel standing in the snow is not, so the painter keeps to the seasons
+       there is something to look at in. */
+    if (stats.culture >= 45 && working) post('paint', 1);
+  }
 
   /**
    * The jobs that are a walk from the door.
@@ -394,7 +462,7 @@ export function CityScape({
    * and a building site with nobody arriving at it is a building putting
    * itself up.
    */
-  const COMMUTES: CrowdJob[] = ['fish', 'wood', 'site'];
+  const COMMUTES: CrowdJob[] = ['fish', 'wood', 'site', 'mine', 'orchard'];
 
   /**
    * Taking them in flat passes gave every job the same first man, so a place
@@ -434,8 +502,17 @@ export function CityScape({
     yard: 'tend',
     water: 'draw',
     site: 'build',
+    camp: 'warm',
+    mine: 'mine',
+    orchard: 'pick',
+    music: 'play',
+    paint: 'paint',
+    guard: 'guard',
+    warm: 'warm',
   };
   const TRAVELS: CrowdJob[] = ['road', 'square', 'yard'];
+  /* A pike and a fiddle both face the same way all day, like a rod does. */
+  const FACES_FIXED: CrowdJob[] = ['fish', 'wood', 'guard', 'music', 'paint', 'mine', 'warm', 'camp'];
 
   const siteAnchor = raisingOf ? siteOf(raisingOf, placements) : undefined;
 
@@ -485,14 +562,46 @@ export function CityScape({
     } else if (job === 'site' && siteAnchor) {
       x = siteAnchor.x + 8 + ((i * 23) % 70);
       y = siteAnchor.y + 46 + ((i * 13) % 22);
+    } else if (job === 'guard' && nth < GATE_POSTS.length) {
+      /* On the line, not scattered near it: a watch standing anywhere but the
+         gate is a group of men loitering. */
+      const stand = GATE_POSTS[nth];
+      x = stand.x;
+      y = stand.y;
+    } else if (job === 'camp') {
+      /* Round the fire they walked in with, in the order the ring was
+         written, and off the ground the tents are pitched on. */
+      if (nth < CAMP_RING.length) {
+        x = CAMP_FIRE.x + CAMP_RING[nth].x;
+        y = CAMP_FIRE.y + CAMP_RING[nth].y;
+      } else {
+        const back = CROWD_SPOTS.camp;
+        x = back.x + ((nth * 53) % back.w);
+        y = back.y + ((nth * 71) % back.h);
+      }
+    } else if (job === 'warm') {
+      /* Round the fire, at arm's length from it, in the order the ring was
+         written. Past the ring they stand back in the box behind. */
+      if (nth < FIRE_RING.length) {
+        x = WINTER_FIRE.x + FIRE_RING[nth].x;
+        y = WINTER_FIRE.y + FIRE_RING[nth].y;
+      } else {
+        const box = CROWD_SPOTS.warm;
+        x = box.x + ((nth * 53) % box.w);
+        y = box.y + ((nth * 71) % box.h);
+      }
     } else if (job === 'square' && (!working || !town)) {
       const lane = LANE[nth % LANE.length];
       x = lane.x + ((i * 23) % 60) - 30;
       y = lane.y + ((i * 17) % 26) - 13;
     } else {
-      // the furrows only fill as far as they have been broken
+      // the furrows only fill as far as they have been broken, across as well
+      // as down: the corner the place was found with is the near end of the
+      // first strip, and a sower standing at the far end of it is standing in
+      // grass nobody has turned.
       const h = job === 'field' && fieldLevel < 2 ? 74 : box.h;
-      x = box.x + ((nth * 53 + (i % 3) * 17) % box.w);
+      const w = job === 'field' && fieldLevel === 0 ? 66 : box.w;
+      x = box.x + ((nth * 53 + (i % 3) * 17) % w);
       y = box.y + ((nth * 71 + (i % 5) * 11) % h);
     }
 
@@ -535,7 +644,7 @@ export function CityScape({
          not a man fishing, so the bank always faces the water, and an axe
          swung at the air beside a tree is not a man cutting it, so a cutter
          always faces the trunk on their right. */
-      facing: ((job === 'fish' || job === 'wood' ? 1 : (i * 13) % 2 === 0 ? 1 : -1) as 1 | -1),
+      facing: ((FACES_FIXED.includes(job) ? 1 : (i * 13) % 2 === 0 ? 1 : -1) as 1 | -1),
       door,
       /* What is carried on the way out: timber to a site, nothing to a bank. */
       walkOut: (job === 'site' ? 'carry' : 'stand') as Pose,
@@ -567,13 +676,19 @@ export function CityScape({
     ghostOf !== null && plotOn !== null ? { ...placements, [ghostOf]: plotOn } : placements;
 
   /** A work that stands, is being raised this year, or is only being thought of. */
-  const workNode = (id: WorkId, drawn: (lvl: number) => ReactNode, outline: ReactNode) => {
+  const workNode = (
+    id: WorkId,
+    drawn: (lvl: number) => ReactNode,
+    outline: ReactNode,
+    /** This one is in the valley before anybody built anything. See `Well`. */
+    found = false,
+  ) => {
     const s = siteOf(id, shown);
     if (!s) return;
     const lvl = level(id);
     const isRaising = raisingOf === id;
     const isGhost = ghostOf === id && !isRaising;
-    if (lvl === 0 && !isRaising && !isGhost) return;
+    if (lvl === 0 && !isRaising && !isGhost && !found) return;
     put(
       id,
       s.y + 60,
@@ -588,7 +703,7 @@ export function CityScape({
             {drawn(Math.max(1, lvl))}
           </Raising>
         ) : (
-          lvl > 0 && drawn(lvl)
+          (lvl > 0 || found) && drawn(lvl)
         )}
         {isGhost && (
           <>
@@ -608,6 +723,37 @@ export function CityScape({
       </g>,
     );
   };
+
+  /* What five people who have just arrived are actually living under. Two
+     tents and a fire, on the ground the first roof will stand on, and gone the
+     moment there is a roof to be gone for. */
+  if (camping) {
+    const home = HUT_SITES[0];
+    put(
+      'camp',
+      home.y + 52,
+      <g transform={`translate(${home.x - 6} ${home.y + 12}) scale(0.78)`}>
+        <Tent paint={paint} />
+        <g transform="translate(44 14) scale(0.86)">
+          <Tent paint={paint} />
+        </g>
+        <g transform="translate(38 40) scale(0.62)">
+          <Bonfire paint={paint} />
+        </g>
+      </g>,
+    );
+  }
+
+  /* And the fire the cold is spent at, which is only there in the cold. */
+  if (season === 'winter') {
+    put(
+      'winterfire',
+      WINTER_FIRE.y + 10,
+      <g transform={`translate(${WINTER_FIRE.x} ${WINTER_FIRE.y})`}>
+        <Bonfire paint={paint} />
+      </g>,
+    );
+  }
 
   // the roofs people live under, which is the count of souls made of wood
   HUT_SITES.slice(0, huts).forEach((h, i) => {
@@ -682,10 +828,14 @@ export function CityScape({
     );
   }
 
+  /* The one thing on this map that was here before the reign was. The place
+     was stopped at for the water and the year of work lines the well rather
+     than digging it, so the hole is in the ground from the first spring and
+     what a year buys is the timber round it. */
   workNode('well', (l) => <Well paint={paint} level={l} />, [
     <ellipse key="o" rx="17" ry="8" />,
     <path key="b" d="M-19 0 v-24 M14 0 v-24 M-24 -26 h48" />,
-  ]);
+  ], true);
 
   /**
    * The eaves whatever has moved in is hanging off. The long room is the one
@@ -985,9 +1135,7 @@ export function CityScape({
             {nameOf('mine')}
           </text>
         </g>
-      ) : (
-        <path d="M92 366 L92 344 Q114 324 136 344 L136 366 Z" fill="#4b4238" opacity=".45" />
-      )}
+      ) : null}
 
       {/* the belt of scrub at its foot, so the rock never touches the corn */}
       <g>

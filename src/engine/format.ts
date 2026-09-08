@@ -3,7 +3,7 @@ import { TRIAL_LEANS } from '../content/trials';
 import { UI } from '../content/ui-strings';
 import { agesNow } from './folk';
 import { truthOf } from './verdict';
-﻿import type { ActionId, GameState, LawId, SubjectId } from './types';
+﻿import type { ActionId, GameState, LawId, StatId, SubjectId } from './types';
 
 const ROMAN: [number, string][] = [
   [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
@@ -32,6 +32,22 @@ export function roman(n: number): string {
  */
 export function points(n: number): string {
   return n.toFixed(1);
+}
+
+/**
+ * The boards that are counted rather than measured.
+ *
+ * The store is a shelf, and a tenth of a point on a shelf is a real amount of
+ * grain: `points` keeps that tenth on purpose. A watch is men with pikes and
+ * culture is songs being sung, and there is no such thing as half of either.
+ * "44.0 / 100" over a row of pikes is a decimal place that has never once
+ * meant anything to anybody reading it.
+ */
+const WHOLE_BOARDS: StatId[] = ['army', 'culture'];
+
+/** A board, as the kind of number that board is actually made of. */
+export function boardPoints(stat: StatId, n: number): string {
+  return WHOLE_BOARDS.includes(stat) ? String(Math.round(n)) : points(n);
 }
 
 /**

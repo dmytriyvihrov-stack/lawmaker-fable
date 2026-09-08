@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { readingFor } from '../../content/town-readings';
 import { UI } from '../../content/ui-strings';
 import { monarchAge, monarchOf } from '../../engine/monarch';
@@ -12,6 +14,13 @@ import { DevEditTrigger, useHoverText } from './DevText';
 
 interface Props {
   state: GameState;
+  /**
+   * What the person holding the seal is doing out there, in one line, on the
+   * bottom edge of the card. Passed in rather than read here: this panel knows
+   * about the crown and nothing about the walk, and the walk is a hook that
+   * only the one place assembling the screen may hold.
+   */
+  doing?: ReactNode;
   /**
    * `card` floats on the town, top right, which is where the crown lives now.
    * `strip` is the same face laid on its side for a phone. `rail` is the old
@@ -31,7 +40,7 @@ function toneOf(n: number): string {
  * patience with you is its own gauge, and whose face keeps its own score, so
  * the gauge lives here under the face rather than in the row with the harvest.
  */
-export function MonarchPanel({ state, variant, dev = false }: Props) {
+export function MonarchPanel({ state, variant, dev = false, doing }: Props) {
   const gaugeHover = useHoverText('ui:monarch:gauge:hover', UI.monarch.gauge);
   const monarch = monarchOf(state.seed);
   const age = monarchAge(state.seed, state.turn);
@@ -177,7 +186,10 @@ export function MonarchPanel({ state, variant, dev = false }: Props) {
           </div>
         </div>
 
-
+        {/* the day being spent under all of that, on the card's own edge */}
+        {doing !== undefined && (
+          <div className="mt-2.5 border-t border-ink-line pt-0.5">{doing}</div>
+        )}
       </div>
     </div>
   );

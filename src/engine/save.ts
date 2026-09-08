@@ -156,6 +156,43 @@ export function markWiringSeen(): void {
 }
 
 /**
+ * The two later notes, on the same terms as the primer above.
+ *
+ * Neither of them can be said on the first screen: one is about the person at
+ * the door and the other is about a thing out on the meadow, and on the day
+ * the primer is read there is neither. So each waits for the thing it is
+ * about to be on screen, and each is remembered by the browser rather than by
+ * the reign, so a second reign is not a second lecture.
+ *
+ * Both keys begin `lawmaker`, which is the whole of what `forgetEverything`
+ * looks for: `clear history` puts the tutorial back with everything else.
+ */
+const NOTE_KEYS = {
+  /** What a dilemma is, said when the first one is standing there. */
+  door: 'lawmaker_seen_door_v1',
+  /** What the small things on the map are, said over the first one. */
+  smallThing: 'lawmaker_seen_small_thing_v1',
+} as const;
+
+export type NoteId = keyof typeof NOTE_KEYS;
+
+export function hasSeenNote(id: NoteId): boolean {
+  try {
+    return localStorage.getItem(NOTE_KEYS[id]) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function markNoteSeen(id: NoteId): void {
+  try {
+    localStorage.setItem(NOTE_KEYS[id], '1');
+  } catch {
+    // private mode or full storage: it will simply be offered again
+  }
+}
+
+/**
  * The shape check. A save that fails this is not repaired past `fillGaps`
  * above: a reign is a reign or it is not, and half a reign is worse than none.
  * What changed is that failing it is now something the player is told about.

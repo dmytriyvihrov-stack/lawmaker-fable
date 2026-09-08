@@ -67,13 +67,15 @@ export const WORK_SITES: Partial<
 };
 
 /**
- * The six pieces of ground a building can be put on.
+ * The pieces of ground a building can be put on: six a hamlet has, and three
+ * more the charter opens.
  *
- * Five of them are where the picture always stood those buildings, so a reign
- * that puts everything where it used to go looks exactly like the reign before
- * placement existed. The sixth is the strip under the crag, which only became
- * ground anybody could use when the furrows stopped running halfway across the
- * valley.
+ * Five of the first six are where the picture always stood those buildings, so
+ * a reign that puts everything where it used to go looks exactly like the reign
+ * before placement existed. The sixth is the strip under the crag, which only
+ * became ground anybody could use when the furrows stopped running halfway
+ * across the valley. `plotsFor()` in `plots.ts` says which of them a place of
+ * this size has.
  *
  * Position and depth come from the plot; what a building calls itself and how
  * big its frame is come from the building, because those are facts about the
@@ -86,6 +88,14 @@ export const PLOT_SITES: Record<PlotId, { x: number; y: number; scale: number }>
   square_west: { x: 640, y: 345, scale: 1.05 },
   well_side: { x: 790, y: 442, scale: 1 },
   west_strip: { x: 176, y: 398, scale: 0.9 },
+  /* The three a charter opens. None of them is ground a hamlet had any reason
+     to walk: the high shoulder over the gate, the bend where the road comes
+     down to the water, and the strip between the last furrow and the first
+     roof. Placed off the map's own numbers rather than off a screenshot, and
+     checked against every hut, every work site and the river. */
+  north_field: { x: 706, y: 214, scale: 0.72 },
+  mill_end: { x: 1046, y: 392, scale: 0.94 },
+  stone_row: { x: 506, y: 388, scale: 0.9 },
 };
 
 /** Where the marker for an empty plot sits, so a dot lands on its ground. */
@@ -96,6 +106,9 @@ export const PLOT_MARK: Record<PlotId, { x: number; y: number }> = {
   square_west: { x: 700, y: 396 },
   well_side: { x: 790, y: 462 },
   west_strip: { x: 216, y: 442 },
+  north_field: { x: 730, y: 250 },
+  mill_end: { x: 1096, y: 430 },
+  stone_row: { x: 540, y: 424 },
 };
 
 /**
@@ -191,7 +204,27 @@ export type CrowdJob =
   | 'pen'
   | 'yard'
   | 'water'
-  | 'site';
+  | 'site'
+  /**
+   * The camp, which is the whole of the settlement until there is a roof.
+   *
+   * Before the first house the yards and the lane are both a name for open
+   * grass: a soul posted to either stood in a field, bowed at nothing, and
+   * strolled eighteen pixels back and forth doing it. Two tents and a fire is
+   * the one place five people who arrived last month actually are.
+   */
+  | 'camp'
+  /**
+   * And the six a place has to earn. Each of them is posted only while the
+   * thing that makes it exist stands: a hole in the crag, three apple trees,
+   * a board that has songs on it, a watch, and the cold.
+   */
+  | 'mine'
+  | 'orchard'
+  | 'music'
+  | 'paint'
+  | 'guard'
+  | 'warm';
 
 export const CROWD_SPOTS: Record<CrowdJob, { x: number; y: number; w: number; h: number }> = {
   field: { x: 298, y: 318, w: 168, h: 152 },
@@ -213,7 +246,72 @@ export const CROWD_SPOTS: Record<CrowdJob, { x: number; y: number; w: number; h:
   pen: { x: 344, y: 590, w: 118, h: 36 },
   water: { x: 762, y: 424, w: 58, h: 34 },
   site: { x: 0, y: 0, w: 60, h: 34 },
+  /* The fallback for a camp with more people round it than the ring holds.
+     The tents themselves are at 810 and 844, so this is the ground below. */
+  camp: { x: 800, y: 432, w: 76, h: 26 },
+  /* At the mouth of the cut, which is where the spoil comes out. The crag
+     itself is at x 114 and nobody stands inside it. */
+  mine: { x: 148, y: 366, w: 76, h: 34 },
+  /* Under the apple trees, which stand at 352, 400 and 438. */
+  orchard: { x: 344, y: 266, w: 100, h: 26 },
+  /* Where the songs are: the west side of the square, clear of the well. */
+  music: { x: 662, y: 404, w: 78, h: 30 },
+  /* And where somebody can see the whole place at once and put it on a board. */
+  paint: { x: 876, y: 424, w: 66, h: 30 },
+  /* The fallback for a watch bigger than the gate has posts for. */
+  guard: { x: 640, y: 250, w: 150, h: 22 },
+  /* The fallback for a crowd bigger than the ring round the fire. */
+  warm: { x: 668, y: 388, w: 96, h: 40 },
 };
+
+/**
+ * Where a pike actually stands: at the gate, on the line the fence runs.
+ *
+ * A watch scattered over a box is a crowd loitering. Three posts, in the order
+ * they get filled, and anybody past the third stands off the line in the box
+ * above.
+ */
+export const GATE_POSTS = [
+  { x: 700, y: 258 },
+  { x: 742, y: 250 },
+  { x: 660, y: 264 },
+];
+
+/**
+ * The winter fire, and the backs round it.
+ *
+ * Placed off the map's own numbers: this is the point in the settlement band
+ * with the most clear ground round it (60 units to the nearest roof, 82 to the
+ * well), which is what a town square is for. The ring is offsets from the
+ * fire, so moving the fire moves everybody standing at it.
+ */
+/**
+ * The camp fire, and where the five of them sit round it.
+ *
+ * Taken off the camp's own drawing rather than guessed: the group is put down
+ * at `HUT_SITES[0]` shifted by (-6, +12) and scaled 0.78, and the bonfire
+ * inside it is at (38, 40), which lands here. Move the camp and this has to
+ * move with it, which is why the arithmetic is written down.
+ */
+export const CAMP_FIRE = { x: HUT_SITES[0].x - 6 + 38 * 0.78, y: HUT_SITES[0].y + 12 + 40 * 0.78 };
+export const CAMP_RING = [
+  { x: -30, y: 10 },
+  { x: 28, y: 12 },
+  { x: -14, y: 24 },
+  { x: 34, y: -6 },
+  { x: -34, y: -8 },
+];
+
+export const WINTER_FIRE = { x: 716, y: 408 };
+export const FIRE_RING = [
+  { x: -34, y: 8 },
+  { x: 33, y: 6 },
+  { x: -19, y: -16 },
+  { x: 24, y: -14 },
+  { x: 2, y: 26 },
+  { x: -38, y: -8 },
+  { x: 40, y: -20 },
+];
 
 /**
  * The track the cut wood comes down, from the edge of the trees to the yards.
@@ -271,6 +369,12 @@ export const FISH_SPOTS = [
   { x: 1128, y: 410 },
   { x: 1070, y: 436 },
   { x: 1010, y: 462 },
+  /* Two more seats on the same line, upstream and down, for a place with more
+     mouths than three rods can feed. Derived from the step between the three
+     above (-59, +26) rather than placed by eye, and hit-tested against the
+     river stroke in the running build. */
+  { x: 1187, y: 384 },
+  { x: 951, y: 488 },
 ];
 
 /**

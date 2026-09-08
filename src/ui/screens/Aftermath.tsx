@@ -6,7 +6,7 @@ import type { Effects, GameState } from '../../engine/types';
 import { DevEffects } from '../components/DevCorner';
 import { DevVerdict } from '../components/DevVerdict';
 import { MovedBoards } from '../components/MovedBoards';
-import { CardFoot } from '../components/Popup';
+import { CARD_BUTTON, CardFoot } from '../components/Popup';
 import { lawNumber } from '../../engine/format';
 import { PersonPortrait } from '../components/PersonPortrait';
 import { TYPE } from '../type';
@@ -238,7 +238,7 @@ export function Aftermath({ state, dev = false, onContinue }: Props) {
         <button
           type="button"
           onClick={onContinue}
-          className="min-h-[48px] w-full rounded-md bg-seal px-5 py-2 text-lg tracking-wide text-parchment active:brightness-110"
+          className={`${CARD_BUTTON} bg-seal text-parchment active:brightness-110`}
         >
           {UI.aftermath.continueButton}
         </button>

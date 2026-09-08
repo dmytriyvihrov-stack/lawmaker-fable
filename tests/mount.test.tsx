@@ -24,6 +24,10 @@ import { GrowthLadder } from '../src/ui/components/GrowthLadder';
 import { DevBar } from '../src/ui/components/DevCorner';
 import { DevDials } from '../src/ui/components/DevDials';
 import { DevVerdict } from '../src/ui/components/DevVerdict';
+import { Primer } from '../src/ui/components/Primer';
+import { DoorNote } from '../src/ui/components/DoorNote';
+import { SmallThingNote } from '../src/ui/components/SmallThingNote';
+import { UI } from '../src/content/ui-strings';
 import { townFolk } from '../src/engine/folk';
 
 /**
@@ -201,6 +205,28 @@ describe('every screen renders', () => {
       expect(panel, state.stage).toContain('souls');
       expect(panel.includes('open it'), state.stage).toBe(state.stage === 'village');
     }
+  });
+
+  /* The three things the game stops to say. Each one is a screen a player is
+     shown exactly once, on a note in `localStorage`, which is the one class of
+     screen nobody ever sees again after their first hour of testing: a primer
+     that throws would ship, and would only ever be found by somebody opening
+     the game for the first time. */
+  it('the three notes the game says once', () => {
+    const primer = draw(<Primer onDone={noop} />);
+    expect(primer).toContain(UI.wiring.heading);
+    expect(primer).toContain(UI.wiring.floor);
+
+    const door = draw(<DoorNote onDone={noop} />);
+    expect(door).toContain(UI.door.heading);
+    for (const line of UI.door.lines) expect(door).toContain(line);
+
+    /* The small one is a tag on the map, so what is checked is that it is
+       drawn and that it cannot be clicked: the thing it is about is a click
+       target on the ground underneath it. */
+    const small = draw(<SmallThingNote left={400} top={300} onShown={noop} />);
+    expect(small).toContain(UI.smallThing.line);
+    expect(small).toContain('pointer-events-none');
   });
 
   it('the thumbs are drawn in dev mode and nowhere else', () => {

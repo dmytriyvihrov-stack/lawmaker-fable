@@ -316,6 +316,18 @@ export const PLOT_NAMES: Record<PlotId, { label: string; line: string }> = {
     label: 'Under the crag',
     line: 'The strip the furrows gave back. Quiet, stony, and a long way from the square.',
   },
+  north_field: {
+    label: 'The north field',
+    line: 'The shoulder above the gate. Everything below it is in sight from up there, and so is whatever is coming.',
+  },
+  mill_end: {
+    label: 'The mill end',
+    line: 'Where the road bends down to the water. Wet in March, and a cart is never more than a minute from it.',
+  },
+  stone_row: {
+    label: 'The stone row',
+    line: 'Between the last furrow and the first roof, on ground too stony to plough and too near to waste.',
+  },
 };
 
 export const PLACE_NAMES: Partial<Record<WorkId, string>> = {

@@ -18,7 +18,7 @@ import { ConsequenceHint } from '../components/ConsequenceHint';
 import { DevEffects } from '../components/DevCorner';
 import { DevEditTrigger, DevText } from '../components/DevText';
 import { DevVerdict } from '../components/DevVerdict';
-import { CardFoot } from '../components/Popup';
+import { CARD_BUTTON, CardFoot } from '../components/Popup';
 import { lawNumber } from '../../engine/format';
 import { useDevEdit } from '../dev/useDevEdit';
 import { PersonPortrait } from '../components/PersonPortrait';
@@ -145,7 +145,7 @@ function WhoStands({
       }`}
     >
       <div className="flex justify-center">
-        <PersonPortrait character={character} size={104} />
+        <PersonPortrait character={character} size={80} />
       </div>
       <div className={`mt-2 ${TYPE.title} leading-tight text-parchment`}>{who.label}</div>
       {/* What they thought of you before you opened your mouth. */}
@@ -159,15 +159,25 @@ function WhoStands({
           <span aria-hidden>{BOND_UI.loverMark}</span> {BOND_UI.loverAtTheDoor}
         </p>
       )}
-      {age !== undefined && age > 0 && (
-        <div className={`${TYPE.label} text-parchment-dim`}>
-          {UI.popup.aged.replace('{n}', String(age))}
-        </div>
-      )}
-      <div className={`mt-2 ${TYPE.note} italic text-hair`}>
-        {before === null
-          ? UI.popup.firstTime
-          : UI.popup.seenBefore.replace('{n}', String(before))}
+      {/* How old they are and when they were last here, on one line.
+         
+          This column is the tallest of the three and it decides the height of
+          the whole card, which is capped, which is why the bench was a card
+          you had to scroll to finish. Two stacked lines of four words each,
+          in a column 142 wide, is three wrapped lines and two margins; the
+          same words with a dot between them are one line and one margin. The
+          portrait came down from 104 to 88 in the same pass. Between them the
+          bench fits inside its own cap with the longest word set open. */}
+      <div className={`mt-1.5 flex flex-wrap items-baseline justify-center gap-x-1.5 ${TYPE.label} text-parchment-dim`}>
+        {age !== undefined && age > 0 && (
+          <span>{UI.popup.aged.replace('{n}', String(age))}</span>
+        )}
+        {age !== undefined && age > 0 && <span aria-hidden className="text-hair">&middot;</span>}
+        <span className="italic normal-case tracking-normal text-hair">
+          {before === null
+            ? UI.popup.firstTime
+            : UI.popup.seenBefore.replace('{n}', String(before))}
+        </span>
       </div>
       {/* Where this is happening, drawn. The mark on the town says the address
           and this says the room, and neither of them is a caption. */}
@@ -238,7 +248,12 @@ export function Case({ state, dev = false, onChoose }: Props) {
 
   return (
     <div className="ruler-case-body p-4">
-    <div className="ruler-case grid gap-4 lg:grid-cols-[142px_minmax(0,1fr)_360px]">
+    {/* Three columns, and the two outer ones are the ones that were making
+        this card scroll. The middle has slack in it - a title and two short
+        paragraphs - while the left was wrapping four words onto three lines in
+        a column of 142 and the right was the word bank. Fourteen pixels off
+        the middle unwraps both of the others. */}
+    <div className="ruler-case grid gap-4 lg:grid-cols-[156px_minmax(0,1fr)_400px]">
       <WhoStands state={state} character={event.character} caseId={event.id} />
 
       {/* what happened */}
@@ -275,7 +290,7 @@ export function Case({ state, dev = false, onChoose }: Props) {
       </section>
 
       {/* what you say */}
-      <section className="min-w-0 rounded-xl border border-ink-line bg-ink/60 p-3.5">
+      <section className="min-w-0 rounded-xl border border-ink-line bg-ink/60 p-3">
         {!grammar ? (
           <>
             <div className="space-y-3">
@@ -312,7 +327,7 @@ export function Case({ state, dev = false, onChoose }: Props) {
             </p>
 
             {/* word bank: what the bench may do */}
-            <div className="mt-2.5 grid grid-cols-2 gap-1.5">
+            <div className="mt-2 grid grid-cols-2 gap-1.5">
               {verbs.map((v) => (
                 <button
                   key={v.id}
@@ -353,7 +368,7 @@ export function Case({ state, dev = false, onChoose }: Props) {
             </div>
 
             {/* what the clerk hears */}
-            <div className="mt-3 min-h-[44px] rounded-lg border border-ink-line bg-ink-soft/70 px-3 py-2">
+            <div className="mt-2.5 min-h-[40px] rounded-lg border border-ink-line bg-ink-soft/70 px-3 py-2">
               {choice ? (
                 <>
                   <p className={`${TYPE.note} leading-snug text-parchment/90`}>
@@ -454,7 +469,7 @@ export function Case({ state, dev = false, onChoose }: Props) {
             type="button"
             disabled={!parsed}
             onClick={() => parsed && onChoose(parsed.choiceId, `"${parsed.sentence}."`)}
-            className="min-h-[48px] w-full rounded-lg bg-bench px-5 py-2 text-[16px] tracking-[0.2em] text-ink disabled:opacity-30"
+            className={`${CARD_BUTTON} bg-bench text-ink`}
           >
             {UI.bench.pronounce}
           </button>

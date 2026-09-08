@@ -156,6 +156,16 @@ export function seasonOf(phase: Phase, turn: number, scene?: Season): Season {
   if (isWinter(turn)) return 'winter';
   // a scene that knows when it happens outranks the phase it happens in
   if (scene) return scene;
+  /* The one year of work that is not autumn.
+     
+     Every other year has a law or a caller in front of it, so by the time the
+     shelf comes round the year is three quarters gone and autumn is what it
+     is. The first year has neither: the founding says five of you walked out
+     in the spring, and the very next screen the player ever sees was headed
+     AUTUMN, YEAR 1, which is half a year the game skipped without saying so.
+     The first thing this place builds is decided in the spring it arrived in,
+     and the year that follows takes the four seasons it should. */
+  if (phase === 'works' && turn <= 1) return 'spring';
   switch (phase) {
     /* Five of you walked out of the old place in the spring, which the opening
        says out loud. The picture is the whole screen now, so a snowfield behind
@@ -704,8 +714,14 @@ export function workSubsidised(s: GameState): boolean {
  * they put up is somewhere to sleep or somewhere to work, and the store holds
  * exactly one of them. Everything else arrives in the second spring along with
  * the seal, and whichever of these two was not picked is on that list.
+ *
+ * And resting is not one of them. The first spring is the one year of the
+ * reign that has no law and no caller in it: taking the only decision out of
+ * it as well leaves a screen that asks nothing, in front of five people
+ * standing in a field they walked to last month. Every other year of the
+ * reign may be slept through; this one is the roof or the cabin.
  */
-export const FIRST_YEAR_WORKS: WorkId[] = ['house', 'woodcutter', 'rest'];
+export const FIRST_YEAR_WORKS: WorkId[] = ['house', 'woodcutter'];
 
 /** The works this place can build at all, in content order. */
 export function worksFor(s: GameState): WorkDef[] {

@@ -293,7 +293,18 @@ export type Pose =
   | 'draw'
   | 'build'
   | 'tend'
-  | 'fish';
+  | 'fish'
+  /* The six a place earns rather than has. A pick is swung at the crag once
+     somebody has cut into it, an arm goes up into the apple trees, a fiddle
+     and an easel arrive with the songs, a pike stands at the gate once there
+     is a watch to stand it, and in the cold everybody who is out at all is
+     out at the fire. */
+  | 'mine'
+  | 'pick'
+  | 'play'
+  | 'paint'
+  | 'guard'
+  | 'warm';
 
 /** A haft, an edge, and everything woven: the whole tool cupboard. */
 const HAFT = '#6b573f';
@@ -317,7 +328,14 @@ export function Worker({
      of a valley. A reaper is folded over the corn, a digger is over the spade,
      a sower walks upright with a hand out, and a fisher does not move at all. */
   const lean =
-    pose === 'reap' ? 30 : pose === 'dig' ? 22 : pose === 'carry' ? 16 : pose === 'tend' ? 13 : 0;
+    pose === 'reap' ? 30
+    : pose === 'dig' ? 22
+    : pose === 'mine' ? 18
+    : pose === 'carry' ? 16
+    : pose === 'tend' ? 13
+    : pose === 'warm' ? 9
+    : pose === 'paint' ? 5
+    : 0;
 
   return (
     <g className={`life-worker life-${pose}`} transform={facing === -1 ? 'scale(-1 1)' : undefined}>
@@ -332,6 +350,29 @@ export function Worker({
         </g>
       )}
       {pose === 'build' && <rect x="2" y="8" width="11" height="2.4" rx="1.2" fill={TIMBER} />}
+      {/* the face of the rock the pick is going into */}
+      {pose === 'mine' && (
+        <g>
+          <path d="M5 10.4 l3.4 -5.6 l5 1.4 l1.2 4.6 z" fill="#8d8377" />
+          <path d="M8.4 4.8 l5 1.4 l-1.6 2.4 z" fill="#a49a8c" />
+        </g>
+      )}
+      {/* the basket the apples go into, standing in the grass */}
+      {pose === 'pick' && (
+        <g>
+          <path d="M4.6 6 h7.4 l-1 4.6 h-5.4 z" fill={STRAW} stroke={HAFT} strokeWidth="0.6" />
+          <path d="M4.6 6 q3.7 -2.6 7.4 0" fill="none" stroke={HAFT} strokeWidth="0.6" />
+          <circle cx="7" cy="7.6" r="1" fill="#c1553f" />
+          <circle cx="9.6" cy="8" r="0.9" fill="#c1553f" />
+        </g>
+      )}
+      {/* three legs and a board, which is the whole of an easel from here */}
+      {pose === 'paint' && (
+        <g stroke={HAFT} strokeWidth="1" strokeLinecap="round" fill="none">
+          <path d="M9 10.6 l1.6 -9 M13.6 10.6 l-2 -9 M10.8 1.6 h2.4" />
+          <rect x="8.6" y="-5.4" width="6.6" height="6.6" rx="0.6" fill="#e6dcc4" stroke={HAFT} strokeWidth="0.7" />
+        </g>
+      )}
       {pose === 'reap' && (
         <g stroke={STRAW} strokeWidth="1" strokeLinecap="round" opacity="0.9">
           <line x1="6" y1="9" x2="12" y2="7.4" />
@@ -419,6 +460,60 @@ export function Worker({
               <line x1="7.6" y1="4.4" x2="8.2" y2="7.2" />
               <line x1="9.2" y1="5" x2="9.8" y2="7.8" />
             </g>
+          </g>
+        )}
+
+        {/* the pick, which is an axe that has given up on wood */}
+        {pose === 'mine' && (
+          <g className="life-tool">
+            <line x1="1" y1="-3" x2="8" y2="3.4" stroke={HAFT} strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M4.6 -1.6 q5 -1 8 3.6" fill="none" stroke={IRON} strokeWidth="1.5" strokeLinecap="round" />
+          </g>
+        )}
+
+        {/* the arm straight up into the branches, and nothing else: what says
+            this is picking and not waving is the tree over the head and the
+            basket at the foot */}
+        {pose === 'pick' && (
+          <g className="life-tool">
+            <line x1="1" y1="-3" x2="5.6" y2="-11.4" stroke={cloth} strokeWidth="1.9" strokeLinecap="round" />
+            <circle cx="6.2" cy="-12.4" r="1.2" fill="#c1553f" />
+          </g>
+        )}
+
+        {/* a fiddle is a body under the chin and a bow across it */}
+        {pose === 'play' && (
+          <g className="life-tool">
+            <path d="M-1.4 -4.6 q3.4 -2.2 5.6 0.6 q-2.6 2.6 -5.6 -0.6z" fill="#a5714a" stroke={HAFT} strokeWidth="0.5" />
+            <line x1="0.4" y1="-1.4" x2="6.6" y2="-6.6" stroke={HAFT} strokeWidth="0.8" strokeLinecap="round" className="city-bow" />
+          </g>
+        )}
+
+        {/* the brush arm, out at the board and back */}
+        {pose === 'paint' && (
+          <g className="life-tool">
+            <line x1="1.6" y1="-2.4" x2="7.4" y2="-3.6" stroke={cloth} strokeWidth="1.8" strokeLinecap="round" className="city-bow" />
+          </g>
+        )}
+
+        {/* the pike stands taller than the man does, and the helmet is the
+            only hard edge on anybody in this valley */}
+        {pose === 'guard' && (
+          <g>
+            <line x1="4.4" y1="9" x2="4.4" y2="-15" stroke={HAFT} strokeWidth="1.1" strokeLinecap="round" />
+            <path d="M4.4 -15 l1.8 3.2 l-1.8 2.4 l-1.8 -2.4z" fill={IRON} />
+            <path d="M-3.6 -7.6 q0 -3.4 3.6 -3.4 q3.6 0 3.6 3.4 z" fill="#9aa0a6" />
+            <path d="M-3.8 -7.6 h7.6 v1.1 h-7.6z" fill="#7f858b" />
+            <path d="M-3.2 -1.4 h6.4 v1.5 h-6.4z" fill="#9aa0a6" opacity=".55" />
+          </g>
+        )}
+
+        {/* both hands out at it, which is the only thing anybody does at a
+            fire and the whole reason to draw one */}
+        {pose === 'warm' && (
+          <g fill="none" stroke={cloth} strokeWidth="1.8" strokeLinecap="round">
+            <path d="M2.6 -1.6 l4.6 -0.6" />
+            <path d="M2.6 1.4 l4.4 0.4" />
           </g>
         )}
 
@@ -535,6 +630,41 @@ export function Worker({
       {(pose === 'chop' || pose === 'build' || pose === 'dig') && <g className="life-chips" pointerEvents="none" fill={pose === 'dig' ? '#998363' : '#dac194'}>
         <path d="M7 7 l2 -1 l1 1 l-2 1Z M12 8 l2 -2 l1 1 l-2 2Z M9 11 l2 -1 l1 1 l-2 1Z" />
       </g>}
+    </g>
+  );
+}
+
+/**
+ * The fire the cold months are spent round.
+ *
+ * A winter in this valley used to be a picture of people sweeping yards, which
+ * is what a place with nothing to do looks like and not what a place in
+ * February looks like. This is the one thing outdoors in the cold worth
+ * standing at: a stack of cut wood, a flame that never holds still, and embers
+ * going up out of it. The people are placed round it by `FIRE_RING` in
+ * `sites.ts`, so the fire and the ring of backs are one fact and not two.
+ */
+export function Bonfire({ paint }: { paint: TownPaint }) {
+  return (
+    <g>
+      <Shade paint={paint} cy={9} rx={20} ry={6} />
+      {/* the light it throws, which is the reason anybody walked over */}
+      <ellipse cy="4" rx="34" ry="14" fill="#f0b25a" opacity=".16" />
+      {/* the stack: two crossed logs and a third leaning on them */}
+      <g stroke={TIMBER_DARK} strokeWidth="3.4" strokeLinecap="round">
+        <line x1="-13" y1="8" x2="11" y2="2" />
+        <line x1="-11" y1="2" x2="13" y2="8" />
+        <line x1="-2" y1="9" x2="1" y2="-4" />
+      </g>
+      <g className="city-flame">
+        <path d="M0 6 q-9 -6 -5 -14 q1 4 3 5 q-2 -8 4 -13 q-1 7 4 10 q2 -3 1.6 -6 q5 7 1.4 14 q-2 3 -9 4z" fill="#e8863a" />
+        <path d="M0 5 q-5 -4 -2.6 -9 q.6 2.4 1.8 3 q-1.2 -5 2.4 -8 q-.6 4.2 2.4 6 q1.2 -1.8 1 -3.6 q3 4.2 .8 8.4 q-1.2 1.8 -5.8 3.2z" fill="#f5c25c" />
+      </g>
+      <g fill="#f0b25a">
+        <circle className="city-ember" cx="-4" cy="-8" r="1.1" />
+        <circle className="city-ember" cx="5" cy="-6" r="0.9" style={{ animationDelay: '1.1s' }} />
+        <circle className="city-ember" cx="1" cy="-11" r="0.8" style={{ animationDelay: '2.2s' }} />
+      </g>
     </g>
   );
 }
@@ -1067,7 +1197,37 @@ export function WatchHouse({ paint, level }: { paint: TownPaint; level: number }
 }
 
 /** Clean water, in the middle of the square. */
+/**
+ * The well, at four levels, and the first of them is the one nobody built.
+ *
+ * This place was stopped at for the water: the founding says so, and the year
+ * of work is called *Line the well*, not dig one. So there is a well here from
+ * the first spring, and what a year buys is a lining, a windlass and a roof.
+ * It used to be drawn only once it had been paid for, which put a scene about
+ * a well that gives four buckets and then mud over a patch of empty grass, and
+ * that is exactly what an unlined well does.
+ *
+ * Level 0 is a hole with a ring of stones round it and a plank across one
+ * side. No posts, no timber rim, nothing anybody carried here.
+ */
 export function Well({ paint, level }: { paint: TownPaint; level: number }) {
+  if (level <= 0) {
+    return (
+      <g>
+        <Shade paint={paint} cy={8} rx={20} ry={6} />
+        <ellipse rx="15" ry="7" fill={paint.waterDeep} stroke="#8a8375" strokeWidth="3.5" className="city-tint" />
+        {/* the stones somebody set round the lip, and the plank to kneel on */}
+        <g fill="#9d968a" stroke={OUTLINE} strokeWidth="0.7">
+          <ellipse cx="-15" cy="-3" rx="4" ry="2.6" />
+          <ellipse cx="-6" cy="-7" rx="3.6" ry="2.4" />
+          <ellipse cx="6" cy="-7" rx="3.4" ry="2.3" />
+          <ellipse cx="15" cy="-2" rx="4" ry="2.6" />
+        </g>
+        <rect x="-13" y="5" width="26" height="4" rx="1.6" fill="#9a7d5c" stroke={OUTLINE} strokeWidth="0.7" />
+        {paint.roofSnow && <ellipse cy="-6" rx="19" ry="3" fill={SNOW} opacity="0.7" />}
+      </g>
+    );
+  }
   return (
     <g>
       <Shade paint={paint} cy={10} rx={24} ry={7} />
@@ -1222,8 +1382,31 @@ export function Fields({
   const turning = breaking && level > 0 ? patches[level - 1] : null;
   const offering = !breaking && level < patches.length && (level > 0 || ghost);
 
+  /**
+   * The corner that was already broken when they got here.
+   *
+   * The year of work is called *Clear another field*, and the founding has
+   * five people voting in one, so there is ground under the plough in this
+   * valley before the reign spends a thing on it. Drawing nothing until the
+   * first field was paid for put every scene that mentions a furrow over open
+   * grass. It is the near end of the first strip and no new ground: clearing
+   * the first field finishes the strip this corner is the start of.
+   */
+  const found = level <= 0 && !breaking ? broken(patches[0], 0.42) : null;
+
   return (
     <g>
+      {found && (
+        <polygon
+          points={found}
+          fill="url(#rows)"
+          stroke={OUTLINE}
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+          opacity="0.9"
+          className="city-tint"
+        />
+      )}
       {patches.map((points, i) => {
         if (i >= done) return null;
         return (

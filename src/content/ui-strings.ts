@@ -16,11 +16,10 @@ export const UI = {
   },
 
   intro: {
-    speaker: 'The Monarch',
     /* The rider and the wax used to be a block of their own above the crown's
        portrait, which is a wrapper round a question that reads the same
        without it. It is half a sentence in front of the question now. */
-    question: 'One question came up the road with the wax. Who is a good ruler?',
+    question: 'Who is a good ruler?',
     /**
      * The one place the game says what it is, and it now says it in four
      * lines instead of six paragraphs.
@@ -36,7 +35,7 @@ export const UI = {
      */
     brief: {
       heading: 'The founding',
-      kicker: 'Spring. Five of you, and nothing written down anywhere.',
+      kicker: 'Spring. Five of you.',
       caption:
         'You walked out of the old place together and stopped here, for the water. On the second night the others voted in a field with their hands up, and the seal is yours.',
       /* Two blocks went out of here. `charge` said "look after them, settle
@@ -46,7 +45,6 @@ export const UI = {
          the question reads the same without the wrapper, so half of it moved
          into the question itself. Eight blocks of text down to six. */
     },
-    footnote: 'Nothing binds you to this answer. It will be remembered anyway.',
     answers: [
       { tag: 'utilitarian' as PhilTag, text: 'One who leaves the most people better off.' },
       { tag: 'egalitarian' as PhilTag, text: 'One who weighs every neck the same.' },
@@ -118,11 +116,10 @@ export const UI = {
   },
 
   works: {
-    heading: 'The year of work',
-    /* Six words on one line under the heading, not a sentence across the top
-       of the card. It is the rule of the screen and it is true every year, so
-       it is said the size a rule is said at and then got out of the way. */
-    prompt: 'One thing, or nothing.',
+    /* The name of the screen and the rule of the screen are the same six
+        words, so it is said once, in the head, and the line that used to sit
+        under it saying "one thing, or nothing" is gone with it. */
+    heading: 'One thing in a year',
     /**
      * A price against the shelf it comes off. "costs 10 from the store" was
      * true and told a player nothing they could act on: ten out of what? The
@@ -134,8 +131,13 @@ export const UI = {
        "10 of 0.8" and "17 of 4.7" went out on every card of every year. What
        is in the store is said once now, over the shelf, and only when nothing
        on it is within reach. */
-    cost: '{n}',
-    free: 'half price: {n}',
+    /* Signed, and in a box of its own. On a work card the store's mark
+       appears twice: once for what the thing pays every year and once for
+       what it takes to build, and both used to be a bare figure next to the
+       same coin. "+1.5" and "6" are not the same kind of number and were the
+       same shape of number. The price is the one with a minus on it. */
+    cost: '-{n}',
+    free: 'half: -{n}',
     costLabel: 'from the store',
     moves: 'What it changes',
     atOnce: 'at once',
@@ -330,7 +332,6 @@ export const UI = {
        effects, and "the subject you pick is the law you write" at the foot of
        the margin. */
     pickPrompt: 'Pick the subject, then what it says. That is the whole law.',
-    pickPromptMany: 'Pick the subject, then what it says. The subject you pick is this year’s law.',
     locked: 'Not on the table today.',
     pickSubjectFirst: 'Pick the subject first, and what it can say follows.',
     seal: 'SEAL IT',
@@ -396,31 +397,88 @@ export const UI = {
    * two sentences. Marks rather than paragraphs: the same marks that are in the
    * header, so the next time they are seen they are already known.
    */
-  /* The one lecture in the game, and it has to fit in the window with the
-     sentence it is standing under and the line that says how to leave. The
-     lead was a whole paragraph to say "here are four dials", which the four
-     lines under it say by being four lines. */
+  /* The one lecture in the game, and it is a screen of its own now, standing
+     before the first year rather than stapled to the bottom of the first
+     seal.
+
+     Where it used to be is the second spring: a player had already spent a
+     whole year choosing between four marks nobody had named, and then read
+     what they meant while a stamp came down over the top of it. Two jobs on
+     one screen and the wrong one first. And each line says what the board
+     DOES rather than what it is, because "sickness decides how many of you
+     are here next spring" is a riddle with the answer left out: people die,
+     strangers stop coming, the store cannot pay. */
   wiring: {
-    heading: 'While the seal is still warm \u00b7 the four dials up there',
+    heading: 'Before the first year',
+    lead: 'Four things are kept in the corner of the screen for the whole of your reign. Nothing else is counted.',
     boards: [
       {
         stat: 'health',
-        line: 'Sickness decides how many of you are here next spring.',
+        title: 'How well people are',
+        line: 'Let it fall and people die over the winter, and the count of you falls with them. Nothing else in the game kills anybody.',
       },
       {
         stat: 'mood',
-        line: 'The square: people come to a place they are glad in and leave one they endure.',
+        title: 'What it is like to live here',
+        line: 'High, and strangers arrive and stay. Low, and the people you already have walk out over the hill.',
       },
       {
         stat: 'economy',
-        line: 'The store is what a year can be built with, and it only holds so much.',
+        title: 'What is in the store',
+        line: 'Every building is paid out of it. It fills a little each year and it only holds so much until you build somewhere to keep more.',
       },
       {
         stat: 'crownSanity',
-        line: 'You. Ruling the way your laws read steadies it; ruling against them does not.',
+        title: 'How steadily you hold it',
+        line: 'Ruling the way your own laws read steadies you. Ruling against them, or opening a sealed law again, does not.',
       },
     ],
-    floor: 'Any of them on the floor for a whole year, and the reign ends there.',
+    floor: 'Let any one of the four sit on the floor for a whole year and the reign ends there. That is the only way to lose.',
+    /* And the shape of a year, because the first screen a player meets is a
+       shelf of eight buildings with nothing on it to say why there is only
+       room for one of them. */
+    yearHeading: 'And a year is one decision',
+    year: 'Some years you write a law. Some years you spend the year putting up one building. Some years somebody is at your door and wants an answer. You never get to do two, and nothing is ever taken back.',
+    go: 'BEGIN THE REIGN',
+  },
+
+  /**
+   * The second thing said once, on the first day somebody is actually at the
+   * door, and not a moment before it.
+   *
+   * The primer above teaches the four boards, which is what a player needs
+   * before they spend a year. It cannot also teach what a dilemma is, because
+   * on the day it is read there has not been one, and a rule about a thing
+   * nobody has seen is a rule nobody keeps. This waits until the first one is
+   * standing there and says the three things a player otherwise works out by
+   * losing: that this pays once and a law pays forever, that nothing warned
+   * them and nothing will, and that the words on the bench are not the same
+   * words for every reign.
+   *
+   * Three lines, because the person is already at the door and the game has
+   * just made them wait through a lecture.
+   */
+  door: {
+    heading: 'Somebody is at the door',
+    lines: [
+      'A law is a rule, and a rule pays out every year you keep it. This is not a law. What you answer here lands once, on the day, and then the day is over.',
+      'Nothing warned you who was coming, and nothing ever will. There is no saving up for the person at the door, only being a place with something in the store when one arrives.',
+      'The laws you have sealed are on the bench with you. Each one hands you a word nobody without it gets, marked with an L, and each one makes the plain words dearer when your answer goes against your own writing.',
+    ],
+    go: 'HEAR THEM OUT',
+  },
+
+  /**
+   * And the one small thing, named the first time one is out there.
+   *
+   * It is a tag on the map beside the thing itself and not a card, for the
+   * reason written at the top of `content/moments.ts`: a paragraph floating on
+   * the meadow made the smallest thing in the game the loudest thing on the
+   * screen. Two short lines, over the spot, gone when the thing is taken.
+   */
+  smallThing: {
+    heading: 'You can stop for this',
+    line: 'It costs the year nothing, and one board goes up a point. Leave it and the year turns and it is gone.',
   },
 
   advisor: {
@@ -522,6 +580,20 @@ export const UI = {
     replaced: 'replaced',
     repealed: 'repealed',
     exceptionLine: 'broken for {who}, year {turn}',
+    /**
+     * What the law is doing to the place right now, which is the one thing a
+     * book of laws is for and the one thing it did not say.
+     *
+     * It used to list what had happened under each law instead: the four
+     * people who came to the door because of it, by name and year. That is
+     * the register's job and the chronicle's, and reading it here answered a
+     * question nobody opens the Codex with. What a reader wants off this page
+     * is what they are still paying for a sentence they wrote nine years ago.
+     */
+    paysHeading: 'What it does, every year',
+    paysNothing: 'Nothing the place can feel, at this size.',
+    /** A law that no longer stands does nothing at all, and says so. */
+    paysGone: 'Nothing. It no longer stands.',
   },
 
   /** Every face that has stood in front of you, and what you did about it. */
@@ -645,9 +717,12 @@ export const UI = {
     firstTime: 'first time here',
     seenBefore: 'here before, in year {n}',
     aged: 'aged {n}',
-    draftingTable: 'The drafting table',
+    /* What you are here to do, not the furniture you are doing it at. It is
+        the whole head of the card now: the line under it said "pick the
+        subject, then what it says", which is what the two rows of tiles
+        directly beneath it are visibly for. */
+    draftingTable: 'Create the law',
     inTheMargin: 'In the margin',
-    lawWillRead: 'The law will read',
     yourRulingReads: 'Your ruling reads',
     whatItDoes: 'And so',
     /** The line the card puts under a season, so the year reads in one place. */
@@ -690,6 +765,29 @@ export const UI = {
       ask: 'Costs the year. May bring nothing.',
       send: 'Costs the year and {n} from the store. The crown sits easier.',
       raid: 'Costs the year and {n} of the crown, won or lost.',
+    },
+    /**
+     * And what it does to everybody who is watching, which is the half of a
+     * foreign policy that was not on the screen.
+     *
+     * The three buttons said what the year and the store would pay and stopped
+     * there, while the engine quietly moved a stance on the place you acted on
+     * and, for the watch, on every other crown as well. Word travels: that is
+     * the rule, and it was invisible. The numbers are filled from `CONFIG`, so
+     * a line here cannot go stale against the thing it describes.
+     */
+    stanceHeading: 'And afterwards',
+    effects: {
+      ask: 'If they say yes, they are owed one: {n} warmer toward you.',
+      send: 'They warm to you by {n}. Nobody else is watching this closely.',
+      raid: 'They turn against you by {n}, and every other crown by {o}. Word travels.',
+    },
+    /** The three words a stance is read as at a glance, over the country. */
+    stanceMark: { friendly: '🤝', civil: '🕊', hostile: '⚔' },
+    /** What is on the roads this year, which is not always your doing. */
+    traffic: {
+      asking: 'A rider is coming with their asking',
+      raiding: 'Armed men, and they can afford to come',
     },
     notNow: 'Next autumn, in the year of work',
     cannot: {

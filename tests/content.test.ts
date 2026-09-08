@@ -29,6 +29,7 @@ import type {
   CaseChoice,
   CityFlag,
   Condition,
+  WorkId,
   Effects,
   IvaStep,
   LawOption,
@@ -643,6 +644,59 @@ describe('content validator', () => {
       expect(STAT_IDS, m.id).toContain(m.touches);
       const knobs = Object.values(m.trait).filter((v) => v !== undefined);
       expect(knobs.length, `${m.id} has no mechanical trait`).toBeGreaterThan(0);
+    }
+  });
+
+  /**
+   * 36. Nothing at the door is about a building this place has not raised.
+   *
+   * Not every noun: a valley has a way in, a fence round a yard, a track out
+   * and the corner of ground the five of them were found voting in, and the
+   * picture draws the well and that corner from the first spring for exactly
+   * that reason. What it does not have is the six that are somebody's year of
+   * work and nothing else, each of them a silhouette on the map that is either
+   * standing there or is not. A scene that opens on a granary in a place with
+   * no granary is the game contradicting its own picture, and it has done it
+   * four times: a trial that sent a man to work at one, two songs judged in a
+   * hall, and a plague named after a long room.
+   *
+   * The one exemption is written down rather than pattern-matched, because
+   * every way of spotting it automatically also hides a real one.
+   */
+  it('36. no scene names a building the place may not have built', () => {
+    const NAMED: [WorkId, RegExp][] = [
+      ['granary', /the granary/i],
+      ['long_room', /long room/i],
+      ['hall', /the hall/i],
+      ['mine', /the (mine|adit|shaft)/i],
+      ['bridge', /the bridge/i],
+      ['watch_house', /the watch[ -]house/i],
+    ];
+    /** Somebody else's hall, three valleys away, which this place never built. */
+    const ELSEWHERE: Record<string, RegExp> = { wv_hearth: /hall of the lord/i };
+
+    const gatedOn = (cond: Condition | null | undefined, work: WorkId): boolean => {
+      if (!cond) return false;
+      if (cond.kind === 'built') return cond.work === work;
+      if (cond.kind === 'all' || cond.kind === 'any') return cond.conds.some((c) => gatedOn(c, work));
+      return false;
+    };
+
+    for (const event of CASES) {
+      const said = [
+        event.title,
+        event.question ?? '',
+        ...(event.scene ?? []),
+        ...event.choices.map((c) => c.text),
+      ].join(' ');
+      const spoken = ELSEWHERE[event.id] ? said.replace(ELSEWHERE[event.id], '') : said;
+      for (const [work, names] of NAMED) {
+        if (!names.test(spoken)) continue;
+        expect(
+          gatedOn(event.trigger, work),
+          `${event.id} names ${work} and does not wait for one to be built`,
+        ).toBe(true);
+      }
     }
   });
 

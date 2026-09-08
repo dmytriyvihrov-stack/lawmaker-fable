@@ -113,4 +113,19 @@ export const BOND_UI = {
   loverAtTheDoor: 'This is the one you took. Whatever you say now, you say to them.',
   /** And on each answer, so the cost is legible before it is paid. */
   loverChoice: 'lands on somebody you love',
+  /**
+   * The visit. The only thing on this page that is not bought and does not
+   * cost the place anything at all: they walk up to the house, and the rest of
+   * the year is easier to be in.
+   */
+  kissLabel: 'Ask them up',
+  kissMark: '💋',
+  kissLine: 'Costs nothing. They come up to the house, and the year is easier. Not again for two years.',
+  kissWait: 'Not again until year {n}.',
+  kissNotYours: 'Only the one you took.',
+  /** What the ledger calls the afternoon. */
+  kissLedger: 'An afternoon with somebody',
+  /** The moment itself, when the two of them are actually in the room. */
+  kissHeading: 'They came up to the house',
+  kissAside: 'Nothing was decided. The seal sat on the table the whole afternoon and nobody looked at it.',
 };

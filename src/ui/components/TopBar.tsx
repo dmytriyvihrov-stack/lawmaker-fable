@@ -2,7 +2,7 @@ import { moodFace, STATS } from '../../content/meta';
 import { readingFor } from '../../content/town-readings';
 import { UI } from '../../content/ui-strings';
 import { CONFIG } from '../../engine/config';
-import { movePoints, movePointsWhole, points } from '../../engine/format';
+import { boardPoints, movePoints, movePointsWhole } from '../../engine/format';
 import {
   activeStats,
   isWinter,
@@ -173,7 +173,7 @@ function Gauge({
           <p className="mt-1.5 text-[12px] leading-snug text-parchment/90">{reading}</p>
         ) : (
           <p className="mt-1.5 text-[12px] tabular-nums text-parchment/90">
-            {points(value)} / {Math.round(ceiling)}
+            {boardPoints(stat, value)} / {Math.round(ceiling)}
           </p>
         )}
         <div className="mt-2 border-t border-ink-line pt-1.5 text-[10px] uppercase tracking-[0.15em] text-parchment-dim">

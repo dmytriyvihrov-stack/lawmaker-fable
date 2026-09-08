@@ -8,6 +8,20 @@ import { FoundingPortrait } from '../components/PersonPortrait';
 import { useDevEdit } from '../dev/useDevEdit';
 import { TYPE } from '../type';
 
+/**
+ * The first sentence of a line, and no more.
+ *
+ * A monarch's line is two sentences: what they do, and what it does to the
+ * place. Both are true and both are worth reading, and the founding is the one
+ * screen where neither has happened yet, so it takes the half that introduces
+ * the person. The whole of it is under the pointer on the crown's own panel,
+ * which is on the screen every year of the reign after this one.
+ */
+function firstSentence(line: string): string {
+  const at = line.indexOf('. ');
+  return at === -1 ? line : line.slice(0, at + 1);
+}
+
 interface Props {
   seed: number;
   dev?: boolean;
@@ -86,7 +100,6 @@ export function Intro({ seed, dev = false, onDeclare }: Props) {
             <MonarchPortrait monarch={monarch} mood={72} size={132} />
           </div>
           <div className="min-w-0 flex-1">
-            <div className={`${TYPE.label} text-parchment-dim`}>{UI.intro.speaker}</div>
             <div className={`${TYPE.display} leading-tight text-parchment`}>{monarch.name}</div>
             {/* What she is, which is the one thing about her that will bend
                 the reign. The rider with the wax used to stand above it in a
@@ -94,7 +107,7 @@ export function Intro({ seed, dev = false, onDeclare }: Props) {
                 question now, where the question is. */}
             <p className={`mt-3 ${TYPE.body} leading-relaxed text-parchment-dim`}>
               <span className="text-seal">{monarch.traitName}. </span>
-              <DevText id={`monarch:${monarch.id}:traitLine`} text={monarch.traitLine} dev={dev} />
+              <DevText id={`monarch:${monarch.id}:traitLine`} text={firstSentence(monarch.traitLine)} dev={dev} />
             </p>
           </div>
         </div>
@@ -115,10 +128,6 @@ export function Intro({ seed, dev = false, onDeclare }: Props) {
           />
         ))}
       </div>
-
-      <p className={`mt-4 text-center ${TYPE.note} leading-relaxed text-parchment-dim`}>
-        <DevText id="intro:footnote" text={UI.intro.footnote} dev={dev} />
-      </p>
     </div>
   );
 }

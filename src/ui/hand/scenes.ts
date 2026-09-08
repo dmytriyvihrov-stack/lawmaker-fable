@@ -355,11 +355,21 @@ function tamScene(): Scene {
       P.loafCart = makeFig(root, { pose: 'mgLoaf', x: 470, y: 264, r: 7 });
       // the spade, stuck in the ground next to him
       el('use', { href: '#mgSpade', x: 588, y: 270 }, root);
-      // the four who dig, in the near corner of the field
-      F.d1 = makeFig(root, { pose: 'mgDig', x: 478, y: 322, color: '#4d6647', flip: true });
-      F.d2 = makeFig(root, { pose: 'mgDig', x: 512, y: 334, color: '#6f6a60' });
-      F.d3 = makeFig(root, { pose: 'mgDig', x: 538, y: 318, color: '#8a7059', flip: true });
-      F.d4 = makeFig(root, { pose: 'mgDig', x: 552, y: 346, color: '#4d6647' });
+      /* The four who dig, in the near corner of the field, and they have to
+         be IN THE PICTURE.
+
+         The card comes up from the bottom of the window and the camera puts
+         the spot at 28 percent of the box, so everything in a scene more than
+         about sixty map units below its own spot is behind the card. These
+         four sat between sixty and eighty-eight below Tam, which is to say
+         all four of them were drawn, every time, underneath the paper. The
+         card says "every other pair is looking at you" over a picture of one
+         man on a fence with nobody in it. Same arrangement, same ground, half
+         the depth. */
+      F.d1 = makeFig(root, { pose: 'mgDig', x: 478, y: 292, color: '#4d6647', flip: true });
+      F.d2 = makeFig(root, { pose: 'mgDig', x: 512, y: 298, color: '#6f6a60' });
+      F.d3 = makeFig(root, { pose: 'mgDig', x: 538, y: 288, color: '#8a7059', flip: true });
+      F.d4 = makeFig(root, { pose: 'mgDig', x: 552, y: 304, color: '#4d6647' });
       // Tam, on the near side of the fence, hand on his back
       F.tam = makeFig(root, { pose: 'mgSitBack', x: 604, y: 264, color: '#4d6647', r: 12 });
       // his share, in his own hand: the halves appear where it was
@@ -405,7 +415,7 @@ function tamScene(): Scene {
             return;
           }
           P.half.show(false);
-          F.tam.setPose('mgDig').set(566, 306);
+          F.tam.setPose('mgDig').set(566, 296);
           diggers('dig');
         },
       },
@@ -416,7 +426,7 @@ function tamScene(): Scene {
         freed: stands,
         step() {
           P.loaf.show(false);
-          F.tam.setPose('mgDig').set(574, 310).setFlip(true);
+          F.tam.setPose('mgDig').set(574, 300).setFlip(true);
           diggers('dig');
         },
       },
@@ -428,7 +438,7 @@ function tamScene(): Scene {
         freed: stands,
         step() {
           P.loaf.show(false);
-          F.tam.setPose('mgDig').set(574, 310).setFlip(true);
+          F.tam.setPose('mgDig').set(574, 300).setFlip(true);
         },
       },
       headman_decides: {

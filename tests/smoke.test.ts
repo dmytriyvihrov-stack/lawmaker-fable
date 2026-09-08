@@ -32,9 +32,10 @@ describe('smoke', () => {
 
   it('a hamlet is offered hamlet work, a town is offered town work', () => {
     const s = newGame(1);
-    // The first spring is a choice of two and nothing else; the list proper
+    // The first spring is a choice of two and nothing else, resting included:
+    // it is the one year with no law and no caller in it. The list proper
     // opens in the second, along with the seal.
-    expect(worksFor(s).map((w) => w.id).sort()).toEqual(['house', 'rest', 'woodcutter']);
+    expect(worksFor(s).map((w) => w.id).sort()).toEqual(['house', 'woodcutter']);
     s.turn = 2;
     const village = worksFor(s).map((w) => w.id);
     expect(village).toContain('fields');

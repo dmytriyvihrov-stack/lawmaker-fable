@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { SUBJECT_WORDS, buildLabel, predicateFor } from '../../content/law-words';
 import { ACTIONS, SUBJECTS } from '../../content/meta';
 import { PersonPortrait } from '../components/PersonPortrait';
-import { CardFoot, PopupHead } from '../components/Popup';
+import { CARD_BUTTON, CardFoot, PopupHead } from '../components/Popup';
 import { UI } from '../../content/ui-strings';
 import { getProposal } from '../../engine/registry';
 import { openProposals } from '../../engine/reducer';
@@ -99,15 +99,15 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
 
   return (
     <>
-      {/* The rule of the screen, in the head, once. It used to be said twice:
-          "Pick what the law is about, then what it says" under the effects, and
-          "More than one law is open this year. The subject you pick is the law
-          you write" at the foot of the margin. One sentence covers both. */}
+      {/* One line, and only one. The second said "pick the subject, then
+          what it says", which is what a blank sentence with the words to fill
+          it in sitting directly underneath already says, and in the years
+          when more than one law was open it said it at greater length. The
+          head of a card is for what this is and when it is happening. */}
       <PopupHead
         kicker={`${UI.popup.draftingTable} · ${UI.popup.ofYear
           .replace('{season}', UI.seasons[season])
           .replace('{n}', String(state.turn))}`}
-        note={proposals.length > 1 ? UI.composer.pickPromptMany : UI.composer.pickPrompt}
       />
       <div className="p-4">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_336px]">
@@ -115,11 +115,13 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
             actually made of, so it gets the width and the matter that raised
             it stands in the margin beside it rather than in front of it. */}
         <section className="min-w-0 rounded-xl border border-ink-line bg-ink/60 p-4">
-          <div className={`${TYPE.label} text-parchment-dim`}>{UI.popup.lawWillRead}</div>
-          {/* The document, at the size a sentence is read at. It was `display`,
-              26px, which took three lines the moment both halves were picked
-              and pushed the wax off the bottom of the window. */}
-          <p className={`mt-2 ${TYPE.title} leading-snug`}>
+          {/* No label over it. A blank sentence in a bordered box on a card
+              headed "create the law", with the words to fill it in directly
+              underneath, is not a thing anybody mistook for something else.
+              At the size a sentence is read at: it was `display`, 26px, which
+              took three lines the moment both halves were picked and pushed
+              the wax off the bottom of the window. */}
+          <p className={`${TYPE.title} leading-snug`}>
             <span className={subject ? 'text-parchment' : 'text-hair'}>
               {subject ? SUBJECT_WORDS[subject] : UI.composer.blankSubject}{' '}
             </span>
@@ -275,7 +277,7 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
           type="button"
           disabled={!picked || label === null}
           onClick={() => picked && label !== null && onSeal(picked.p.id, picked.i, label)}
-          className={`min-h-[48px] w-full rounded-lg bg-seal px-5 py-2 text-[17px] tracking-[0.2em] text-parchment disabled:opacity-30`}
+          className={`${CARD_BUTTON} bg-seal text-parchment`}
         >
           {UI.composer.seal}
         </button>

@@ -1,7 +1,4 @@
-import { useEffect, useState } from 'react';
-import { STATS } from '../../content/meta';
 import { UI } from '../../content/ui-strings';
-import { hasSeenWiring, markWiringSeen } from '../../engine/save';
 import { lawNumber } from '../../engine/format';
 import type { GameState, LawId } from '../../engine/types';
 
@@ -18,20 +15,14 @@ interface Props {
  * outcome, it is a sentence that is now true.
  */
 export function SealMoment({ state, onDone }: Props) {
-  /* The one moment the game explains itself, and a screen that explains
-     itself cannot also take itself away after four seconds. It used to live
-     on the aftermath card, which a sealed law never reaches, so nobody ever
-     saw it; then it tied to "the first law of this save", so nobody already
-     past their first law ever saw it either. It is a fact about the device,
-     not the reign: shown once, on whichever law is standing here the first
-     time this browser sees this screen, and never again after that. */
-  const [teaching] = useState(() => !hasSeenWiring());
+  /* Nothing is taught here any more. The four boards used to be explained on
+     the bottom of this screen, which meant the one moment the game explained
+     itself was also the moment it was stamping a law, and it was the second
+     spring: a whole year had already been spent. That block is now its own
+     screen before the first year (`Primer`), on the same once-per-browser
+     note in `save.ts`. This is a seal coming down, and only that.
 
-  useEffect(() => {
-    if (teaching) markWiringSeen();
-  }, [teaching]);
-
-  /* No timer. The first law waited for a click and every law after it took
+     No timer. The first law waited for a click and every law after it took
      itself away after four and a half seconds, so the one screen in the game
      that says "click anywhere to carry on" said it once and then stopped
      saying it, and a reader who had learned to wait was interrupted instead.
@@ -50,7 +41,7 @@ export function SealMoment({ state, onDone }: Props) {
     >
       <div className="stamp-flash pointer-events-none fixed inset-0 bg-parchment" />
 
-      <div className={`stamp-seal fixed left-1/2 ${teaching ? 'top-[24%]' : 'top-[38%]'}`}>
+      <div className="stamp-seal fixed left-1/2 top-[38%]">
         <svg viewBox="0 0 120 120" className="h-32 w-32 opacity-90" aria-hidden>
           <circle cx="60" cy="60" r="52" fill="var(--color-seal)" />
           <circle
@@ -70,14 +61,7 @@ export function SealMoment({ state, onDone }: Props) {
         </svg>
       </div>
 
-      {/* The lecture is four lines taller than the sentence it stands under,
-          so on its one showing the whole block starts higher up and the stamp
-          moves up out of its way. */}
-      <div
-        className={`drift-in relative mb-6 w-full max-w-md text-left ${
-          teaching ? 'mt-[32vh]' : 'mt-[46vh]'
-        }`}
-      >
+      <div className="drift-in relative mb-6 mt-[46vh] w-full max-w-md text-left">
         {/* Its number, and then the sentence. The number is what the rest of
             the reign will call it, and the ceremony line underneath now says
             "it" rather than quoting the whole thing a second time. */}
@@ -101,38 +85,9 @@ export function SealMoment({ state, onDone }: Props) {
           </div>
         )}
 
-        {/* Once, on the first law: the four dials, in the marks they are drawn
-            with up in the header, and the one rule about the floor. */}
-        {teaching && (
-          <div className="mt-4 rounded-md border border-seal/50 bg-seal/10 p-3">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-seal">
-              {UI.wiring.heading}
-            </div>
-            <ul className="mt-2 space-y-1.5">
-              {UI.wiring.boards.map((board) => {
-                const meta = STATS.find((s) => s.id === board.stat);
-                return (
-                  <li key={board.stat} className="flex items-baseline gap-2.5">
-                    <span aria-hidden className="w-5 shrink-0 text-[15px] leading-none">
-                      {meta?.emoji}
-                    </span>
-                    <span className="sr-only">{meta?.label}</span>
-                    <span className="text-[13px] leading-relaxed text-parchment/90">
-                      {board.line}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-            <p className="mt-2.5 border-t border-seal/40 pt-2 text-[13px] leading-relaxed text-bad">
-              {UI.wiring.floor}
-            </p>
-          </div>
-        )}
-
-        {/* Always in the window, whatever is above it. The lecture is the one
-            thing here tall enough to push the way out below the bottom edge,
-            and a screen that explains itself cannot also hide its own door. */}
+        {/* Always in the window, whatever is above it. An aftermath of four
+            paragraphs is enough to push the way out below the bottom edge,
+            and a screen with no other exit cannot hide its own door. */}
         <p className="sticky bottom-0 mt-3 border-t border-ink-line bg-ink py-2 text-[11px] uppercase tracking-[0.15em] text-parchment-dim">
           {UI.winter.dismiss}
         </p>

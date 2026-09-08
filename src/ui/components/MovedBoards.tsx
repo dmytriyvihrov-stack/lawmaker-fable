@@ -101,6 +101,19 @@ export function MovedBoards({ once, every, souls, place, emptyLine, bare, row, n
   const nowRows = rows(once);
   const yearRows = rows(every);
 
+  /**
+   * How wide the number is allowed to be.
+   *
+   * Down a column the values are stacked and want a common width, or the
+   * marks that say when each one lands come out ragged. Along a row they are
+   * side by side and a common width is dead air: "lifts a little" is fourteen
+   * characters and the box was twenty-eight, so the mark that says *every
+   * year* sat most of an inch to the right of the board it belonged to, and
+   * a card with two feelings on it needed two lines to say what fits on one.
+   * A row sizes to its own words.
+   */
+  const widthFor = (wide: boolean): string => (row ? '' : wide ? 'w-28' : 'w-8');
+
   /** Whether the place is big enough to have this board at all yet. */
   const felt = (id: StatId): boolean => place === undefined || isActiveStat(place, id);
 
@@ -140,11 +153,11 @@ export function MovedBoards({ once, every, souls, place, emptyLine, bare, row, n
   }) => (
     /* One group, left-aligned, mark next to the number it marks. `justify-between`
        used to split this across the full width of the row, so on anything wider
-       than the rail — a card in the year of work, easily four times as wide —
+       than the rail - a card in the year of work, easily four times as wide -
        the "when" mark drifted most of a foot away from the number it was
        marking, joined to it by nothing but a straight line a reader had to
        draw themselves. */
-    <li className={`flex items-baseline gap-2 text-[12px] ${dim ? 'opacity-55' : ''}`}>
+    <li className={`flex items-baseline gap-1.5 text-[12px] ${dim ? 'opacity-55' : ''}`}>
       <span aria-hidden title={label} className="w-4 shrink-0 cursor-help">
         {emoji}
       </span>
@@ -170,7 +183,7 @@ export function MovedBoards({ once, every, souls, place, emptyLine, bare, row, n
           label={row.label}
           value={amount(row.id, row.delta, numeric, plain).text}
           tone={row.delta > 0 ? 'text-good' : 'text-bad'}
-          width={amount(row.id, row.delta, numeric, plain).wide ? 'w-28' : 'w-8'}
+          width={widthFor(amount(row.id, row.delta, numeric, plain).wide)}
           dim={!felt(row.id)}
           when={plain ? undefined : felt(row.id) ? UI.seal.onceIcon : UI.seal.whenTownIcon}
           whenLabel={plain ? undefined : felt(row.id) ? UI.seal.once : UI.seal.whenTown}
@@ -183,7 +196,7 @@ export function MovedBoards({ once, every, souls, place, emptyLine, bare, row, n
           label={row.label}
           value={amount(row.id, row.delta, numeric, plain).text}
           tone={row.delta > 0 ? 'text-good' : 'text-bad'}
-          width={amount(row.id, row.delta, numeric, plain).wide ? 'w-28' : 'w-8'}
+          width={widthFor(amount(row.id, row.delta, numeric, plain).wide)}
           dim={!felt(row.id)}
           when={bare ? undefined : felt(row.id) ? UI.seal.everyYearIcon : UI.seal.whenTownIcon}
           whenLabel={bare ? undefined : felt(row.id) ? UI.seal.everyYear : UI.seal.whenTown}
@@ -195,7 +208,7 @@ export function MovedBoards({ once, every, souls, place, emptyLine, bare, row, n
           label={UI.caseScreen.souls}
           value={`${signed(souls)}%`}
           tone={souls > 0 ? 'text-good' : 'text-bad'}
-          width="w-8"
+          width={widthFor(false)}
           when={plain ? undefined : UI.seal.onceIcon}
           whenLabel={plain ? undefined : UI.seal.once}
         />
@@ -207,7 +220,7 @@ export function MovedBoards({ once, every, souls, place, emptyLine, bare, row, n
 /**
  * Which boards an answer touches, with no number, no direction and nothing to
  * click. A dilemma keeps the weight of what it moves a secret until the
- * aftermath — which way it moves is part of that secret, not a preview of it.
+ * aftermath - which way it moves is part of that secret, not a preview of it.
  * A player weighing two answers can see that one leans on health and the
  * other on the store without being told which way or by how much.
  */

@@ -1408,7 +1408,7 @@ export const CASES: CaseEvent[] = [
     },
     priority: 0,
     character: 'healer',
-    title: 'The Long Room Is Full',
+    title: 'The Sick Have Run Out of Floor',
     question: 'The sick have run out of floor, and the well is downhill of the graves.',
     scene: [
       'The Healer has stopped writing names. She says the cough moves faster than the cart, and asks for the one thing she has never asked for: authority.',
@@ -1866,7 +1866,7 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'hall_judges',
-        text: 'The hall sits, and judges, and finds neither of them worthy.',
+        text: 'It goes to a hearing, and the hearing finds neither of them worthy.',
         result:
           'The hall sits on the Thursday, considers a tragedy and nine worms at some length, and awards the purse to neither, in writing, and pins the writing to the door. The purse goes back in the box for a better year. The worm man reads the writing to his crowd in a funny voice and the players do not come out at all.',
         tags: ['meritocratic'],
@@ -1914,7 +1914,7 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'judged_worthy',
-        text: 'The hall judges it, and it is worthy, and your worst year goes into the book.',
+        text: 'It goes to a hearing, it is judged worthy, and your worst year goes into the book.',
         result:
           'The hall enters the ballad in the book of worthy things, with your name in it twice, and the clerk asks how to spell the well. Nobody is paid a copper. The square works out inside a week that the book is now the place its own bad winter is kept, and reads it.',
         tags: ['meritocratic'],
@@ -2870,7 +2870,7 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'no_verdict',
-        text: 'No verdict. He works the loss off at the granary, in the open.',
+        text: 'No verdict. He works the loss off in the open, where it can be counted.',
         result:
           'He carries sacks for a month with everybody watching, and by the second week people have started talking to him while he does it. Whether he opened the door is a question the place agrees to stop asking, and it stays agreed, mostly.',
         tags: ['communitarian'],

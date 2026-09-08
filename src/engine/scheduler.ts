@@ -32,11 +32,24 @@ function lastSeen(s: GameState, id: string): number {
  */
 export function pickEvent(
   draft: GameState,
-  opts: { lawAllowed?: boolean } = {},
+  opts: { lawAllowed?: boolean; heavyAllowed?: boolean } = {},
 ): CurrentEvent | null {
   const lawAllowed = opts.lawAllowed !== false;
+  /**
+   * Whether this slot may be filled by something hard.
+   *
+   * A year holds two people, and a player asked that it never hold two hard
+   * ones: the year of work is the beat between the difficult things, and with
+   * a second crisis stacked behind the first the beat never lands. The heavy
+   * scenes are the two branches below - a promise the reign already made, and
+   * anything the scheduler files at or under the urgent line - so a slot that
+   * has spent its one heavy scene simply does not read them. What it can still
+   * have is a caller, which is the half of this game that was written to be
+   * enjoyed.
+   */
+  const heavyAllowed = opts.heavyAllowed !== false;
   // 1. PENDING
-  const due = draft.pending.filter((p) => p.onTurn <= draft.turn);
+  const due = heavyAllowed ? draft.pending.filter((p) => p.onTurn <= draft.turn) : [];
   if (due.length > 0) {
     let best = due[0];
     for (const p of due) {
@@ -50,7 +63,7 @@ export function pickEvent(
   const cases = allCases();
   let urgentId: string | null = null;
   let urgentPrio = Number.POSITIVE_INFINITY;
-  for (const c of cases) {
+  for (const c of heavyAllowed ? cases : []) {
     if (c.trigger === null) continue;
     if (c.priority > CONFIG.urgentPriority) continue;
     if (draft.shownCases.includes(c.id)) continue;

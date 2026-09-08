@@ -101,6 +101,15 @@ export interface Bond {
   giftTurn?: number;
   /** The year it stopped being a good opinion of you. */
   loverSince?: number;
+  /**
+   * TODO(architect): `kissTurn` is needed because the one you took can come
+   * and see you, once every other year, and the visit has to remember when it
+   * last happened. `giftTurn` is the gift's clock and cannot be shared: a
+   * lawmaker who spent one on the other would be choosing between a present
+   * and an afternoon, which is not the choice being modelled. Optional and
+   * additive, so every save written before it reads as never having had one.
+   */
+  kissTurn?: number;
 }
 
 /**
@@ -116,7 +125,18 @@ export type PlotId =
   | 'cart_ground'
   | 'square_west'
   | 'well_side'
-  | 'west_strip';
+  | 'west_strip'
+  /**
+   * TODO(architect): the last three are needed because six pieces of ground
+   * and five things that can stand on one is not a decision, it is a queue.
+   * They open with the charter: a town has cleared and walked more of the
+   * valley than a hamlet has, and `plotsFor()` in `plots.ts` is what holds
+   * that true. Additive only, so every save written before them reads the
+   * same and every reign that never charters never sees one.
+   */
+  | 'north_field'
+  | 'mill_end'
+  | 'stone_row';
 
 export type IvaStep = 'met' | 'helped' | 'wronged' | 'advocate';
 export type Phase =

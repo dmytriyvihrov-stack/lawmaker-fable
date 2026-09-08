@@ -9,6 +9,8 @@ export const JOURNEY = {
     fields: 'Tending the field',
     wood: 'Helping with the timber',
   },
+  /** The one line in the game that is a button and moves no board. */
+  doingSwitch: 'Go and do something else: {next}',
   heading: 'A word on the road',
   more: 'The rest of it',
   approaching: 'Someone is coming to find you',

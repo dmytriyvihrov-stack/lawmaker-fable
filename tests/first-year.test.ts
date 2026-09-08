@@ -32,8 +32,11 @@ describe('the first year', () => {
     expect(open, 'no roof on offer').toContain('house');
     expect(open, 'no cabin on offer').toContain('woodcutter');
     // and nothing else: a granary is not a thing five people decide about in
-    // the first spring
-    expect(open.filter((id) => id !== 'rest').sort()).toEqual(['house', 'woodcutter']);
+    // the first spring, and neither is going back to bed. The first year is
+    // the one with no law and no caller in it, so the shelf is the whole of
+    // the decision and resting would empty the screen.
+    expect(open.sort()).toEqual(['house', 'woodcutter']);
+    expect(open, 'the first year can be slept through').not.toContain('rest');
     // the store holds one building and not two, so the first year is a choice
     // of exactly one of them and the other waits for a better year
     const price = (id: string) => WORKS.find((w) => w.id === id)!.cost;

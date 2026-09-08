@@ -23,7 +23,7 @@ export const CONFIG = {
      nothing to spend it on. A first roof is a week of five people and a
      first year should not be a hole, so the shelf starts fuller and the two
      things that year can buy are priced at what they actually are. */
-  start: { crownSanity: 66, health: 18, economy: 14, mood: 50, army: 18, culture: 8 },
+  start: { crownSanity: 66, health: 18, economy: 16, mood: 50, army: 18, culture: 8 },
 
   /**
    * The store is the one board that is a store. The others are how the place
@@ -121,6 +121,21 @@ export const CONFIG = {
   year: {
     lawEvery: 2,          // a decree at most this often, in years
     dilemmasPerYear: 2,   // at most this many people in front of you a year
+    /**
+     * And at most this many of them may be a hard one.
+     *
+     * A player asked for no more than one dilemma a year, so that the heavy
+     * answers are diluted by the monotony of building. Taken literally, as
+     * one scene a year, twelve played reigns said what that costs: the warm
+     * half of the game stopped happening altogether (14.9 scenes a reign down
+     * to 1.3), two cases became unreachable, `comfortable` lost eleven years
+     * of reign, and `best` stopped running out of laws and started dying of
+     * an empty store in eight reigns of twelve, because the cases are what
+     * feeds it. So the cap is on the hard ones and not on the year: the first
+     * person at the door may be a crisis, the second may only be a caller,
+     * and the year of work still sits between them.
+     */
+    heavyPerYear: 1,
     /**
      * And how long one of the scenes that come round stays away before it can
      * be asked again. Four of those against two slots a year gives roughly two
@@ -291,7 +306,14 @@ export const CONFIG = {
      * and what is left over is the difference between a reign that starts and
      * a reign that starts broke.
      */
-    costFirstYear: 8,
+    /* Six, not eight, and the shelf starts at sixteen rather than fourteen.
+       The first year still emptied most of the store: twelve on the table
+       after the crown's winter, eight for a roof, and the second spring
+       opened on two points out of a shelf of twenty with nothing on the list
+       under ten. A first roof should cost most of a first year and not all of
+       it, and what is left over is the difference between a reign that has
+       started and a reign that is waiting. */
+    costFirstYear: 6,
     /** And every floor after the first costs this much more than the last. */
     perLevel: 7,
     /**
@@ -373,7 +395,15 @@ export const CONFIG = {
    * Iva is nine, Wat is eleven, Lark is twelve. Nothing else in the game reads
    * that number before offering to take somebody, and it has to.
    */
-  bond: { giftCost: 2, giftEvery: 2, loverCost: 3, loverSanity: 1, loverAge: 18 },
+  /* `kissEvery` and `kissSanity` are the visit: the one you took comes up to
+     the house, and the crown is a little better for the rest of the year. It
+     is deliberately the smallest move on any board in the game and it is on a
+     two year clock, because a lawmaker who could buy four points of their own
+     patience every spring would never have to keep anybody happy again. */
+  bond: {
+    giftCost: 2, giftEvery: 2, loverCost: 3, loverSanity: 1, loverAge: 18,
+    kissEvery: 2, kissSanity: 4,
+  },
 
   /**
    * How fast the years are allowed to go past.

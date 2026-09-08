@@ -104,6 +104,33 @@ export function giftAgainAt(s: GameState, character: string): number {
   return (bondOf(s, character).giftTurn ?? s.turn) + CONFIG.bond.giftEvery;
 }
 
+/** Why the one you took cannot come up to the house, or null when they can. */
+export type VisitBlock = 'gone' | 'notyours' | 'waiting' | null;
+
+/**
+ * The one thing on this page that costs nothing at all.
+ *
+ * Everything else a lawmaker can do about a person is bought: a gift is two
+ * off the store, taking somebody is three and a day. This is an afternoon,
+ * and the only reason it is on a clock is that a thing you can have whenever
+ * you want it stops being a thing you look forward to.
+ */
+export function visitBlock(s: GameState, character: string): VisitBlock {
+  if (!isPerson(character)) return 'gone';
+  if (doingsNow(s).get(character) === 'gone') return 'gone';
+  if (loverOf(s) !== character) return 'notyours';
+  const bond = bondOf(s, character);
+  if (bond.kissTurn !== undefined && s.turn - bond.kissTurn < CONFIG.bond.kissEvery) {
+    return 'waiting';
+  }
+  return null;
+}
+
+/** The year they could come again. */
+export function visitAgainAt(s: GameState, character: string): number {
+  return (bondOf(s, character).kissTurn ?? s.turn) + CONFIG.bond.kissEvery;
+}
+
 /** Why you cannot take somebody, or null when you can. */
 export type LoverBlock = 'gone' | 'child' | 'needs' | 'taken' | 'poor' | null;
 

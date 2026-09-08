@@ -1,9 +1,9 @@
 import { UI } from '../../content/ui-strings';
 import { roman } from '../../engine/format';
 import { epithetOf } from '../../engine/epithet';
-import { chronicle } from '../../engine/story';
-import { characterMeta } from '../../content/meta';
-import { getCase } from '../../engine/registry';
+import { findLawOption } from '../../engine/registry';
+import { lawTrend } from '../../engine/simulation';
+import { MovedBoards } from '../components/MovedBoards';
 import type { GameState } from '../../engine/types';
 
 interface Props {
@@ -13,7 +13,6 @@ interface Props {
 
 export function Codex({ state, onClose }: Props) {
   const epithet = epithetOf(state);
-  const chain = chronicle(state);
   return (
     <div
       className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-6"
@@ -57,7 +56,7 @@ export function Codex({ state, onClose }: Props) {
 
         {state.laws.length === 0 && <p className="text-[14px] text-parchment-dim">{UI.codex.empty}</p>}
 
-        {chain.length > 0 && (
+        {state.laws.length > 0 && (
           <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-parchment-dim">
             {UI.story.chronicleHeading}
           </div>
@@ -69,7 +68,17 @@ export function Codex({ state, onClose }: Props) {
             const related = state.exceptions.filter(
               (e) => e.law === `${law.subject}_${law.action}`,
             );
-            const caused = chain[i]?.consequences ?? [];
+            /**
+             * What this law is costing or paying the place this year.
+             *
+             * Read off the law itself through the same function the year uses,
+             * at this reign's weight and this stage's scale, so the number
+             * here and the number the store actually gets are one number. A
+             * hamlet law that turns at scale reads differently in the town it
+             * grew into, and it should.
+             */
+            const option = findLawOption(law.subject, law.action, law.label);
+            const pays = !dead && option ? lawTrend(state, option) : null;
             return (
               <li key={`${law.subject}_${law.action}_${i}`} className="border-l-2 border-ink-line pl-3">
                 <div className={dead ? 'text-parchment-dim line-through' : 'text-parchment'}>
@@ -88,20 +97,25 @@ export function Codex({ state, onClose }: Props) {
                       .replace('{turn}', String(e.turn))}
                   </div>
                 ))}
-                {caused.length > 0 && (
-                  <ul className="mt-2 space-y-1">
-                    {caused.map((c, k) => (
-                      <li key={k} className="flex items-center gap-2 text-[12px] text-parchment-dim">
-                        <span aria-hidden className="text-parchment-dim">
-                          ↳
-                        </span>
-                        <span aria-hidden>{characterMeta(getCase(c.caseId)?.character).emoji}</span>
-                        <span className="text-parchment/80">{c.title}</span>
-                        <span className="text-[11px]">t{c.turn}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <div className="mt-2 border-t border-ink-line pt-1.5">
+                  <div className="text-[10px] uppercase tracking-[0.15em] text-parchment-dim">
+                    {UI.codex.paysHeading}
+                  </div>
+                  <div className="mt-1">
+                    {pays === null ? (
+                      <p className="text-[12px] leading-snug text-parchment-dim">
+                        {UI.codex.paysGone}
+                      </p>
+                    ) : (
+                      <MovedBoards
+                        every={pays}
+                        place={state}
+                        bare
+                        emptyLine={UI.codex.paysNothing}
+                      />
+                    )}
+                  </div>
+                </div>
               </li>
             );
           })}

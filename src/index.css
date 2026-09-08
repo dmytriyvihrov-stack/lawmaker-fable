@@ -466,6 +466,43 @@ button:disabled {
   animation: ember-rise 3.4s ease-out infinite;
 }
 
+/* A bow across a fiddle and a brush at a board are the same gesture from up
+   here: one arm going out and coming back, slower than an axe and without the
+   stop at the end of it. */
+@keyframes bow-draw {
+  0%, 100% { rotate: -6deg; }
+  50% { rotate: 9deg; }
+}
+.city-bow {
+  animation: bow-draw 2.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+
+/* Two faces leaning into the gap between them, and what fills the gap. The
+   lean is most of it: the hearts on their own are a sticker, and the hearts
+   over two people who have moved toward each other are an afternoon. */
+@keyframes lover-lean-in { 0% { translate: 0 0; rotate: 0deg; } 100% { translate: 10px 0; rotate: 5deg; } }
+@keyframes lover-lean-in-right { 0% { translate: 0 0; rotate: 0deg; } 100% { translate: -10px 0; rotate: -5deg; } }
+.lover-lean-left { animation: lover-lean-in 1.6s ease-out forwards; }
+.lover-lean-right { animation: lover-lean-in-right 1.6s ease-out forwards; }
+@keyframes lover-heart-rise {
+  0% { opacity: 0; translate: 0 6px; scale: .5; }
+  22% { opacity: 1; }
+  100% { opacity: 0; translate: 0 -46px; scale: 1.1; }
+}
+.lover-heart {
+  display: inline-block;
+  margin: 0 3px;
+  font-size: 20px;
+  opacity: 0;
+  animation: lover-heart-rise 2.2s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lover-lean-left, .lover-lean-right { animation: none; }
+  .lover-heart { animation: none; opacity: 1; }
+}
+
 /* smoke, which is the sign that somebody is in there and warm */
 @keyframes smoke-rise {
   0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
@@ -636,6 +673,7 @@ button:disabled {
   .city-ember,
   .city-smoke,
   .city-swing,
+  .city-bow,
   .city-haul,
   .city-turn,
   .city-load,

@@ -6,6 +6,7 @@ import {
   loverBlock,
   loverOf,
   nudgeBond,
+  visitBlock,
 } from './bonds';
 import { canPlace, fallbackPlot, needsPlacement } from './plots';
 import { CONFIG } from './config';
@@ -353,6 +354,24 @@ export function takeLover(s: GameState, character: string): GameState {
 }
 
 /**
+ * The one you took comes up to the house.
+ *
+ * Nothing is spent and nothing is built. The crown is four points better for
+ * the rest of the year and that is the whole of it, which makes it the only
+ * move in the game whose entire return is that somebody was glad to see you.
+ * On a two year clock, for the reason in `visitBlock`.
+ */
+export function visitLover(s: GameState, character: string): GameState {
+  if (visitBlock(s, character) !== null) return s;
+  const draft = clone(s);
+  bump(draft, 'crownSanity', CONFIG.bond.kissSanity, BOND_UI.kissLedger);
+  const bonds = draft.bonds ?? {};
+  const now = bonds[character] ?? { level: 2 as const };
+  draft.bonds = { ...bonds, [character]: { ...now, kissTurn: draft.turn } };
+  return draft;
+}
+
+/**
  * The place is given a name. It changes nothing on any board: what it changes
  * is that from here on the carters know which turning, and so does the header.
  */
@@ -606,7 +625,11 @@ export function continueYear(s: GameState): GameState {
   const draft = clone(s);
 
   if (draft.eventsThisYear < CONFIG.year.dilemmasPerYear) {
-    const next = pickEvent(draft, { lawAllowed: false });
+    const next = pickEvent(draft, {
+      lawAllowed: false,
+      /* One hard thing a year. Whoever comes after it comes to talk. */
+      heavyAllowed: draft.eventsThisYear < CONFIG.year.heavyPerYear,
+    });
     if (next) {
       draft.eventsThisYear += 1;
       draft.current = next;

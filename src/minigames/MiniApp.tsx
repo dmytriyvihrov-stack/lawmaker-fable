@@ -400,6 +400,7 @@ export function MiniApp() {
           season={season}
           onGift={() => {}}
           onTake={() => {}}
+          onVisit={() => {}}
           onClose={() => setRegisterOpen(false)}
         />
       )}

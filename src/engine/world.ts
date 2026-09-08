@@ -301,9 +301,7 @@ export function tickWorld(s: GameState): WorldOutcome | null {
   });
 
   // one raid a year at most, and it is the one with the oldest grudge
-  const raiders = states
-    .filter((k) => k.stance <= -2 && k.stats.army > s.stats.army)
-    .sort((a, b) => a.stance - b.stance);
+  const raiders = states.filter((k) => raidRisk(s, k)).sort((a, b) => a.stance - b.stance);
   if (raiders.length > 0) {
     const raider = raiders[0];
     moves.push(
@@ -315,6 +313,19 @@ export function tickWorld(s: GameState): WorldOutcome | null {
   }
 
   return { world: { peoples: s.world.peoples, states }, moves };
+}
+
+/**
+ * Whether this neighbour is both angry enough and strong enough to come.
+ *
+ * The atlas draws armed men on the road for exactly the states this returns
+ * true for, and `tickWorld` picks the year's raider out of the same list, so
+ * the warning on the map and the thing that happens are one predicate. A
+ * warning derived from a second copy of a rule is a warning that will be wrong
+ * the first time the rule moves.
+ */
+export function raidRisk(s: GameState, k: ForeignState): boolean {
+  return k.stance <= -2 && k.stats.army > s.stats.army;
 }
 
 /* --------------------------------------------------------------- an action */

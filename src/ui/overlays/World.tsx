@@ -4,7 +4,7 @@ import { TAG_LABEL } from '../../content/portrait-text';
 import { UI } from '../../content/ui-strings';
 import { CONFIG } from '../../engine/config';
 import { rand01 } from '../../engine/rng';
-import { blockedReason, type WorldAction } from '../../engine/world';
+import { blockedReason, raidRisk, type WorldAction } from '../../engine/world';
 import type { ForeignState, GameState, StatId } from '../../engine/types';
 import { TYPE } from '../type';
 
@@ -18,6 +18,19 @@ interface Props {
 const BOARD_W = 1000;
 const BOARD_H = 800;
 const REACH = 260;
+
+/**
+ * The three things a neighbour can be, at a glance.
+ *
+ * The seven words in `UI.world.stance` are the fine grain, and they stay under
+ * the name. This is the reading somebody makes in half a second from across
+ * the map: are they with me, are they nothing to me, or are they trouble.
+ */
+function stanceMark(stance: number): string {
+  if (stance >= 1) return UI.world.stanceMark.friendly;
+  if (stance <= -1) return UI.world.stanceMark.hostile;
+  return UI.world.stanceMark.civil;
+}
 
 /** Warm parchment at a favour, cold stone at a grudge, plain in between. */
 function fillFor(stance: number): string {
@@ -85,17 +98,27 @@ function Card({
   onAct: (action: WorldAction, target: string) => void;
 }) {
   const stance = UI.world.stance[String(them.stance) as keyof typeof UI.world.stance];
-  const buttons: { action: WorldAction; label: string; cost: string }[] = [
-    { action: 'ask', label: UI.world.ask, cost: UI.world.costs.ask },
+  const K = CONFIG.kingdom;
+  const buttons: { action: WorldAction; label: string; cost: string; after: string }[] = [
+    {
+      action: 'ask',
+      label: UI.world.ask,
+      cost: UI.world.costs.ask,
+      after: UI.world.effects.ask.replace('{n}', String(K.ask.debt)),
+    },
     {
       action: 'send',
       label: UI.world.send,
-      cost: UI.world.costs.send.replace('{n}', String(CONFIG.kingdom.send.cost)),
+      cost: UI.world.costs.send.replace('{n}', String(K.send.cost)),
+      after: UI.world.effects.send.replace('{n}', String(K.send.stance)),
     },
     {
       action: 'raid',
       label: UI.world.raid,
-      cost: UI.world.costs.raid.replace('{n}', String(CONFIG.kingdom.raid.crown)),
+      cost: UI.world.costs.raid.replace('{n}', String(K.raid.crown)),
+      after: UI.world.effects.raid
+        .replace('{n}', String(K.raid.stance))
+        .replace('{o}', String(K.raid.others)),
     },
   ];
 
@@ -156,6 +179,9 @@ function Card({
               <div className="world-action-cost">
                 {blocked ?? b.cost}
               </div>
+              {/* what it costs is only half of it: this is what everybody
+                  standing round the table thinks of you afterwards */}
+              <div className="world-action-after">{b.after}</div>
             </div>
           );
         })}
@@ -247,7 +273,53 @@ export function World({ state, onAct, onClose }: Props) {
                   <text y="74" textAnchor="middle" className="atlas-name" fill={on ? '#fff0cc' : '#3e4834'}>{k.name}</text>
                   <text y="92" textAnchor="middle" className="atlas-stance" fill={on ? '#cbd3b5' : '#666347'}>{stance}</text>
                   {k.ask && <g transform="translate(57 -62)"><circle r="18" fill="#f7df9d" stroke="#9b7447" strokeWidth="2" /><text y="6" textAnchor="middle" fontSize="20">{UI.world.askMark}</text></g>}
+                  {/* What they are, over the top of them.
+
+                      A stance was a word under the name in eleven point type
+                      and a line style on the road, both of which are read only
+                      by somebody who already knows to look. This is the one
+                      thing about a neighbour that decides what you do next, so
+                      it is a mark the size of a mark, above the roofs. */}
+                  <g transform="translate(0 -104)" pointerEvents="none">
+                    <circle r="21" fill={fillFor(k.stance)} stroke="#6f634a" strokeWidth="2" />
+                    <text y="8" textAnchor="middle" fontSize="22">{stanceMark(k.stance)}</text>
+                  </g>
                 </g>;
+              })}
+
+              {/* And what is actually on the roads this year.
+
+                  A neighbour who has asked for something has sent somebody to
+                  ask, and a neighbour who is angry enough and armed enough to
+                  come is on the way whether or not the atlas was opened. Both
+                  travel the road they would really travel, from their own
+                  ground to the capital, and the second is read off the same
+                  predicate the year itself uses to pick a raider. */}
+              {world.states.map((k) => {
+                const raiding = raidRisk(state, k);
+                if (!k.ask && !raiding) return null;
+                const from = { x: 500 + k.position.x * REACH, y: 400 + k.position.y * REACH };
+                return (
+                  <g key={`traffic-${k.id}`} pointerEvents="none">
+                    <g
+                      className="atlas-traffic"
+                      style={{
+                        ['--dx' as string]: `${((500 - from.x) * 0.72).toFixed(1)}px`,
+                        ['--dy' as string]: `${((400 - from.y) * 0.72).toFixed(1)}px`,
+                      }}
+                    >
+                      <g transform={`translate(${from.x} ${from.y})`}>
+                        <title>
+                          {k.name}: {raiding ? UI.world.traffic.raiding : UI.world.traffic.asking}
+                        </title>
+                        <circle r="15" fill={raiding ? '#bb8171' : '#e4d4af'} stroke="#6f634a" strokeWidth="2" />
+                        <text y="6" textAnchor="middle" fontSize="16">
+                          {raiding ? UI.world.actionIcons.raid : UI.world.actionIcons.ask}
+                        </text>
+                      </g>
+                    </g>
+                  </g>
+                );
               })}
             </svg>
             <div className="world-country-list">{world.states.map((k) => <button key={k.id} type="button" aria-pressed={picked === k.id} onClick={() => setPicked(k.id)}>{k.name}</button>)}</div>

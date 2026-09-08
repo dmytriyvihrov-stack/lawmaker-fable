@@ -124,7 +124,12 @@ export const MOMENTS: Moment[] = [
     task: 'Stacking the wood back up',
     line: 'Half a winter of somebody\u2019s firewood is across the path under a foot of snow, and the two of you have it back up inside a quarter of an hour. She puts a cup of something into your hands and stands in the doorway until you are out of sight.',
     done: 'Stacked',
-    effect: { mood: 1 },
+    /* Half a winter of firewood, back under a roof and dry. That is fuel the
+       place would otherwise have bought or cut again, so it lands in the
+       store. It read as a warm feeling because the scene is a warm one, and
+       the scene is still warm; what a morning of lifting actually produces
+       is wood. */
+    effect: { economy: 1 },
     seasons: ['winter'],
   },
   {

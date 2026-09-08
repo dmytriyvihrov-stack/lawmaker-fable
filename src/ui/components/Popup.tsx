@@ -15,11 +15,48 @@ interface Props {
   tailX?: number | null;
   /** A scene is wide and low; a document is narrower and taller. */
   wide?: boolean;
+  /**
+   * This card has no scene under it, so it may take the height.
+   *
+   * The cap exists to keep the town visible above the card, and on the two
+   * screens that are a shelf of things to read - the year of work and the
+   * drafting table - what is above the card is scenery, while what is inside
+   * it is three hundred pixels of list nobody can see without scrolling. On
+   * the bench it is the opposite: somebody is standing up there in a scene
+   * the answers act on, and every pixel the card takes is taken off them.
+   *
+   * 48, and it has been 42 and 54. This is a trade with two ends and one
+   * number in it: every point of height is a point of scroll saved and a
+   * point of town covered, and the small thing a year puts on the map sits
+   * between map y 350 and 604, which is the near meadow the card lives over.
+   *
+   * 42 was the old cap and the year of work scrolled 305 pixels at it. 54 cut
+   * that to 161 and covered the settlement band with it, which is the whole
+   * of what a player is deciding about. What moved the trade was the shelf
+   * going three across instead of two: the same eight works are three rows
+   * now rather than four, so 48 scrolls 204 - still better than 54 managed at
+   * two columns - and hands back 43 pixels of town. Measured on a 720 window
+   * with a village shelf and the run below it.
+   */
+  tall?: boolean;
   cardRef?: Ref<HTMLDivElement>;
   children: ReactNode;
 }
 
 const EDGE = { bench: 'var(--color-bench)', seal: 'var(--color-seal)' };
+
+/**
+ * The one button that ends a card: its size, spacing and manners, without its
+ * colour, which belongs to the screen.
+ *
+ * Four screens end in one of these and all four had written their own,
+ * which is how they arrived at three type sizes and two corner radii between
+ * them. It is centred and as wide as its own words: full width made a slab
+ * of paint the width of the card, which reads as the floor of the card and
+ * not as a thing to press.
+ */
+export const CARD_BUTTON =
+  'min-h-[44px] max-w-full rounded-lg px-9 py-2 text-[16px] tracking-[0.2em] disabled:opacity-30';
 
 /**
  * The card that opens over the town.
@@ -35,7 +72,7 @@ const EDGE = { bench: 'var(--color-bench)', seal: 'var(--color-seal)' };
  * cap the card scrolls and the town stays visible, which is the right way
  * round.
  */
-export function Popup({ tone, tailX = null, wide = false, cardRef, children }: Props) {
+export function Popup({ tone, tailX = null, wide = false, tall = false, cardRef, children }: Props) {
   const edge = EDGE[tone];
   return (
     <div
@@ -50,8 +87,14 @@ export function Popup({ tone, tailX = null, wide = false, cardRef, children }: P
           style={{ left: `${tailX - 6}px`, borderColor: edge }}
         />
       )}
+      {/* Square along the bottom, because that edge is the edge of the
+          window now rather than a margin of meadow nobody was looking at.
+          The twenty pixels under it were the one part of this screen that
+          could never hold anything. */}
       <div
-        className="decision-paper max-h-[42dvh] overflow-y-auto rounded-2xl border bg-ink-soft/95 shadow-[0_20px_44px_rgba(0,0,0,0.5)] backdrop-blur-[2px]"
+        className={`decision-paper overflow-y-auto rounded-t-2xl border border-b-0 bg-ink-soft/95 shadow-[0_20px_44px_rgba(0,0,0,0.5)] backdrop-blur-[2px] ${
+          tall ? 'max-h-[48dvh]' : 'max-h-[44dvh]'
+        }`}
         style={{ borderColor: edge }}
       >
         {children}
@@ -82,10 +125,14 @@ export function CardFoot({
   pad?: 4 | 5;
   children: ReactNode;
 }) {
-  const cancel = pad === 5 ? '-mx-5 -mb-5 px-5 pb-5' : '-mx-4 -mb-4 px-4 pb-4';
+  const cancel = pad === 5 ? '-mx-5 -mb-5 px-5 pb-3' : '-mx-4 -mb-4 px-4 pb-3';
   return (
+    /* Centred, and the button inside is the width of what it says. A bar of
+       colour the whole width of the card reads as the card's own floor
+       rather than as one thing to press, and on a wide window it was eight
+       hundred pixels of paint carrying three words. */
     <div
-      className={`sticky z-10 mt-4 border-t border-ink-line/60 bg-ink-soft/95 pt-2 backdrop-blur-[2px] [bottom:0] ${cancel}`}
+      className={`sticky z-10 mt-3 flex justify-center border-t border-ink-line/60 bg-ink-soft/95 pt-2 backdrop-blur-[2px] [bottom:0] ${cancel}`}
     >
       {children}
     </div>
