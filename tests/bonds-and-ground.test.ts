@@ -47,12 +47,17 @@ describe('what one person thinks of you', () => {
     expect(bondLevel(s, 'tam')).toBe(-2);
   });
 
-  it('is not a thing the square, the crown or an animal can have', () => {
+  it('is not a thing the square or the crown can have, and is one the wolf can', () => {
     const s = reign();
-    for (const who of ['crowd', 'monarch', 'wolf']) {
+    for (const who of ['crowd', 'monarch']) {
       nudgeBond(s, who, 2);
       expect(bondLevel(s, who), who).toBe(0);
     }
+    /* The one at the woodpile is not a person and is somebody: four winters
+       of a bowl left out is an opinion, and the register can put something
+       out for it and let it stay. */
+    nudgeBond(s, 'wolf', 2);
+    expect(bondLevel(s, 'wolf')).toBe(2);
   });
 
   /**

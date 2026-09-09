@@ -172,12 +172,18 @@ function WhoStands({
         {age !== undefined && age > 0 && (
           <span>{UI.popup.aged.replace('{n}', String(age))}</span>
         )}
-        {age !== undefined && age > 0 && <span aria-hidden className="text-hair">&middot;</span>}
-        <span className="italic normal-case tracking-normal text-hair">
-          {before === null
-            ? UI.popup.firstTime
-            : UI.popup.seenBefore.replace('{n}', String(before))}
-        </span>
+        {/* And nothing at all the first time. A line under somebody's name
+            saying they have never been here before is a fact about the log
+            rather than about them, and it was under nine faces in ten. Only
+            the second visit is worth the words. */}
+        {before !== null && age !== undefined && age > 0 && (
+          <span aria-hidden className="text-hair">&middot;</span>
+        )}
+        {before !== null && (
+          <span className="italic normal-case tracking-normal text-hair">
+            {UI.popup.seenBefore.replace('{n}', String(before))}
+          </span>
+        )}
       </div>
       {/* Where this is happening, drawn. The mark on the town says the address
           and this says the room, and neither of them is a caption. */}

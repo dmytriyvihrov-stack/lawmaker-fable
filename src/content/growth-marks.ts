@@ -15,7 +15,10 @@ export interface GrowthMark {
   line: string;
 }
 
-export const GROWTH_MARKS: Record<'hint' | 'open' | 'first' | 'second' | 'charter', GrowthMark> = {
+export const GROWTH_MARKS: Record<
+  'hint' | 'open' | 'first' | 'second' | 'charter' | 'crown',
+  GrowthMark
+> = {
   hint: {
     title: 'Two of you have the time',
     line: 'Enough hands that the field does not need all of them, and two people out of the number start talking about something else.',
@@ -33,8 +36,15 @@ export const GROWTH_MARKS: Record<'hint' | 'open' | 'first' | 'second' | 'charte
     line: 'Enough of you now for the half you did not pick. It arrives late, which is a fact about this place that people will notice for years.',
   },
   charter: {
-    title: 'The charter',
-    line: 'The hamlet becomes a town. A clerk draws a circle on a map, and anything the place never got round to choosing turns up in the post.',
+    title: 'The charter, and a town',
+    line: 'The hamlet becomes a town. A clerk draws a circle on a map, anything the place never got round to choosing turns up in the post, and a year of work costs what a town pays.',
+  },
+  /* The last rung, and it was on nobody's ladder: the screen that says what a
+     count opens went as far as the charter and stopped, in a game with a third
+     stage in it. */
+  crown: {
+    title: 'The crown, and a state',
+    line: 'The town becomes a kingdom, which is to say it stops being the only place on the map. Five neighbours with their own stores and their own laws, and a year of work that can be spent abroad instead of at home.',
   },
 };
 

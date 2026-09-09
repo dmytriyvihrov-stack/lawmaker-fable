@@ -13,8 +13,14 @@ import type { Bond, BondLevel, CaseChoice, GameState } from './types';
  * open once it has already happened.
  */
 
-/** The square, the crown and the animals are not people you can be liked by. */
-const NOT_A_PERSON = ['monarch', 'crowd', 'wolf'];
+/**
+ * The square and the crown are not somebody you can be liked by. Everybody
+ * else at this door is, and since V66 that includes the thing at the woodpile:
+ * a wolf you have fed four winters running has an opinion of you, and a player
+ * asked to be able to put something out for it and to let it stay. It is the
+ * one of these that is not a person and is still somebody.
+ */
+const NOT_A_PERSON = ['monarch', 'crowd'];
 
 export function isPerson(character: string | undefined): character is string {
   return character !== undefined && !NOT_A_PERSON.includes(character);

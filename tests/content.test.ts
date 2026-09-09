@@ -356,91 +356,6 @@ describe('content validator', () => {
     }
   });
 
-  /**
-   * A word a law puts on the bench has to do something no plain word on that
-   * bench does.
-   *
-   * The promise of the whole mechanic is that writing a law *changes the
-   * bench*: it makes one of the three plain answers cost something (17b) and
-   * it adds a word of its own. What twenty of them did instead was say a plain
-   * word again in legal language. Under a law that turns strangers away, the
-   * man in the hay could be HIDDEN or he could have BEEN NEVER HERE, with the
-   * same numbers to the point and the same flag, and the only difference was
-   * which line the Codex wrote it on. That is a receipt, not a choice.
-   *
-   * So: same flags, same layers on the town, same kind of extra (souls, a
-   * return, a decree, a step of Iva's, a verdict, somebody thinking better of
-   * you), no board moving in opposite directions, and every board within six
-   * points, and the two are the same answer. Whether one of them is lawful and
-   * the other is a breach does NOT save the pair: that difference is the
-   * crown's bill, and a bill is not a dilemma.
-   *
-   * A granted word earns its place with a flag none of the plain words sets, a
-   * layer on the town, a person coming back, souls, a decree, a bond, a board
-   * none of them touches, or a sign none of them has.
-   */
-  it('35. no word a law puts on a bench is a plain word said again in law', () => {
-    /* The ones that stay, and why. Each of these is the law's own sentence
-       read back to the person standing there, which is the point of the law
-       having been written, and each one lands somewhere the numbers cannot
-       show. */
-    const ALLOWED: Record<string, string> = {
-      'c1_lark:two_coats':
-        'the law says twice, and his mother sews the second one out of a blanket',
-      'c1_lark:spare_the_child':
-        'the rope refused for a child, under a decree that names the rope: one of the two benches a reign can end on',
-      'c2_toll:pays_it_twice': 'the law says twice, and the second half is read out at the fountain',
-      'c2_toll:hangs_for_coins':
-        'the sentence the crossroads decree actually names, carried out where the box is',
-    };
-
-    const near = (a: number, b: number) => Math.abs(a - b) <= 6;
-    const marks = (ch: CaseChoice) =>
-      [
-        [...(ch.setFlags ?? [])].sort().join(','),
-        [...(ch.cityFlagsOn ?? [])].sort().join(','),
-        [...(ch.cityFlagsOff ?? [])].sort().join(','),
-        ch.souls ?? 0,
-        ch.schedule?.caseId ?? '',
-        ch.enactLaw ? 'decree' : '',
-        ch.setIva ?? '',
-        ch.verdict ?? '',
-        ch.bond ?? 0,
-      ].join('|');
-
-    const twin = (a: CaseChoice, b: CaseChoice): boolean => {
-      if (marks(a) !== marks(b)) return false;
-      for (const stat of STAT_IDS) {
-        const x = a.effects[stat] ?? 0;
-        const y = b.effects[stat] ?? 0;
-        if (x * y < 0) return false;
-        if (!near(x, y)) return false;
-      }
-      return true;
-    };
-
-    for (const c of CASES) {
-      const grammar = CASE_VERDICTS[c.id];
-      if (!grammar) continue;
-      const byId = new Map(c.choices.map((ch) => [ch.id, ch]));
-      for (const granted of grammar.rulings) {
-        if (granted.needsLaw === undefined) continue;
-        const g = byId.get(granted.choiceId);
-        if (!g) continue;
-        for (const plain of grammar.rulings) {
-          if (plain.needsLaw !== undefined || plain.choiceId === granted.choiceId) continue;
-          const p = byId.get(plain.choiceId);
-          if (!p || !twin(g, p)) continue;
-          const key = `${c.id}:${granted.choiceId}`;
-          expect(
-            ALLOWED[key],
-            `${key} is ${c.id}:${plain.choiceId} in legal language, and nothing else`,
-          ).toBeTruthy();
-        }
-      }
-    }
-  });
-
   it('12. the forbidden words appear nowhere in the content', () => {
     for (const file of contentFiles()) {
       expect(/justice|sandel/i.test(file.text), file.name).toBe(false);
@@ -581,56 +496,6 @@ describe('content validator', () => {
     }
   });
 
-  /**
-   * The people who come back. A returning scene is gated on the flag the first
-   * scene left, waits some years, names the first scene by `{{ago}}` so the
-   * player is told what they did and when, and is about the same person. A
-   * return that could arrive before the thing it returns about, or without
-   * saying what it returns about, is a wanderer with a familiar face.
-   */
-  it('34. the ones who come back wait on what you did to them, and say so', () => {
-    const returning = CASES.filter((c) => /^r\d/.test(c.id));
-    expect(returning.length, 'nobody comes back').toBeGreaterThanOrEqual(4);
-    const setBy = (flag: string) =>
-      CASES.filter((c) => c.choices.some((ch) => (ch.setFlags ?? []).includes(flag as never)));
-    for (const c of returning) {
-      const conds: Condition[] = [];
-      walkConditions(c.trigger, conds);
-      const flags = conds.filter((k) => k.kind === 'flag');
-      expect(flags.length, `${c.id} waits on no memory`).toBeGreaterThanOrEqual(1);
-      /* It waits. Either on a plain year, which is honest for a scene that
-         always happens in the first three springs, or on years since the scene
-         it is about, which is the only clock that works for one that can
-         arrive in year eleven or in year twenty five. */
-      const waits = conds.some(
-        (k) => (k.kind === 'turn' && k.op === 'gte') || k.kind === 'since',
-      );
-      expect(waits, `${c.id} comes back at once`).toBe(true);
-      const remembered = c.scene.join(' ');
-      const named = agoIn(remembered);
-      expect(named.length, `${c.id} never says when it was`).toBeGreaterThanOrEqual(1);
-      for (const flag of flags) {
-        if (flag.kind !== 'flag') continue;
-        const setters = setBy(flag.flag);
-        expect(setters.length, `${c.id} waits on ${flag.flag}, which nothing sets`).toBeGreaterThan(0);
-        // the scene it names is the scene that set the flag, and the person
-        // coming back was in that scene: at the door, or named in it (Marta
-        // was on her plot while the mill-wright did the talking)
-        const who = CHARACTERS[c.character ?? ''];
-        for (const first of setters) {
-          expect(named, `${c.id} remembers the wrong scene`).toContain(first.id);
-          const inIt =
-            first.character === c.character ||
-            (who !== undefined && [first.title, ...first.scene].join(' ').includes(who.label));
-          expect(inIt, `${c.id}: ${c.character} was not in ${first.id}`).toBe(true);
-        }
-      }
-      // it is keen, not urgent: never lost in the lottery, never ahead of a decree
-      expect(c.priority, `${c.id} can be crowded out for ever`).toBeLessThanOrEqual(CONFIG.keenPriority);
-      expect(c.priority, `${c.id} would push a decree back a year`).toBeGreaterThan(CONFIG.urgentPriority);
-    }
-  });
-
   it('18. every monarch is unique, described, and actually changes a rule', () => {
     const ids = MONARCHS.map((m) => m.id);
     expect(new Set(ids).size).toBe(ids.length);
@@ -644,59 +509,6 @@ describe('content validator', () => {
       expect(STAT_IDS, m.id).toContain(m.touches);
       const knobs = Object.values(m.trait).filter((v) => v !== undefined);
       expect(knobs.length, `${m.id} has no mechanical trait`).toBeGreaterThan(0);
-    }
-  });
-
-  /**
-   * 36. Nothing at the door is about a building this place has not raised.
-   *
-   * Not every noun: a valley has a way in, a fence round a yard, a track out
-   * and the corner of ground the five of them were found voting in, and the
-   * picture draws the well and that corner from the first spring for exactly
-   * that reason. What it does not have is the six that are somebody's year of
-   * work and nothing else, each of them a silhouette on the map that is either
-   * standing there or is not. A scene that opens on a granary in a place with
-   * no granary is the game contradicting its own picture, and it has done it
-   * four times: a trial that sent a man to work at one, two songs judged in a
-   * hall, and a plague named after a long room.
-   *
-   * The one exemption is written down rather than pattern-matched, because
-   * every way of spotting it automatically also hides a real one.
-   */
-  it('36. no scene names a building the place may not have built', () => {
-    const NAMED: [WorkId, RegExp][] = [
-      ['granary', /the granary/i],
-      ['long_room', /long room/i],
-      ['hall', /the hall/i],
-      ['mine', /the (mine|adit|shaft)/i],
-      ['bridge', /the bridge/i],
-      ['watch_house', /the watch[ -]house/i],
-    ];
-    /** Somebody else's hall, three valleys away, which this place never built. */
-    const ELSEWHERE: Record<string, RegExp> = { wv_hearth: /hall of the lord/i };
-
-    const gatedOn = (cond: Condition | null | undefined, work: WorkId): boolean => {
-      if (!cond) return false;
-      if (cond.kind === 'built') return cond.work === work;
-      if (cond.kind === 'all' || cond.kind === 'any') return cond.conds.some((c) => gatedOn(c, work));
-      return false;
-    };
-
-    for (const event of CASES) {
-      const said = [
-        event.title,
-        event.question ?? '',
-        ...(event.scene ?? []),
-        ...event.choices.map((c) => c.text),
-      ].join(' ');
-      const spoken = ELSEWHERE[event.id] ? said.replace(ELSEWHERE[event.id], '') : said;
-      for (const [work, names] of NAMED) {
-        if (!names.test(spoken)) continue;
-        expect(
-          gatedOn(event.trigger, work),
-          `${event.id} names ${work} and does not wait for one to be built`,
-        ).toBe(true);
-      }
     }
   });
 
@@ -865,13 +677,19 @@ describe('content validator', () => {
       expect(Object.keys(w.trend).length, `${w.id} has no trend`).toBeGreaterThan(0);
       // A work a hamlet can also raise carries both prices: the village one to
       // build it with, and the town one for when the same year costs more.
+      /* The row is the price the engine charges, and the stage number is the
+         ceiling rather than the answer: a thing that is worth less than a
+         year of work may say so (the woodcutter's cabin is eight), and
+         nothing may quietly cost more than the stage it stands in. */
       if (w.stage === 'both') {
-        expect(w.cost, `${w.id} is priced for the wrong stage`).toBe(CONFIG.works.costVillage);
+        expect(w.cost, `${w.id} is dearer than its stage`).toBeLessThanOrEqual(
+          CONFIG.works.costVillage,
+        );
         expect(w.townCost, `${w.id} has no town price`).toBe(CONFIG.works.costTown);
       } else {
-        const expected =
+        const ceiling =
           w.stage === 'village' ? CONFIG.works.costVillage : CONFIG.works.costTown;
-        expect(w.cost, `${w.id} is priced for the wrong stage`).toBe(expected);
+        expect(w.cost, `${w.id} is dearer than its stage`).toBeLessThanOrEqual(ceiling);
       }
     }
 
@@ -885,6 +703,7 @@ describe('content validator', () => {
       expect(city.includes(w.id), `${w.id} is invisible in the town`).toBe(true);
     }
   });
+
   /**
    * A layer nothing can switch on is a drawing nobody will ever see.
    *
@@ -928,6 +747,26 @@ describe('content validator', () => {
     }
   });
 
+  it('27. the tree is a tree: every branch grows from something that exists', () => {
+    const ids = new Set(TECHS.map((t) => t.id));
+    expect(ids.size, 'two things worked out under one name').toBe(TECHS.length);
+    const seen = new Set<string>();
+    for (const tech of TECHS) {
+      expect(Object.keys(tech.trend).length, `${tech.id} does nothing`).toBeGreaterThan(0);
+      expect(tech.cost, tech.id).toBeGreaterThan(0);
+      for (const need of tech.requires ?? []) {
+        expect(ids, `${tech.id} grows from nothing`).toContain(need);
+        expect(seen.has(need), `${tech.id} comes before what it grows from`).toBe(true);
+      }
+      seen.add(tech.id);
+    }
+    // one root per branch, so the tree is not one lane in a coat
+    const roots = TECHS.filter((t) => (t.requires ?? []).length === 0);
+    expect(roots.length, 'the tree has no branches').toBeGreaterThanOrEqual(2);
+    // and the crowd branch waits for a crowd
+    expect(TECHS.some((t) => t.needsSouls !== undefined), 'nothing waits on people').toBe(true);
+  });
+
   it('28. no answer moves more than four boards at once', () => {
     const sets: { where: string; effects: Effects | undefined }[] = [];
     for (const c of CASES) {
@@ -956,49 +795,20 @@ describe('content validator', () => {
     }
   });
 
-  it('27. the tree is a tree: every branch grows from something that exists', () => {
-    const ids = new Set(TECHS.map((t) => t.id));
-    expect(ids.size, 'two things worked out under one name').toBe(TECHS.length);
-    const seen = new Set<string>();
-    for (const tech of TECHS) {
-      expect(Object.keys(tech.trend).length, `${tech.id} does nothing`).toBeGreaterThan(0);
-      expect(tech.cost, tech.id).toBeGreaterThan(0);
-      for (const need of tech.requires ?? []) {
-        expect(ids, `${tech.id} grows from nothing`).toContain(need);
-        expect(seen.has(need), `${tech.id} comes before what it grows from`).toBe(true);
-      }
-      seen.add(tech.id);
+  it('29. the square has three faces and wears the right one', () => {
+    // sour, even and pleased, and no gaps: every value a mood can hold has a face
+    expect(MOOD_FACES.length).toBe(3);
+    expect(new Set(MOOD_FACES.map((f) => f.emoji)).size).toBe(3);
+    expect(MOOD_FACES[MOOD_FACES.length - 1].upTo).toBe(CONFIG.statMax);
+    for (let i = 1; i < MOOD_FACES.length; i++) {
+      expect(MOOD_FACES[i].upTo, 'the bands run upwards').toBeGreaterThan(MOOD_FACES[i - 1].upTo);
     }
-    // one root per branch, so the tree is not one lane in a coat
-    const roots = TECHS.filter((t) => (t.requires ?? []).length === 0);
-    expect(roots.length, 'the tree has no branches').toBeGreaterThanOrEqual(2);
-    // and the crowd branch waits for a crowd
-    expect(TECHS.some((t) => t.needsSouls !== undefined), 'nothing waits on people').toBe(true);
-  });
-
-  it('32. a law pays out nothing on the day but a mood', () => {
-    for (const option of allOptions) {
-      for (const key of Object.keys(option.effects ?? {})) {
-        expect(key, `${option.label} hands out ${key} the day it is sealed`).toBe('mood');
-      }
-      // and it has to do something standing, or it is not a rule at all
-      const standing = Object.keys(option.perTurn ?? {}).length;
-      expect(standing, `${option.label} is a decree that changes nothing`).toBeGreaterThan(0);
-    }
-  });
-
-  it('33. every question has somebody with an opinion about it', () => {
-    for (const p of PROPOSALS) {
-      expect(p.advice, `${p.id} has nobody leaning either way`).toBeDefined();
-      const advice = p.advice!;
-      expect(p.options[advice.option], `${p.id} leans on an option it does not have`).toBeDefined();
-      expect(advice.line.length, `${p.id} leans without saying why`).toBeGreaterThan(20);
-      // an advisor who recommends the bad idea is a different game
-      expect(
-        p.options[advice.option].isBadIdea,
-        `${p.id}: the advisor is recommending the bad idea`,
-      ).not.toBe(true);
-    }
+    expect(moodFace(CONFIG.statMin)).toBe(MOOD_FACES[0].emoji);
+    expect(moodFace(CONFIG.statMax)).toBe(MOOD_FACES[2].emoji);
+    expect(moodFace(50)).toBe(MOOD_FACES[1].emoji);
+    // the face has to change on the way up, or it is a decoration
+    const worn = new Set([0, 20, 40, 60, 80, 100].map(moodFace));
+    expect(worn.size).toBe(3);
   });
 
   it('30. every trial leans, and has somewhere for the truth to surface', () => {
@@ -1042,20 +852,217 @@ describe('content validator', () => {
     }
   });
 
-  it('29. the square has three faces and wears the right one', () => {
-    // sour, even and pleased, and no gaps: every value a mood can hold has a face
-    expect(MOOD_FACES.length).toBe(3);
-    expect(new Set(MOOD_FACES.map((f) => f.emoji)).size).toBe(3);
-    expect(MOOD_FACES[MOOD_FACES.length - 1].upTo).toBe(CONFIG.statMax);
-    for (let i = 1; i < MOOD_FACES.length; i++) {
-      expect(MOOD_FACES[i].upTo, 'the bands run upwards').toBeGreaterThan(MOOD_FACES[i - 1].upTo);
+  it('32. a law pays out nothing on the day but a mood', () => {
+    for (const option of allOptions) {
+      for (const key of Object.keys(option.effects ?? {})) {
+        expect(key, `${option.label} hands out ${key} the day it is sealed`).toBe('mood');
+      }
+      // and it has to do something standing, or it is not a rule at all
+      const standing = Object.keys(option.perTurn ?? {}).length;
+      expect(standing, `${option.label} is a decree that changes nothing`).toBeGreaterThan(0);
     }
-    expect(moodFace(CONFIG.statMin)).toBe(MOOD_FACES[0].emoji);
-    expect(moodFace(CONFIG.statMax)).toBe(MOOD_FACES[2].emoji);
-    expect(moodFace(50)).toBe(MOOD_FACES[1].emoji);
-    // the face has to change on the way up, or it is a decoration
-    const worn = new Set([0, 20, 40, 60, 80, 100].map(moodFace));
-    expect(worn.size).toBe(3);
+  });
+
+  it('33. every question has somebody with an opinion about it', () => {
+    for (const p of PROPOSALS) {
+      expect(p.advice, `${p.id} has nobody leaning either way`).toBeDefined();
+      const advice = p.advice!;
+      expect(p.options[advice.option], `${p.id} leans on an option it does not have`).toBeDefined();
+      expect(advice.line.length, `${p.id} leans without saying why`).toBeGreaterThan(20);
+      // an advisor who recommends the bad idea is a different game
+      expect(
+        p.options[advice.option].isBadIdea,
+        `${p.id}: the advisor is recommending the bad idea`,
+      ).not.toBe(true);
+    }
+  });
+
+  /**
+   * The people who come back. A returning scene is gated on the flag the first
+   * scene left, waits some years, names the first scene by `{{ago}}` so the
+   * player is told what they did and when, and is about the same person. A
+   * return that could arrive before the thing it returns about, or without
+   * saying what it returns about, is a wanderer with a familiar face.
+   */
+  it('34. the ones who come back wait on what you did to them, and say so', () => {
+    const returning = CASES.filter((c) => /^r\d/.test(c.id));
+    expect(returning.length, 'nobody comes back').toBeGreaterThanOrEqual(4);
+    const setBy = (flag: string) =>
+      CASES.filter((c) => c.choices.some((ch) => (ch.setFlags ?? []).includes(flag as never)));
+    for (const c of returning) {
+      const conds: Condition[] = [];
+      walkConditions(c.trigger, conds);
+      const flags = conds.filter((k) => k.kind === 'flag');
+      expect(flags.length, `${c.id} waits on no memory`).toBeGreaterThanOrEqual(1);
+      /* It waits. Either on a plain year, which is honest for a scene that
+         always happens in the first three springs, or on years since the scene
+         it is about, which is the only clock that works for one that can
+         arrive in year eleven or in year twenty five. */
+      const waits = conds.some(
+        (k) => (k.kind === 'turn' && k.op === 'gte') || k.kind === 'since',
+      );
+      expect(waits, `${c.id} comes back at once`).toBe(true);
+      const remembered = c.scene.join(' ');
+      const named = agoIn(remembered);
+      expect(named.length, `${c.id} never says when it was`).toBeGreaterThanOrEqual(1);
+      for (const flag of flags) {
+        if (flag.kind !== 'flag') continue;
+        const setters = setBy(flag.flag);
+        expect(setters.length, `${c.id} waits on ${flag.flag}, which nothing sets`).toBeGreaterThan(0);
+        // the scene it names is the scene that set the flag, and the person
+        // coming back was in that scene: at the door, or named in it (Marta
+        // was on her plot while the mill-wright did the talking)
+        const who = CHARACTERS[c.character ?? ''];
+        for (const first of setters) {
+          expect(named, `${c.id} remembers the wrong scene`).toContain(first.id);
+          const inIt =
+            first.character === c.character ||
+            (who !== undefined && [first.title, ...first.scene].join(' ').includes(who.label));
+          expect(inIt, `${c.id}: ${c.character} was not in ${first.id}`).toBe(true);
+        }
+      }
+      // it is keen, not urgent: never lost in the lottery, never ahead of a decree
+      expect(c.priority, `${c.id} can be crowded out for ever`).toBeLessThanOrEqual(CONFIG.keenPriority);
+      expect(c.priority, `${c.id} would push a decree back a year`).toBeGreaterThan(CONFIG.urgentPriority);
+    }
+  });
+
+  /**
+   * A word a law puts on the bench has to do something no plain word on that
+   * bench does.
+   *
+   * The promise of the whole mechanic is that writing a law *changes the
+   * bench*: it makes one of the three plain answers cost something (17b) and
+   * it adds a word of its own. What twenty of them did instead was say a plain
+   * word again in legal language. Under a law that turns strangers away, the
+   * man in the hay could be HIDDEN or he could have BEEN NEVER HERE, with the
+   * same numbers to the point and the same flag, and the only difference was
+   * which line the Codex wrote it on. That is a receipt, not a choice.
+   *
+   * So: same flags, same layers on the town, same kind of extra (souls, a
+   * return, a decree, a step of Iva's, a verdict, somebody thinking better of
+   * you), no board moving in opposite directions, and every board within six
+   * points, and the two are the same answer. Whether one of them is lawful and
+   * the other is a breach does NOT save the pair: that difference is the
+   * crown's bill, and a bill is not a dilemma.
+   *
+   * A granted word earns its place with a flag none of the plain words sets, a
+   * layer on the town, a person coming back, souls, a decree, a bond, a board
+   * none of them touches, or a sign none of them has.
+   */
+  it('35. no word a law puts on a bench is a plain word said again in law', () => {
+    /* The ones that stay, and why. Each of these is the law's own sentence
+       read back to the person standing there, which is the point of the law
+       having been written, and each one lands somewhere the numbers cannot
+       show. */
+    const ALLOWED: Record<string, string> = {
+      'c1_lark:two_coats':
+        'the law says twice, and his mother sews the second one out of a blanket',
+      'c1_lark:spare_the_child':
+        'the rope refused for a child, under a decree that names the rope: one of the two benches a reign can end on',
+      'c2_toll:pays_it_twice': 'the law says twice, and the second half is read out at the fountain',
+      'c2_toll:hangs_for_coins':
+        'the sentence the crossroads decree actually names, carried out where the box is',
+    };
+
+    const near = (a: number, b: number) => Math.abs(a - b) <= 6;
+    const marks = (ch: CaseChoice) =>
+      [
+        [...(ch.setFlags ?? [])].sort().join(','),
+        [...(ch.cityFlagsOn ?? [])].sort().join(','),
+        [...(ch.cityFlagsOff ?? [])].sort().join(','),
+        ch.souls ?? 0,
+        ch.schedule?.caseId ?? '',
+        ch.enactLaw ? 'decree' : '',
+        ch.setIva ?? '',
+        ch.verdict ?? '',
+        ch.bond ?? 0,
+      ].join('|');
+
+    const twin = (a: CaseChoice, b: CaseChoice): boolean => {
+      if (marks(a) !== marks(b)) return false;
+      for (const stat of STAT_IDS) {
+        const x = a.effects[stat] ?? 0;
+        const y = b.effects[stat] ?? 0;
+        if (x * y < 0) return false;
+        if (!near(x, y)) return false;
+      }
+      return true;
+    };
+
+    for (const c of CASES) {
+      const grammar = CASE_VERDICTS[c.id];
+      if (!grammar) continue;
+      const byId = new Map(c.choices.map((ch) => [ch.id, ch]));
+      for (const granted of grammar.rulings) {
+        if (granted.needsLaw === undefined) continue;
+        const g = byId.get(granted.choiceId);
+        if (!g) continue;
+        for (const plain of grammar.rulings) {
+          if (plain.needsLaw !== undefined || plain.choiceId === granted.choiceId) continue;
+          const p = byId.get(plain.choiceId);
+          if (!p || !twin(g, p)) continue;
+          const key = `${c.id}:${granted.choiceId}`;
+          expect(
+            ALLOWED[key],
+            `${key} is ${c.id}:${plain.choiceId} in legal language, and nothing else`,
+          ).toBeTruthy();
+        }
+      }
+    }
+  });
+
+  /**
+   * 36. Nothing at the door is about a building this place has not raised.
+   *
+   * Not every noun: a valley has a way in, a fence round a yard, a track out
+   * and the corner of ground the five of them were found voting in, and the
+   * picture draws the well and that corner from the first spring for exactly
+   * that reason. What it does not have is the six that are somebody's year of
+   * work and nothing else, each of them a silhouette on the map that is either
+   * standing there or is not. A scene that opens on a granary in a place with
+   * no granary is the game contradicting its own picture, and it has done it
+   * four times: a trial that sent a man to work at one, two songs judged in a
+   * hall, and a plague named after a long room.
+   *
+   * The one exemption is written down rather than pattern-matched, because
+   * every way of spotting it automatically also hides a real one.
+   */
+  it('36. no scene names a building the place may not have built', () => {
+    const NAMED: [WorkId, RegExp][] = [
+      ['granary', /the granary/i],
+      ['long_room', /long room/i],
+      ['hall', /the hall/i],
+      ['mine', /the (mine|adit|shaft)/i],
+      ['bridge', /the bridge/i],
+      ['watch_house', /the watch[ -]house/i],
+    ];
+    /** Somebody else's hall, three valleys away, which this place never built. */
+    const ELSEWHERE: Record<string, RegExp> = { wv_hearth: /hall of the lord/i };
+
+    const gatedOn = (cond: Condition | null | undefined, work: WorkId): boolean => {
+      if (!cond) return false;
+      if (cond.kind === 'built') return cond.work === work;
+      if (cond.kind === 'all' || cond.kind === 'any') return cond.conds.some((c) => gatedOn(c, work));
+      return false;
+    };
+
+    for (const event of CASES) {
+      const said = [
+        event.title,
+        event.question ?? '',
+        ...(event.scene ?? []),
+        ...event.choices.map((c) => c.text),
+      ].join(' ');
+      const spoken = ELSEWHERE[event.id] ? said.replace(ELSEWHERE[event.id], '') : said;
+      for (const [work, names] of NAMED) {
+        if (!names.test(spoken)) continue;
+        expect(
+          gatedOn(event.trigger, work),
+          `${event.id} names ${work} and does not wait for one to be built`,
+        ).toBe(true);
+      }
+    }
   });
 });
 

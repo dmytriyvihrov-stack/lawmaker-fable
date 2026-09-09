@@ -16,6 +16,27 @@ import type { CurrentEvent, GameState } from './types';
  */
 const recurring = (id: string): boolean => id.startsWith('rr_');
 
+/**
+ * Whether the last person through this door was one of the warm ones.
+ *
+ * Read off the log rather than kept in the save: the log already says which
+ * case was ruled on and when, and a field for this would be a field about the
+ * scheduler's mood rather than about the reign.
+ */
+function lastWasWarm(s: GameState): boolean {
+  let last: string | null = null;
+  let turn = Number.NEGATIVE_INFINITY;
+  for (const line of s.log) {
+    if (line.kind === 'case' && line.turn >= turn) {
+      turn = line.turn;
+      last = line.refId ?? null;
+    }
+  }
+  if (last === null) return false;
+  const was = allCases().find((c) => c.id === last);
+  return was !== undefined && was.priority >= CONFIG.year.warmFrom;
+}
+
 /** The year this scene was last ruled on. `-Infinity` if it never has been. */
 function lastSeen(s: GameState, id: string): number {
   let last = Number.NEGATIVE_INFINITY;
@@ -32,9 +53,20 @@ function lastSeen(s: GameState, id: string): number {
  */
 export function pickEvent(
   draft: GameState,
-  opts: { lawAllowed?: boolean; heavyAllowed?: boolean } = {},
+  opts: { lawAllowed?: boolean; heavyAllowed?: boolean; consequencesOnly?: boolean } = {},
 ): CurrentEvent | null {
   const lawAllowed = opts.lawAllowed !== false;
+  /**
+   * The consequence slot, which is the second half of one dilemma a year.
+   *
+   * A year holds one person at the door with a question, and one thing coming
+   * back off an answer you already gave. Two branches are that second thing
+   * and no others: the diary, which is what an answer scheduled for years
+   * later, and the keen band, which is somebody the reign has already decided
+   * about walking back up to the door. A fresh caller who happened to be next
+   * in the queue is not a consequence and does not get this slot.
+   */
+  const consequencesOnly = opts.consequencesOnly === true;
   /**
    * Whether this slot may be filled by something hard.
    *
@@ -48,6 +80,11 @@ export function pickEvent(
    * enjoyed.
    */
   const heavyAllowed = opts.heavyAllowed !== false;
+  /* Every scene in the game, read once: the keen band below is looked at
+     before the urgent one on a consequence slot, so this cannot wait until
+     step 2 the way it used to. */
+  const cases = allCases();
+
   // 1. PENDING
   const due = heavyAllowed ? draft.pending.filter((p) => p.onTurn <= draft.turn) : [];
   if (due.length > 0) {
@@ -58,9 +95,12 @@ export function pickEvent(
     draft.pending = draft.pending.filter((p) => p !== best);
     return { kind: 'case', id: best.caseId };
   }
+  /* and when the diary is empty, the other kind of consequence: somebody
+     the reign has already decided about, coming back about it. Nothing else
+     may stand in this slot. */
+  if (consequencesOnly) return casePick('keen');
 
   // 2. URGENT
-  const cases = allCases();
   let urgentId: string | null = null;
   let urgentPrio = Number.POSITIVE_INFINITY;
   for (const c of heavyAllowed ? cases : []) {
@@ -97,7 +137,22 @@ export function pickEvent(
     return { kind: 'proposal', id: best.id };
   };
 
-  const casePick = (): CurrentEvent | null => {
+  /**
+   * The written arc, in three bands rather than one queue.
+   *
+   * `keen` is somebody the reign has already decided about, coming back the
+   * first year there is room; `arc` is the rest of the written business; and
+   * `warm` is the half of this game that was written to be enjoyed, which the
+   * priority numbers put permanently at the back of the queue.
+   *
+   * That queue was fine while a year held two people, because the second of
+   * them could not be a hard one and a warm caller was the only thing left to
+   * fill it. With one person a year it is not: taking the lowest number every
+   * time gave twelve reigns 15.7 crises each and 1.9 warm scenes between them,
+   * and left ten cases unreachable. So the slot alternates instead, and which
+   * band it reads is decided outside, by what the last person at the door was.
+   */
+  function casePick(band: 'keen' | 'arc' | 'warm'): CurrentEvent | null {
     const candidates = cases.filter(
       (c) =>
         c.trigger !== null &&
@@ -106,13 +161,15 @@ export function pickEvent(
         c.priority > CONFIG.urgentPriority &&
         evaluate(c.trigger, draft),
     );
-    if (candidates.length === 0) return null;
-    /* The keen band goes first, and only then the lottery. A person the reign
-       has already decided about comes back the first year there is room for
-       them, ahead of the callers who wait on nobody; between two of them, the
-       lower number, and between equals the seed. */
-    const keen = candidates.filter((c) => c.priority <= CONFIG.keenPriority);
-    const pool = keen.length > 0 ? keen : candidates;
+    const pool = candidates.filter((c) =>
+      band === 'keen'
+        ? c.priority <= CONFIG.keenPriority
+        : band === 'warm'
+          ? c.priority >= CONFIG.year.warmFrom
+          : c.priority > CONFIG.keenPriority && c.priority < CONFIG.year.warmFrom,
+    );
+    if (pool.length === 0) return null;
+    // inside a band: the lower number, and the seed between equals
     let best = pool[0];
     let bestR = rand01(draft.seed, 'case', draft.turn, best.id);
     for (const c of pool.slice(1)) {
@@ -123,14 +180,16 @@ export function pickEvent(
       }
     }
     return { kind: 'case', id: best.id };
-  };
+  }
 
   /**
-   * And when the written arc has nothing left, the ordinary business of the
-   * place. Last on purpose: a scene that can be asked again must never take
-   * the year from one that cannot. Whichever has been away longest, and the
-   * seed between equals, and never one that has been round inside
-   * `year.recurAfter`, so a quiet year is still allowed to happen.
+   * And the ordinary business of the place: a stone, a bench, a gate in
+   * November, the bottom of the store. It comes after everything written, so
+   * a scene that can be asked again never takes the year from one that
+   * cannot, except on a warm turn where there is no warm caller left to have
+   * it. Whichever has been away longest, and the seed between equals, and
+   * never one that has been round inside `year.recurAfter`, so a quiet year
+   * is still allowed to happen.
    */
   const roundPick = (): CurrentEvent | null => {
     const pool = cases.filter(
@@ -159,10 +218,24 @@ export function pickEvent(
   // a decree opens the year it is due; otherwise the year belongs to people
   const first = lawAllowed ? proposalPick() : null;
   if (first) return first;
-  const second = casePick();
-  if (second) return second;
-  const third = roundPick();
-  if (third) return third;
+
+  /* And whose turn it is. One person a year means this slot is not choosing a
+     scene so much as choosing what a whole year feels like, so it takes turns:
+     after anybody hard, the next person through the door is somebody warm if
+     there is one, and after somebody warm it is back to the written arc.
+
+     The keen band is last here and not first, because it belongs to the other
+     slot: somebody coming back about a ruling of yours is a consequence, and
+     the consequence slot is where the year keeps them. It is still read here,
+     so that a year with nothing else in it is never a year they wait through. */
+  const warmTurn = !lastWasWarm(draft);
+  const tries: (() => CurrentEvent | null)[] = warmTurn
+    ? [() => casePick('warm'), roundPick, () => casePick('arc'), () => casePick('keen')]
+    : [() => casePick('arc'), () => casePick('warm'), roundPick, () => casePick('keen')];
+  for (const tryOne of tries) {
+    const got = tryOne();
+    if (got) return got;
+  }
 
   // 4. nothing left
   return null;

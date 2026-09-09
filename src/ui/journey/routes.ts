@@ -36,7 +36,19 @@ const WATER = BENDS.flatMap(([x0, y0, x1, y1, x2, y2, x3, y3]) =>
   }),
 );
 export const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
-export const inWater = (at: Point) => WATER.some((b) => distance(at, b) < 32);
+// The river's box, widened by the reach of `inWater`: a point outside it is
+// dry without asking all 243 samples.
+const WATER_BOX = WATER.reduce(
+  (b, q) => ({
+    minX: Math.min(b.minX, q.x - 32), maxX: Math.max(b.maxX, q.x + 32),
+    minY: Math.min(b.minY, q.y - 32), maxY: Math.max(b.maxY, q.y + 32),
+  }),
+  { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity },
+);
+export const inWater = (at: Point) =>
+  at.x >= WATER_BOX.minX && at.x <= WATER_BOX.maxX &&
+  at.y >= WATER_BOX.minY && at.y <= WATER_BOX.maxY &&
+  WATER.some((b) => distance(at, b) < 32);
 export const atCrossing = (at: Point) => distance(at, CROSSING[1]) < 76;
 /** Some old scene pins mark the water itself. Feet stop on its nearest bank. */
 export function onFoot(at: Point): Point {
@@ -68,10 +80,16 @@ export function route(from: Point, to: Point): Point[] {
   const link = (a: number, b: number) => { links[a].push(b); links[b].push(a); };
   for (const [a, b] of EDGES) link(a, b);
   for (const idx of [start, end]) {
-    const nearby = NODES.map((at, i) => ({ i, length: distance(nodes[idx], at) }))
-      .sort((a, b) => a.length - b.length)
-      .filter(({ i }) => drySegment(nodes[idx], nodes[i])).slice(0, 2);
-    for (const { i } of nearby) link(idx, i);
+    // Nearest first, and stop at the second dry one: a dry segment is the
+    // expensive test, and only the two nearest that pass it are ever linked.
+    const byLength = NODES.map((at, i) => ({ i, length: distance(nodes[idx], at) }))
+      .sort((a, b) => a.length - b.length);
+    const nearby: number[] = [];
+    for (const { i } of byLength) {
+      if (drySegment(nodes[idx], nodes[i])) nearby.push(i);
+      if (nearby.length === 2) break;
+    }
+    for (const i of nearby) link(idx, i);
     // A scene actually on the crossing can connect to its deck.
     if (nearby.length === 0 && atCrossing(nodes[idx])) link(idx, 9);
   }

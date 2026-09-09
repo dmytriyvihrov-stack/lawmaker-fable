@@ -1,4 +1,5 @@
 import { BOND_UI, bondWord } from '../../content/bonds';
+import { STATS } from '../../content/meta';
 import { UI } from '../../content/ui-strings';
 import { DOING_LINES, folkLook } from '../../content/folk';
 import { CONFIG } from '../../engine/config';
@@ -52,6 +53,15 @@ export function Register({ state, season, onGift, onTake, onVisit, onClose }: Pr
   /** Whether the store can pay for a kindness at all this year. */
   const storePoor = state.stats.economy < CONFIG.bond.giftCost;
 
+  /* The crown's own mark, so what a bond gives back can be read off the
+     button rather than out of a sentence: the store pays for this and the
+     person upstairs is the one it is paid for. */
+  const crownMark = STATS.find((st) => st.id === 'crownSanity')?.emoji ?? '';
+  /** A line with its own two numbers in it: what the store pays, what the
+      crown gets. */
+  const fill = (line: string, cost: number, crown: number): string =>
+    line.replace('{n}', String(cost)).replace('{c}', String(crown));
+
   const act =
     'min-h-[30px] rounded-md border px-2 py-1 text-[11px] leading-tight disabled:opacity-40';
 
@@ -104,10 +114,13 @@ export function Register({ state, season, onGift, onTake, onVisit, onClose }: Pr
             const take = loverBlock(state, who);
             const visit = visitBlock(state, who);
             const canBeLiked = isPerson(who) && doings.get(who) !== 'gone';
+            /* The thing at the woodpile is somebody and is not a person, so
+               the two buttons say what they actually do to a wolf. */
+            const beast = who === 'wolf';
 
             const giftWhy =
               gift === null
-                ? BOND_UI.giftLine
+                ? fill(BOND_UI.giftLine, CONFIG.bond.giftCost, 0)
                 : gift === 'top'
                   ? BOND_UI.giftTop
                   : gift === 'poor'
@@ -119,7 +132,11 @@ export function Register({ state, season, onGift, onTake, onVisit, onClose }: Pr
             const takeWhy = mine
               ? BOND_UI.loverSince.replace('{n}', String(bond.loverSince ?? state.turn))
               : take === null
-                ? BOND_UI.loverLine
+                ? fill(
+                    beast ? BOND_UI.wolfTakeLine : BOND_UI.loverLine,
+                    CONFIG.bond.loverCost,
+                    CONFIG.bond.loverSanity,
+                  )
                 : take === 'taken'
                   ? BOND_UI.loverHas
                   : take === 'poor'
@@ -197,7 +214,7 @@ export function Register({ state, season, onGift, onTake, onVisit, onClose }: Pr
                             : 'border-ink-line text-parchment-dim'
                         }`}
                       >
-                        🎁 {BOND_UI.giftLabel}
+                        🎁 {beast ? BOND_UI.wolfGiftLabel : BOND_UI.giftLabel}
                         <span className="ml-1 tabular-nums text-parchment-dim">
                           {CONFIG.bond.giftCost}
                         </span>
@@ -213,9 +230,20 @@ export function Register({ state, season, onGift, onTake, onVisit, onClose }: Pr
                             : 'border-ink-line text-parchment-dim'
                         }`}
                       >
-                        {BOND_UI.loverMark} {BOND_UI.loverLabel}
+                        {BOND_UI.loverMark} {beast ? BOND_UI.wolfTakeLabel : BOND_UI.loverLabel}
                         <span className="ml-1 tabular-nums text-parchment-dim">
                           {CONFIG.bond.loverCost}
+                        </span>
+                        {/* and what it gives back, which is the one steady thing in a
+                            whole reign and was only ever said in a sentence */}
+                        <span
+                          className="ml-1.5 tabular-nums text-good"
+                          title={BOND_UI.crownGain.replace(
+                            '{n}',
+                            String(CONFIG.bond.loverSanity),
+                          )}
+                        >
+                          <span aria-hidden>{crownMark}</span> +{CONFIG.bond.loverSanity}
                         </span>
                       </button>
                       {/* And the one that only ever appears beside one face in
@@ -229,7 +257,7 @@ export function Register({ state, season, onGift, onTake, onVisit, onClose }: Pr
                           onClick={() => onVisit(who)}
                           title={
                             visit === null
-                              ? BOND_UI.kissLine
+                              ? fill(BOND_UI.kissLine, 0, CONFIG.bond.kissSanity)
                               : visit === 'waiting'
                                 ? BOND_UI.kissWait.replace('{n}', String(visitAgainAt(state, who)))
                                 : visit === 'gone'
@@ -242,7 +270,16 @@ export function Register({ state, season, onGift, onTake, onVisit, onClose }: Pr
                               : 'border-ink-line text-parchment-dim'
                           }`}
                         >
-                          {BOND_UI.kissMark} {BOND_UI.kissLabel}
+                          {BOND_UI.kissMark} {beast ? BOND_UI.wolfKissLabel : BOND_UI.kissLabel}
+                          <span
+                            className="ml-1.5 tabular-nums text-good"
+                            title={BOND_UI.crownGain.replace(
+                              '{n}',
+                              String(CONFIG.bond.kissSanity),
+                            )}
+                          >
+                            <span aria-hidden>{crownMark}</span> +{CONFIG.bond.kissSanity}
+                          </span>
                         </button>
                       )}
                       {/* and never the store line here: it is over the list */}

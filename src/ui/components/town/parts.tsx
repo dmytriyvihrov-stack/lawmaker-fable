@@ -1356,12 +1356,15 @@ export function WatchHouse({ paint, level }: { paint: TownPaint; level: number }
 /**
  * The well, at four levels, and the first of them is the one nobody built.
  *
- * This place was stopped at for the water: the founding says so, and the year
- * of work is called *Line the well*, not dig one. So there is a well here from
- * the first spring, and what a year buys is a lining, a windlass and a roof.
- * It used to be drawn only once it had been paid for, which put a scene about
- * a well that gives four buckets and then mud over a patch of empty grass, and
- * that is exactly what an unlined well does.
+ * This place was stopped at for the water, so the hole comes before the work:
+ * from the second spring there is a hole with stones round it, and what a year
+ * of work buys is the lining, the windlass and the roof. That is what a scene
+ * about a well giving four buckets and then mud is standing on, and it is
+ * exactly what an unlined well does.
+ *
+ * Not in the first spring, though. Five people walked in last month and the
+ * valley is open ground: `CityScape` passes `found` as false that year and
+ * nothing of this is drawn at all.
  *
  * Level 0 is a hole with a ring of stones round it and a plank across one
  * side. No posts, no timber rim, nothing anybody carried here.
@@ -1499,6 +1502,7 @@ export function Fields({
   level,
   ghost = false,
   breaking = false,
+  broken = true,
 }: {
   paint: TownPaint;
   level: number;
@@ -1506,6 +1510,12 @@ export function Fields({
   ghost?: boolean;
   /** This year's field is being turned over rather than standing finished. */
   breaking?: boolean;
+  /**
+   * Whether the corner nobody paid for is broken yet. False in the first
+   * spring only, where the valley is open ground and the whole of that
+   * year is deciding what to put on it.
+   */
+  broken?: boolean;
 }) {
   /**
    * Three strips and no more.
@@ -1522,7 +1532,7 @@ export function Fields({
     '288,434 470,426 478,476 282,482',
   ];
   /** The near end of a quad, as far across it as the plough has got. */
-  const broken = (points: string, share: number): string => {
+  const cutAcross = (points: string, share: number): string => {
     const p = points.split(' ').map((pair) => pair.split(',').map(Number));
     const at = (a: number[], b: number[]) => [
       a[0] + (b[0] - a[0]) * share,
@@ -1539,16 +1549,18 @@ export function Fields({
   const offering = !breaking && level < patches.length && (level > 0 || ghost);
 
   /**
-   * The corner that was already broken when they got here.
+   * The corner broken in the first year anybody lived here.
    *
-   * The year of work is called *Clear another field*, and the founding has
-   * five people voting in one, so there is ground under the plough in this
-   * valley before the reign spends a thing on it. Drawing nothing until the
-   * first field was paid for put every scene that mentions a furrow over open
-   * grass. It is the near end of the first strip and no new ground: clearing
-   * the first field finishes the strip this corner is the start of.
+   * There is ground under the plough in this valley before the reign spends
+   * a thing on it, because drawing nothing until the first field is paid for
+   * puts every scene that mentions a furrow over open grass. It is the near
+   * end of the first strip and no new ground: clearing the first field
+   * finishes the strip this corner is the start of.
+   *
+   * `broken` is false for one year of the reign, the first, where nobody has
+   * turned anything over yet.
    */
-  const found = level <= 0 && !breaking ? broken(patches[0], 0.42) : null;
+  const found = broken && level <= 0 && !breaking ? cutAcross(patches[0], 0.42) : null;
 
   return (
     <g>
@@ -1589,9 +1601,9 @@ export function Fields({
             strokeLinejoin="round"
             className="city-tint"
           />
-          <polygon points={broken(turning, 0.55)} fill="url(#rows)" className="city-tint" />
+          <polygon points={cutAcross(turning, 0.55)} fill="url(#rows)" className="city-tint" />
           <polyline
-            points={broken(turning, 0.55).split(' ').slice(1, 3).join(' ')}
+            points={cutAcross(turning, 0.55).split(' ').slice(1, 3).join(' ')}
             fill="none"
             stroke={OUTLINE}
             strokeWidth="1.2"

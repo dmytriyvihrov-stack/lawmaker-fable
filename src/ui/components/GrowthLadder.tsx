@@ -98,38 +98,51 @@ export function GrowthLadder({ state }: Props) {
 
   const Card = ({ step }: { step: GrowthStep }) => {
     const here = upcoming !== null && upcoming.at === step.at;
+    /* The two rungs where the place stops being what it was are drawn as
+       that and not as another card in the row: a charter and a crown are
+       the only two counts in the game that change the rules. */
+    const turning = step.stage !== undefined;
+    const opens = step.techs.filter((t) => t.name !== step.title);
     const box = step.reached
       ? 'border-seal/70 bg-seal/15 text-parchment'
       : here
         ? 'border-parchment-dim bg-ink-soft text-parchment'
-        : 'border-ink-line bg-ink-soft/40 text-parchment-dim';
+        : turning
+          ? 'border-seal/40 bg-ink-soft/60 text-parchment'
+          : 'border-ink-line bg-ink-soft/40 text-parchment-dim';
     return (
-      <li className={`flex w-[148px] shrink-0 flex-col rounded-lg border p-2 ${box}`}>
+      <li
+        className={`flex w-[152px] shrink-0 flex-col rounded-lg border p-2 ${box} ${
+          turning ? 'border-dashed' : ''
+        }`}
+      >
         <div className="flex items-baseline justify-between gap-1">
           <span className="text-[13px] tabular-nums">{step.at}</span>
           <span className="text-[9px] uppercase tracking-[0.12em] text-parchment-dim">
             {step.reached ? UI.techs.growthReached : here ? UI.techs.growthNext : ''}
           </span>
         </div>
-        {/* The name, and what the rung is like under the pointer. Five rungs
-            of two lines each, over a screen that also carries a row of four
-            facts, nine cards and a block of costs, is most of a window spent
-            on a ladder nobody is reading twice. */}
-        <div className="mt-0.5 text-[12px] font-medium leading-tight" title={step.line}>
-          {step.title}
-        </div>
+        {/* The name, and then what it actually is. Half these cards used to
+            carry a name and the words "thinkable from here" and nothing
+            else, which is a card that has told you a count and a noun: the
+            line is on the card now, clamped to three lines of it. */}
+        <div className="mt-0.5 text-[12px] font-medium leading-tight">{step.title}</div>
+        <p className="mt-1 line-clamp-3 text-[10px] leading-snug text-parchment-dim" title={step.line}>
+          {step.line}
+        </p>
 
         <div className="mt-auto space-y-1 pt-1.5">
           <Boards step={step} />
-          {step.techs.length > 0 && (
+          {/* and whatever else lands on the same count. A rung that IS a
+              thing worked out takes its name from it, so naming it again
+              underneath was the card saying one word twice. */}
+          {opens.length > 0 && (
             <div className="text-[10px] leading-snug text-seal/80">
               {UI.techs.growthOpens}
-              {step.techs.length > 1 && (
-                <span className="text-parchment-dim">
-                  {': '}
-                  {step.techs.map((t) => t.name).join(', ')}
-                </span>
-              )}
+              <span className="text-parchment-dim">
+                {': '}
+                {opens.map((t) => t.name).join(', ')}
+              </span>
             </div>
           )}
         </div>

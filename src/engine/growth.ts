@@ -32,6 +32,14 @@ export interface GrowthStep {
   /** What becomes thinkable at this count. */
   techs: TechDef[];
   reached: boolean;
+  /**
+   * The two rungs where the place stops being what it was.
+   *
+   * A charter and a crown are not the same kind of news as a rota, and the
+   * ladder used to draw all nine rungs as one row of equal cards with the
+   * biggest two somewhere in the middle of it.
+   */
+  stage?: 'town' | 'kingdom';
 }
 
 /**
@@ -87,7 +95,15 @@ export function growthLadder(s: GameState): GrowthStep[] {
     second.boards = left.length > 0 ? left : [...OPENABLE_BOARDS];
   }
 
-  put(CONFIG.town.at, GROWTH_MARKS.charter.title, GROWTH_MARKS.charter.line);
+  const charter = put(CONFIG.town.at, GROWTH_MARKS.charter.title, GROWTH_MARKS.charter.line);
+  charter.stage = 'town';
+
+  /* And the last rung, which was on nobody's ladder. A place of three
+     hundred is a kingdom with neighbours on a map, three things a year of
+     work can be spent abroad and a stage of its own, and the one screen in
+     the game that says what a count opens did not mention it. */
+  const crown = put(CONFIG.kingdom.at, GROWTH_MARKS.crown.title, GROWTH_MARKS.crown.line);
+  crown.stage = 'kingdom';
 
   for (const tech of allTechs()) {
     if (tech.needsSouls === undefined) continue;

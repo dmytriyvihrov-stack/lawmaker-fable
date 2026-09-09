@@ -35,15 +35,19 @@ export const WORKS: WorkDef[] = [
     stage: 'village',
     name: "Put up a woodcutter's cabin",
     line: 'A saw pit and a store at the edge of the trees. The wood comes in steadily instead of when somebody thinks of it.',
-    cost: 10,
+    /* Eight, not ten, and eight in the first spring as well, where the roof
+       is six. That is what makes the first choice a choice: the roof is the
+       cheap answer and the cabin is the dearer one that pays. Asked for by
+       the user. */
+    cost: 8,
     maxLevel: 3,
     trend: { economy: 1.5 },
   },
   {
     id: 'fields',
     stage: 'village',
-    name: 'Clear another field',
-    line: 'More ground under the plough. The store grows a little every year after.',
+    name: 'Clear a field',
+    line: 'Ground broken, turned and put under the plough. The store grows a little every year after.',
     cost: 10,
     maxLevel: 3,
     trend: { economy: 2 },
@@ -51,7 +55,7 @@ export const WORKS: WorkDef[] = [
   {
     id: 'well',
     stage: 'village',
-    name: 'Line the well',
+    name: 'Dig a well, and line it',
     line: 'Clean water, and fewer coughs in the wet months.',
     cost: 10,
     maxLevel: 2,
@@ -188,11 +192,12 @@ export const WORKS: WorkDef[] = [
      */
     id: 'fair',
     stage: 'both',
-    /* Not tied to a law yet, and the reason is worth keeping: this is the only
-       thing a hamlet can do about its own mood. Gate it behind any decree and
-       the first three acts have no lever at all, and a middling reign is
-       walked out on every time. The gate wants a cheap hamlet day off written
-       first, with the real fair as the thing the law unlocks. */
+    /* And it is no longer on the shelf from the first spring. A valley of
+       five does not know how to hold a fair; somebody works that out, and
+       until they have (`fair_day` on the tree) the year cannot be spent this
+       way at all. It is still the only thing a hamlet can do about its own
+       mood, which is why the tech that opens it is the cheapest one there
+       is and wants no crowd behind it. */
     name: 'Hold a fair',
     line: 'A day nobody works, with a fiddle if there is one. It can be held again next year, and it costs the store every time.',
     // A hamlet cannot hold a fair. It can hold a day off, cheaply, and be glad

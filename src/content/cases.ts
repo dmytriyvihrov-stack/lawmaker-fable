@@ -81,11 +81,11 @@ export const CASES: CaseEvent[] = [
 
   {
     id: 'v2_well',
-    /* The well is in the first sentence of this game: one field, one well. The
-       year of work *lines* it, and an unlined well is exactly the one that
-       gives four buckets and then mud, so waiting on the work put the dry week
-       in year fifteen or in no year at all (24 reigns of 36). It waits on the
-       law and on the place having lived a summer. */
+    /* The place was stopped at for the water, and the hole is in the ground
+       from the second spring. The year of work *lines* it, and an unlined well
+       is exactly the one that gives four buckets and then mud, so waiting on
+       the work put the dry week in year fifteen or in no year at all (24
+       reigns of 36). It waits on the law and on a summer having been lived. */
     trigger: {
       kind: 'all',
       conds: [
@@ -1209,7 +1209,6 @@ export const CASES: CaseEvent[] = [
     scene: [
       'He is young and he is thin, and he has worked out that where people are is also where bones are. Somebody looked at him across the fire and announced that he is a he. Nobody checked, and nobody has questioned it since.',
       'On the fourth night somebody left a bowl out without mentioning it. In the morning the bowl was clean and he was still there.',
-      'Nobody will settle this on their own. They have all found a reason to be standing near you.',
     ],
     choices: [
       {
@@ -1221,7 +1220,7 @@ export const CASES: CaseEvent[] = [
         effects: { economy: -6 },
         setFlags: ['wolf_kept'],
         cityFlagsOn: ['wolf_at_the_edge'],
-        schedule: { caseId: 'w_wolf_dog', inTurns: 2 },
+        schedule: { caseId: 'w_wolf_dog', inTurns: 4 },
       },
       {
         id: 'drive_it_off',
@@ -1235,7 +1234,7 @@ export const CASES: CaseEvent[] = [
            decision about it, it is a decision to have the same evening again
            later, and a thing that has learned where the bones are does not
            unlearn it. The bill for the free answer arrives in three years. */
-        schedule: { caseId: 'w_wolf_back', inTurns: 3 },
+        schedule: { caseId: 'w_wolf_back', inTurns: 5 },
       },
       {
         id: 'kill_it',
@@ -1335,7 +1334,7 @@ export const CASES: CaseEvent[] = [
         effects: { economy: -8, mood: -4 },
         setFlags: ['wolf_kept'],
         cityFlagsOn: ['wolf_at_the_edge'],
-        schedule: { caseId: 'w_wolf_dog', inTurns: 2 },
+        schedule: { caseId: 'w_wolf_dog', inTurns: 4 },
       },
       {
         id: 'pen_them_at_night',
@@ -2025,7 +2024,7 @@ export const CASES: CaseEvent[] = [
         effects: { health: -4, mood: -2 },
         cityFlagsOn: ['dragon_roost'],
         setFlags: ['bees_kept'],
-        schedule: { caseId: 'w_honey', inTurns: 2 },
+        schedule: { caseId: 'w_honey', inTurns: 4 },
       },
       {
         id: 'smoke',
@@ -2255,31 +2254,31 @@ export const CASES: CaseEvent[] = [
     character: 'brother',
     title: 'Your Brother on the Road',
     question:
-      'Your brother has walked here from the old place with one bag, and everybody can smell the reason he left it.',
+      'Your brother has walked here from the old place with one bag, and he has been drinking the whole way.',
     scene: [
-      'He is at the fence being extremely pleasant to people who have known him for one minute. He has been there since noon and has already been offered a bed by somebody who will regret it.',
-      'The Treasurer has said his piece twice: a hamlet this size feeds who it can carry, the store is what it is, and family is not an argument about grain. He is right, and he is talking about your brother.',
+      'He is at the fence being extremely pleasant to people who have known him for one minute. He is steady this morning. He was not steady last night, and both of those have been true every day for years.',
+      'The Treasurer has said his piece twice: a hamlet this size feeds who it can carry, and family is not an argument about grain. He is right, and he is talking about a man who cannot stop on his own and knows it.',
     ],
     choices: [
       {
         id: 'let_him_in',
-        text: 'He walks in like anybody else, and takes his chances.',
+        text: 'He walks in like anybody else, and nothing is arranged.',
         result:
-          'He is in by supper and asleep in the long house by dark. Nobody says anything to your face about it, and everybody says something.',
+          'He is in by supper and asleep in the long house by dark, and nobody takes the jug off him on the way. Nothing is said to your face about it, and something is said.',
         tags: ['communitarian'],
         effects: { mood: -6 },
         setFlags: ['brother_kept'],
-        schedule: { caseId: 'w_brother_fire', inTurns: 2 },
+        schedule: { caseId: 'w_brother_fire', inTurns: 4 },
       },
       {
         id: 'take_him_in',
-        text: 'He comes in, and somebody is paid to keep an eye on him.',
+        text: 'He comes in dry, and somebody is paid to keep him that way.',
         result:
-          'A bed, a rota, and a quiet arrangement with the store that everybody works out inside a week. It costs, and it is the reason the first year goes by without an incident.',
+          'A bed, a rota, a woman who has done this before, and a quiet arrangement with the store that everybody works out inside a week. It costs, and it is the reason the first year goes by without an incident.',
         tags: ['egalitarian'],
         effects: { mood: -8, economy: -12 },
         setFlags: ['brother_kept', 'brother_carried'],
-        schedule: { caseId: 'w_brother_easel', inTurns: 3 },
+        schedule: { caseId: 'w_brother_easel', inTurns: 5 },
       },
       {
         id: 'turn_him_back',

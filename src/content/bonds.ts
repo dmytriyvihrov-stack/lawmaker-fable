@@ -93,20 +93,35 @@ export const CHOICE_BOND_OTHERS: Record<string, Record<string, number>> = {
 export const BOND_UI = {
   heading: 'Where you stand with them',
   giftLabel: 'Give them something',
-  giftLine: 'Costs the store two. They think one step better of you. Not the same person twice in two years.',
+  giftLine: 'Costs the store {n}. They think one step better of you. Not the same person twice in two years.',
   giftWait: 'Not again until year {n}.',
   giftPoor: 'The store cannot spare it.',
   giftTop: 'There is no rung above this one.',
   giftGone: 'Not here any more.',
   giftDone: 'Given, year {n}.',
   loverLabel: 'Take them',
-  loverLine: 'Costs the store three. The place stops pretending it had not noticed.',
+  /**
+   * And the same two buttons in the words the thing at the woodpile gets.
+   * Nobody takes a wolf; a wolf stays, or it does not, and the difference
+   * between the two is four winters of somebody leaving a bowl out.
+   */
+  wolfGiftLabel: 'Put something out',
+  wolfTakeLabel: 'Let it stay',
+  wolfTakeLine: 'Costs the store {n}. It stops keeping to the edge of the light, and the crown is {c} steadier every year it is here.',
+  wolfKissLabel: 'Walk out to it',
+  loverLine: 'Costs the store {n}. The place stops pretending it had not noticed, and the crown is {c} steadier every year they are here.',
   loverNeeds: 'Only from the top rung, and only if it is already true.',
   loverChild: 'They are a child. Not while that is true.',
   loverHas: 'You have somebody.',
   loverIs: 'Yours',
   loverMark: '💗',
   loverSince: 'since year {n}',
+  /**
+   * The chip on the button: what the crown gets out of it, in the crown's own
+   * mark, beside what the store pays. A player asked to be able to see that
+   * without reading a sentence for it.
+   */
+  crownGain: 'and the crown is {n} better for it',
   /** What the ledger calls the one steady thing in a reign. */
   loverSanity: 'Somebody who is glad you came home',
   /** Said on the card when the person standing there is the one you took. */
@@ -120,7 +135,7 @@ export const BOND_UI = {
    */
   kissLabel: 'Ask them up',
   kissMark: '💋',
-  kissLine: 'Costs nothing. They come up to the house, and the year is easier. Not again for two years.',
+  kissLine: 'Costs nothing. They come up to the house and the crown is {c} better for the rest of the year. Not again for two years.',
   kissWait: 'Not again until year {n}.',
   kissNotYours: 'Only the one you took.',
   /** What the ledger calls the afternoon. */

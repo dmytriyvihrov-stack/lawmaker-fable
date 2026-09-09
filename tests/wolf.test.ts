@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { CONFIG } from '../src/engine/config';
 import { CASES } from '../src/content/cases';
 import { CASE_SPOTS, CITY_LABELS, characterMeta } from '../src/content/meta';
 import { CASE_VERDICTS } from '../src/content/verdict-words';
 import { chooseCase, continueYear, newGame } from '../src/engine/reducer';
+import { reignAt, withCase } from './helpers';
 import { computePortrait } from '../src/engine/portrait';
 import { OWN_ROPE_DESC, OWN_ROPE_HEADLINE } from '../src/content/own-rope';
 import { evaluate } from '../src/engine/conditions';
@@ -16,11 +18,7 @@ const back = CASES.find((c) => c.id === 'w_wolf_back') as CaseEvent;
 
 /** A reign far enough along that the thing at the woodpile could turn up. */
 function years(n: number, souls: number): GameState {
-  const s = newGame(11);
-  s.turn = n;
-  s.population = souls;
-  s.current = { kind: 'case', id: 'w_wolf' };
-  return s;
+  return withCase(reignAt({ turn: n, population: souls }), 'w_wolf');
 }
 
 describe('the thing at the woodpile', () => {
@@ -51,13 +49,16 @@ describe('the thing at the woodpile', () => {
       wolf.choices.filter((c) => c.schedule).map((c) => [c.id, c.schedule!]),
     );
     expect([...scheduled.keys()]).toEqual(['feed_it', 'drive_it_off']);
-    // the bowl grows into a litter
+    // the bowl grows into a litter, and never inside the floor: a thing that
+    // comes back two springs later is the same scene with a gap in it
     expect(scheduled.get('feed_it')!.caseId).toBe('w_wolf_dog');
-    expect(scheduled.get('feed_it')!.inTurns).toBe(2);
-    // and the pots only put the same evening off for three years, because the
+    expect(scheduled.get('feed_it')!.inTurns).toBe(CONFIG.year.consequenceAfter);
+    // and the pots only put the same evening off for a few years, because the
     // trees were where it lived before anybody banged anything
     expect(scheduled.get('drive_it_off')!.caseId).toBe('w_wolf_back');
-    expect(scheduled.get('drive_it_off')!.inTurns).toBe(3);
+    expect(scheduled.get('drive_it_off')!.inTurns).toBeGreaterThan(
+      CONFIG.year.consequenceAfter,
+    );
     expect(litter.trigger, 'the litter arrives by schedule and no other way').toBeNull();
     expect(back.trigger, 'and so does the one that was sent away').toBeNull();
   });

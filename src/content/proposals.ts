@@ -31,7 +31,7 @@ export const PROPOSALS: Proposal[] = [
       line: "Share it. The day we start counting whose row is whose is the day somebody stops digging.",
     },
     problem: [
-      'A handful of us, one field, one well, and a seal that somebody has to hold.',
+      'A handful of us, open ground, water we have not lined yet, and a seal that somebody has to hold.',
       'Say how the work goes. Everyone will hear you, because everyone is here.',
     ],
     options: [

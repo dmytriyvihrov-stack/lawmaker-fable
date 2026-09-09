@@ -55,15 +55,29 @@ export const TECHS: TechDef[] = [
   },
 
   // ---- the crowd ----
+  /**
+   * The first thing this branch ever works out, and the only one that hands a
+   * year of the reign back a way to spend itself.
+   *
+   * A fair used to be on the shelf from the first spring, which made the one
+   * thing a hamlet can do about its own mood a thing it had always known how
+   * to do. Nobody in a valley of five knows how to hold a fair. Somebody works
+   * out that a day nobody works is worth more than the day's work, writes down
+   * who brings what, and after that the place has a fair in it forever.
+   *
+   * It is also where the branch starts: the list of who brings what on the day
+   * is the first written list this place ever keeps, and the watch's rota and
+   * the ballad both come off the back of it.
+   */
   {
-    id: 'muster',
+    id: 'fair_day',
     era: 1,
-    name: 'The muster roll',
-    line: 'A list of who can hold a pike, and who is pretending they cannot.',
-    cost: 16,
-    needsSouls: 40,
-    // a list of who can hold a pike is also a list of who is not in the field
-    trend: { army: 1, economy: -1 },
+    name: 'The day off',
+    line: 'Somebody works out that a day nobody works is worth more than the day of work. A fair can be held from now on.',
+    cost: 8,
+    // the day itself is a year of work and pays for itself there; this is only
+    // the knowing how, and the songs it leaves behind
+    trend: { culture: 1 },
   },
   {
     id: 'rota',
@@ -71,7 +85,7 @@ export const TECHS: TechDef[] = [
     name: 'The written rota',
     line: 'Who stands where, on paper, for the whole month. The watch stops arguing.',
     cost: 24,
-    requires: ['muster'],
+    requires: ['fair_day'],
     needsSouls: 90,
     trend: { army: 1, mood: -1 },
   },
@@ -81,7 +95,7 @@ export const TECHS: TechDef[] = [
     name: 'The travelling ballad',
     line: 'Somebody sets your worst year to a tune, and the tune is very good.',
     cost: 22,
-    requires: ['muster'],
+    requires: ['fair_day'],
     needsSouls: 100,
     // somebody sets your worst year to a tune, and the tune travels
     trend: { culture: 2, crownSanity: -1 },

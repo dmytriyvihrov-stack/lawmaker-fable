@@ -65,9 +65,13 @@ export type WorkGroup = 'infrastructure';
  * branches. The field branch is paid for out of the surplus; the crowd branch
  * needs people in one place before anybody thinks of it at all.
  */
+/* TODO(architect): `muster` was dropped and `fair_day` added in V66, at the
+   user's word: the muster roll at forty souls came off the ladder, and the
+   fair stopped being a thing a valley of five already knows how to hold. Two
+   members of an id union, no field added, renamed or removed. */
 export type TechId =
   | 'plough' | 'cistern' | 'ledger' | 'physician'
-  | 'muster' | 'rota' | 'ballads' | 'press' | 'scribes';
+  | 'fair_day' | 'rota' | 'ballads' | 'press' | 'scribes';
 
 export interface TechDef {
   id: TechId;

@@ -56,20 +56,33 @@ describe('how long ago it was, in words', () => {
 
 describe('Tam, and the fence, four autumns on', () => {
   it('comes back the way you left him, and only that way', () => {
+    /* In the consequence slot, which is where somebody coming back about a
+       ruling of yours belongs: a year holds one fresh dilemma and one of
+       these, and this is the one of these. */
     const fed = after('v1_idle_hand', 'feed_him', 'tam_fed', 5);
-    expect(pickEvent(fed, { lawAllowed: false })).toEqual({ kind: 'case', id: 'r1_tam_fed' });
+    expect(pickEvent(fed, { lawAllowed: false, consequencesOnly: true })).toEqual({
+      kind: 'case',
+      id: 'r1_tam_fed',
+    });
     const cut = after('v1_idle_hand', 'no_work_no_bread', 'tam_cut', 5);
-    expect(pickEvent(cut, { lawAllowed: false })).toEqual({ kind: 'case', id: 'r1_tam_cut' });
+    expect(pickEvent(cut, { lawAllowed: false, consequencesOnly: true })).toEqual({
+      kind: 'case',
+      id: 'r1_tam_cut',
+    });
   });
 
-  it('never pushes a decree back a year, and never loses the lottery to a wanderer', () => {
+  it('never pushes a decree back a year, and has a slot of its own to come back in', () => {
     // a law is due and open: the law comes first, and Tam takes the next slot
     const fed = after('v1_idle_hand', 'feed_him', 'tam_fed', 5);
     const first = pickEvent(fed, { lawAllowed: true });
     expect(first?.kind).toBe('proposal');
-    // the wolf and the corner are both eligible in this year and lose to him
-    const second = pickEvent(fed, { lawAllowed: false });
+    /* The wolf and the corner are both eligible in this year. In the
+       consequence slot they are not even read, and in the dilemma slot one
+       of them may have the year - but Tam is still the last thing that slot
+       falls back on, so he is never lost, only ever put off. */
+    const second = pickEvent(fed, { lawAllowed: false, consequencesOnly: true });
     expect(second).toEqual({ kind: 'case', id: 'r1_tam_fed' });
+    expect(pickEvent(fed, { lawAllowed: false })?.kind).toBe('case');
   });
 
   it('does not come back before its years, or to a place that never decided about him', () => {
@@ -223,9 +236,15 @@ describe('the woman the scene was about', () => {
 describe('Marta, and the ground, years on', () => {
   it('remembers which way the plot went', () => {
     const kept = after('v3_millwright', 'marta_keeps', 'marta_kept', 8);
-    expect(pickEvent(kept, { lawAllowed: false })).toEqual({ kind: 'case', id: 'r2_marta_kept' });
+    expect(pickEvent(kept, { lawAllowed: false, consequencesOnly: true })).toEqual({
+      kind: 'case',
+      id: 'r2_marta_kept',
+    });
     const moved = after('v3_millwright', 'plot_to_the_mill', 'marta_moved', 8);
-    expect(pickEvent(moved, { lawAllowed: false })).toEqual({ kind: 'case', id: 'r2_marta_moved' });
+    expect(pickEvent(moved, { lawAllowed: false, consequencesOnly: true })).toEqual({
+      kind: 'case',
+      id: 'r2_marta_moved',
+    });
   });
 
   it('says how long she has been waiting', () => {

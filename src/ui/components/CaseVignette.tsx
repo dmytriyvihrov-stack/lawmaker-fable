@@ -90,18 +90,82 @@ const ART: Record<string, JSX.Element> = {
     </g>
   ),
 
-  // the same strip, unplanted, with the mill wheel over the water behind it
+  /**
+   * The mill that was built on her ground, and the strip in front of it that
+   * she has not planted since.
+   *
+   * It was a bare spoked circle over a line, which is a cart wheel lying in a
+   * field. A mill is a house with a wheel hanging off the side of it and
+   * water running under that, and none of the three was drawn.
+   */
   r2_marta_moved: (
     <g>
-      <path d="M8 88 q40 -10 80 0" stroke={SOFT} strokeWidth="3" fill="none" />
-      <path d="M8 40 q44 -12 80 4" stroke={INK} strokeWidth="6" fill="none" opacity="0.6" />
-      <circle cx="74" cy="36" r="12" fill="none" stroke={GLOW} strokeWidth="2.4" />
-      <path d="M62 36 H86 M74 24 V48 M66 28 L82 44 M82 28 L66 44" stroke={GLOW} strokeWidth="1.6" />
-      <g stroke={SOFT} strokeWidth="1.2" opacity="0.8">
-        <path d="M20 78 q3 -8 6 0 M34 76 q3 -8 6 0 M50 80 q3 -8 6 0" />
+      {/* the leat, running under the wheel and away */}
+      <path d="M2 62 q22 6 44 2 q24 -4 48 4" stroke={SOFT} strokeWidth="7" fill="none" opacity="0.7" />
+      <path d="M2 62 q22 6 44 2 q24 -4 48 4" stroke={GLOW} strokeWidth="1.2" fill="none" opacity="0.35" />
+
+      {/* the mill house: a stone foot, a timber upper floor and a long roof */}
+      <path d="M44 26 L66 10 L88 26 Z" fill={INK} opacity="0.85" />
+      <rect x="48" y="26" width="36" height="34" fill="none" stroke={INK} strokeWidth="2.4" />
+      <path d="M48 44 h36" stroke={INK} strokeWidth="1.6" opacity="0.7" />
+      {/* the sack door on the upper floor, which is the whole point of a mill */}
+      <rect x="60" y="30" width="12" height="11" fill={INK} opacity="0.7" />
+      <path d="M66 22 h12" stroke={INK} strokeWidth="2" />
+      <path d="M76 22 v6" stroke={SOFT} strokeWidth="1.6" />
+      {/* and the door at the bottom of it */}
+      <rect x="62" y="48" width="10" height="12" fill={SOFT} opacity="0.8" />
+
+      {/* the wheel, hung off the near end and standing in the water */}
+      <circle cx="34" cy="52" r="17" fill="none" stroke={GLOW} strokeWidth="2.4" />
+      <circle cx="34" cy="52" r="4" fill="none" stroke={GLOW} strokeWidth="1.6" />
+      <g stroke={GLOW} strokeWidth="1.4" opacity="0.9">
+        <path d="M17 52 H51 M34 35 V69 M22 40 L46 64 M46 40 L22 64" />
       </g>
-      <path d="M24 88 L30 58" stroke={INK} strokeWidth="2.6" strokeLinecap="round" />
-      <path d="M22 60 h14 v5 h-14 z" fill={INK} />
+      {/* the paddles on the rim, which are what the water pushes */}
+      <g stroke={GLOW} strokeWidth="2.6" strokeLinecap="round" opacity="0.75">
+        <path d="M34 35 v5 M51 52 h-5 M34 69 v-5 M17 52 h5" />
+      </g>
+      {/* the launder bringing the water on to the top of it */}
+      <path d="M6 40 L26 40 L30 44" stroke={INK} strokeWidth="2.6" fill="none" strokeLinejoin="round" />
+
+      {/* her strip, unploughed: the ridges of a field nobody has turned over,
+          and the boundary peg still standing at the near end of it */}
+      <path d="M4 92 q44 -8 88 0" stroke={SOFT} strokeWidth="3" fill="none" />
+      <g stroke={SOFT} strokeWidth="1.2" opacity="0.55">
+        <path d="M10 84 q40 -6 76 0 M14 76 q36 -5 66 0" />
+      </g>
+      <path d="M20 92 V70" stroke={INK} strokeWidth="2.6" strokeLinecap="round" />
+      <path d="M14 72 h12 v4 h-12 z" fill={SEAL} opacity="0.85" />
+    </g>
+  ),
+
+  /**
+   * The year the mill was a stake in her ground and not a mill yet: four pegs
+   * across a strip in crop, and the frame of the thing they are for standing
+   * behind it with a wheel that has nothing to turn in.
+   */
+  v3_millwright: (
+    <g>
+      {/* the stream it wants, which is why it wants this ground */}
+      <path d="M2 30 q24 8 46 2 q26 -6 46 4" stroke={SOFT} strokeWidth="6" fill="none" opacity="0.6" />
+
+      {/* the frame: two posts, a beam, and the wheel hub set on it */}
+      <g stroke={INK} strokeWidth="2.6" strokeLinecap="round" fill="none">
+        <path d="M52 58 V26 M84 58 V26 M50 26 H86" />
+        <path d="M52 40 L84 26 M84 40 L52 26" strokeWidth="1.4" opacity="0.6" />
+      </g>
+      <circle cx="68" cy="46" r="10" fill="none" stroke={GLOW} strokeWidth="2" />
+      <path d="M58 46 H78 M68 36 V56" stroke={GLOW} strokeWidth="1.4" />
+
+      {/* her strip, in crop, with the line of pegs walked across it */}
+      <path d="M4 92 q44 -8 88 0" stroke={SOFT} strokeWidth="3" fill="none" />
+      <g stroke={GLOW} strokeWidth="1.3" opacity="0.5">
+        <path d="M8 84 q42 -7 80 0 M12 76 q38 -6 70 0 M16 68 q34 -5 60 0" />
+      </g>
+      <g stroke={SEAL} strokeWidth="2.2" strokeLinecap="round">
+        <path d="M30 90 V74 M42 87 V71 M54 85 V69 M66 84 V68" />
+      </g>
+      <path d="M30 76 L66 70" stroke={SEAL} strokeWidth="1.4" strokeDasharray="4 3" />
     </g>
   ),
 

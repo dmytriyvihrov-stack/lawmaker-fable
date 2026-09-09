@@ -1217,6 +1217,7 @@ export function App() {
           stats={game.stats}
           cityFlags={game.cityFlags}
           population={game.population}
+          turn={game.turn}
           buildings={game.buildings}
           stage={game.stage}
           season={season}

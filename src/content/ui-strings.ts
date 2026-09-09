@@ -7,7 +7,7 @@ export const UI = {
     staleSave:
       'There is a reign saved here that this version of the game cannot open. Beginning a new one will write over it.',
     name: 'Lawmaker Fable',
-    tagline: 'Five people, one field, and a seal. Write the law before the place is big enough to need it.',
+    tagline: 'Five people, open ground, and a seal. Write the law before the place is big enough to need it.',
     newGame: 'Begin a reign',
     /** The dev door: start a reign already grown, to read a later stage. */
     beginAt: 'Begin at',
@@ -408,37 +408,52 @@ export const UI = {
      DOES rather than what it is, because "sickness decides how many of you
      are here next spring" is a riddle with the answer left out: people die,
      strangers stop coming, the store cannot pay. */
+  /* And it is four rows of one clause each now, with what each board pulls on
+     drawn as a mark rather than said in a sentence. A player asked for less
+     reading and for the connections themselves: which dial moves which. The
+     `to` mark is what this board does to something else, the `from` mark is
+     what moves this one, and the arrow between them is the whole lesson. */
   wiring: {
     heading: 'Before the first year',
-    lead: 'Four things are kept in the corner of the screen for the whole of your reign. Nothing else is counted.',
+    lead: 'Four things are kept in the corner of the screen. Nothing else is counted, and each one pulls on something.',
     boards: [
       {
         stat: 'health',
         title: 'How well people are',
-        line: 'Let it fall and people die over the winter, and the count of you falls with them. Nothing else in the game kills anybody.',
+        to: 'people',
+        line: 'Low, and people die over the winter and the count falls with them.',
       },
       {
         stat: 'mood',
         title: 'What it is like to live here',
-        line: 'High, and strangers arrive and stay. Low, and the people you already have walk out over the hill.',
+        to: 'people',
+        line: 'High, and strangers arrive. Low, and the people here walk out over the hill.',
       },
       {
         stat: 'economy',
         title: 'What is in the store',
-        line: 'Every building is paid out of it. It fills a little each year and it only holds so much until you build somewhere to keep more.',
+        to: 'work',
+        line: 'Every building is paid out of it, and it only holds so much.',
       },
       {
         stat: 'crownSanity',
         title: 'How steadily you hold it',
-        line: 'Ruling the way your own laws read steadies you. Ruling against them, or opening a sealed law again, does not.',
+        from: 'law',
+        line: 'Ruling the way your own laws read steadies you. Ruling against them does not.',
       },
     ],
-    floor: 'Let any one of the four sit on the floor for a whole year and the reign ends there. That is the only way to lose.',
+    /** The three things on the other end of those arrows. */
+    marks: {
+      people: { icon: '🧍', label: 'how many of you there are' },
+      work: { icon: '🔨', label: 'what a year can be spent on' },
+      law: { icon: '📜', label: 'the laws you have sealed' },
+    },
+    floor: 'Any one of the four on the floor for a whole year ends the reign. That is the only way to lose.',
     /* And the shape of a year, because the first screen a player meets is a
        shelf of eight buildings with nothing on it to say why there is only
        room for one of them. */
     yearHeading: 'And a year is one decision',
-    year: 'Some years you write a law. Some years you spend the year putting up one building. Some years somebody is at your door and wants an answer. You never get to do two, and nothing is ever taken back.',
+    year: 'A law, a building, or somebody at your door who wants an answer. Never two, and nothing is ever taken back.',
     go: 'BEGIN THE REIGN',
   },
 
@@ -461,9 +476,9 @@ export const UI = {
   door: {
     heading: 'Somebody is at the door',
     lines: [
-      'A law is a rule, and a rule pays out every year you keep it. This is not a law. What you answer here lands once, on the day, and then the day is over.',
-      'Nothing warned you who was coming, and nothing ever will. There is no saving up for the person at the door, only being a place with something in the store when one arrives.',
-      'The laws you have sealed are on the bench with you. Each one hands you a word nobody without it gets, marked with an L, and each one makes the plain words dearer when your answer goes against your own writing.',
+      'A law pays out every year you keep it. This is not a law. What you answer here lands once, and then the day is over.',
+      'Nothing warns you who is coming. There is no saving for the person at the door, only having something in the store when one arrives.',
+      'Your sealed laws are on the bench with you. Each hands you a word marked with an L, and makes the plain words dearer when you rule against your own writing.',
     ],
     go: 'HEAR THEM OUT',
   },
@@ -714,7 +729,6 @@ export const UI = {
   popup: {
     standingBeforeYou: 'Standing before you',
     aCase: 'A case',
-    firstTime: 'first time here',
     seenBefore: 'here before, in year {n}',
     aged: 'aged {n}',
     /* What you are here to do, not the furniture you are doing it at. It is

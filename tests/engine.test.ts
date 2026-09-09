@@ -5,7 +5,6 @@ import {
   advance,
   continueYear,
   chooseCase,
-  chooseLaw,
   chooseWork,
   newGame,
   reopenLaw,
@@ -19,20 +18,12 @@ import {
   workCost,
   worksFor,
 } from '../src/engine/simulation';
-import { getProposal } from '../src/engine/registry';
 import type { GameState } from '../src/engine/types';
+import { reignAt, seal } from './helpers';
 
 /** A state parked on a given year, without going through the UI. */
 function at(seed: number, turn = 1): GameState {
-  const s = newGame(seed);
-  s.turn = turn;
-  return s;
-}
-
-/** Seal a law without caring about the drafting table. */
-function seal(s: GameState, proposalId: string, idx: number): GameState {
-  const proposal = getProposal(proposalId)!;
-  return chooseLaw(s, proposalId, idx, proposal.options[idx].label);
+  return reignAt({ seed, turn });
 }
 
 describe('the hamlet', () => {
@@ -258,8 +249,11 @@ describe('the year of work', () => {
       s.shownCases = ['v1_idle_hand', 'v2_well', 'v3_millwright', 'v4_hay'];
       s = chooseWork(s, 'rest');
     }
-    expect(s.techs[0]).toBe('plough');
-    expect(trendOf(s, 'economy')).toBeGreaterThan(0);
+    // the cheapest thing anybody could start on, and the day off is eight
+    expect(s.techs[0]).toBe('fair_day');
+    // and what it is for: a year of the reign the place did not know how to
+    // spend before it worked this out
+    expect(worksFor(s).map((w) => w.id)).toContain('fair');
   });
 
   it('a year that already spent its work goes straight on', () => {

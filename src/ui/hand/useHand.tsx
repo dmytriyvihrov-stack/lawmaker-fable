@@ -10,7 +10,7 @@ import { Camera, WIDE } from './camera';
 import { makeGesture } from './gestures';
 import type { Gesture, GestureCtx } from './gestures';
 import { DEFS, SCENES } from './scenes';
-import type { ActHooks } from './scenes';
+import type { ActHooks, Scene } from './scenes';
 import { play } from '../audio/sound';
 
 /**
@@ -102,6 +102,40 @@ const TOOL_SYMBOL: Record<string, string> = {
   bucket: '#mgToolBucket',
 };
 
+/** One step of an act, drawn on the scene: what to take, and where to take it. */
+interface Hint {
+  from: { x: number; y: number; r: number } | null;
+  to: { x: number; y: number } | null;
+}
+
+/**
+ * Where the hand is wanted on this step of this act.
+ *
+ * A carry has two ends and everything else has one: a thing to cut, shake,
+ * hold a torch to, tap or turn away from. `base` is how many steps the acts
+ * before this one in a chain already took, the same number the gesture
+ * counts in, so a cut followed by a carry asks for the loaf and then the
+ * cart rather than for the loaf twice.
+ */
+function hintOf(act: ActDef, sc: Scene | undefined, step: number): Hint | null {
+  if (!sc) return null;
+  const at = (id: string): { x: number; y: number; r: number } | null => {
+    try {
+      const thing = sc.get(id);
+      return { x: thing.x, y: thing.y, r: Math.max(9, thing.r) };
+    } catch {
+      /* a scene that does not carry this one is a scene with no hint in it */
+      return null;
+    }
+  };
+  if (act.kind === 'carry') {
+    const s = act.steps[step];
+    if (!s) return null;
+    return { from: at(s.item), to: at(s.to) };
+  }
+  return { from: at(act.target), to: null };
+}
+
 interface Acting {
   caseId: string;
   choiceId: string;
@@ -147,6 +181,17 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
   const [stage, setStage] = useState<HandStage>('wide');
   const [acting, setActing] = useState<Acting | null>(null);
   const [tool, setTool] = useState<Tool>(null);
+  /**
+   * What to put your hand on, and where it goes.
+   *
+   * The strip under the scene says what to do in words. Which loaf, and
+   * which cart, was left to the player to find by dragging things until
+   * something moved. This is the ring round the one to pick up and the
+   * arrow to the place it is wanted, in the scene’s own coordinates, one
+   * step at a time: the ring goes out the moment the thing is in hand and
+   * the arrow stays until the step is done.
+   */
+  const [hint, setHint] = useState<Hint | null>(null);
 
   const nearEl = useRef<SVGGElement | null>(null);
   const toolRef = useRef<SVGGElement | null>(null);
@@ -302,6 +347,7 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
     play('rustle');
     gesture.current = null;
     setTool(null);
+    setHint(null);
     setStage('hold');
     a.hooks.done?.();
     // the scene holds for a beat, and only then does the reign hear of it
@@ -316,6 +362,9 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
   function beginAct(a: Acting, act: ActDef, base = 0) {
     const sc = SCENES[a.caseId];
     setTool(act.tool);
+    /* the first step of this act, pointed at before a finger has moved */
+    let at = 0;
+    setHint(hintOf(act, sc, 0));
     const contact = () => play(act.tool === 'bucket' ? 'water'
       : act.tool === 'torch' ? 'fire'
       : act.kind === 'taps' ? 'wood'
@@ -323,8 +372,19 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
     let heat = 0;
     const hooks: ActHooks = {
       ...a.hooks,
-      grab: (i) => { contact(); a.hooks.grab?.(i); },
-      step: (i, kind) => { contact(); a.hooks.step?.(i, kind); },
+      /* it is in your hand: the ring has done its job and the arrow is
+         the half of this that is still worth looking at */
+      grab: (i) => {
+        contact();
+        setHint((h) => (h ? { from: null, to: h.to } : h));
+        a.hooks.grab?.(i);
+      },
+      step: (i, kind) => {
+        contact();
+        at += 1;
+        setHint(hintOf(act, sc, at));
+        a.hooks.step?.(i, kind);
+      },
       pull: (n) => { play('strain', .18); a.hooks.pull?.(n); },
       freed: (i) => { play('rustle'); a.hooks.freed?.(i); },
       slip: (x, y) => { play('wood'); a.hooks.slip?.(x, y); },
@@ -358,6 +418,7 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
     if (!acting || !at) return;
     gesture.current = null;
     setTool(null);
+    setHint(null);
     SCENES[acting.caseId].reset();
     setActing(null);
     setStage('zooming');
@@ -469,6 +530,9 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
      screen away from the spot the camera had flown to, so there was nothing
      under the finger and nothing on the screen either. */
   const box = mapViewport(fit);
+  /* Scene coordinates to map coordinates: the same shift `toScene` undoes
+     for the pointer, in the other direction. */
+  const handOff = open.current?.off ?? null;
 
   const overlay = (
     <svg
@@ -509,6 +573,51 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
           strokeLinecap="round"
           opacity=".4"
         />
+      )}
+      {/* What to put your hand on, and where it goes: a ring round the one
+          thing this step wants and a running line to the place it is wanted.
+          Drawn in map units, so the scene’s own coordinates are shifted by
+          the same offset everything else in it is. */}
+      {stage === 'act' && hint && handOff && (
+        <g pointerEvents="none">
+          {hint.from && hint.to && (
+            <path
+              className="hand-hint-run"
+              d={`M${hint.from.x + handOff.x} ${hint.from.y + handOff.y} L${
+                hint.to.x + handOff.x
+              } ${hint.to.y + handOff.y}`}
+              stroke="var(--color-cloth-rich)"
+              strokeWidth="1.6"
+              strokeDasharray="6 6"
+              strokeLinecap="round"
+              fill="none"
+              opacity=".8"
+            />
+          )}
+          {hint.to && (
+            <g transform={`translate(${hint.to.x + handOff.x} ${hint.to.y + handOff.y})`}>
+              <circle
+                r="9"
+                fill="none"
+                stroke="var(--color-cloth-rich)"
+                strokeWidth="1.4"
+                strokeDasharray="3 4"
+                opacity=".75"
+              />
+            </g>
+          )}
+          {hint.from && (
+            <g transform={`translate(${hint.from.x + handOff.x} ${hint.from.y + handOff.y})`}>
+              <circle
+                className="hand-hint-ring"
+                r={hint.from.r + 4}
+                fill="none"
+                stroke="var(--color-cloth-rich)"
+                strokeWidth="2"
+              />
+            </g>
+          )}
+        </g>
       )}
       <g ref={toolRef} style={{ display: tool ? undefined : 'none' }} pointerEvents="none">
         <g ref={toolInRef}>

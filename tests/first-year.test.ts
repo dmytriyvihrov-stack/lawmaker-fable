@@ -62,11 +62,14 @@ describe('the first year', () => {
     expect(house.trend.health!).toBeGreaterThan(0);
     expect(cabin.trend.economy!).toBe(1.5);
     expect(cabin.trend.mood, 'the cabin is not a comfort').toBeUndefined();
-    // both are a village year, at the village price
+    // both are a village year, and neither is dearer than a village year is
     for (const w of [house, cabin]) {
       expect(w.stage).toBe('village');
-      expect(w.cost).toBe(CONFIG.works.costVillage);
+      expect(w.cost).toBeLessThanOrEqual(CONFIG.works.costVillage);
     }
+    // and the cabin is the dearer of the two, which is what makes the first
+    // choice a choice rather than a preference
+    expect(cabin.cost).toBeGreaterThan(CONFIG.works.costFirstYear);
     // the roof matters because a hamlet starts unwell, and it starts unwell
     expect(CONFIG.start.health).toBeLessThan(20);
   });

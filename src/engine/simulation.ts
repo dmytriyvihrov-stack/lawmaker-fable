@@ -689,14 +689,15 @@ export function workCost(s: GameState, work: WorkDef): number {
   if (work.maxLevel === 0) return asked;
   const level = s.buildings[work.id] ?? 0;
   // the first roof, in the first year, at what a first roof is worth. Only the
-  // two things that year is a choice between: everything else is priced at
-  // what a year of work costs, in the first year and in the fortieth.
-  const first = s.turn <= 1 && level === 0 && FIRST_YEAR_WORKS.includes(work.id);
-  const base = first
-    ? CONFIG.works.costFirstYear
-    : s.stage === 'village'
-      ? CONFIG.works.costVillage
-      : CONFIG.works.costTown;
+  // roof: the cabin is the dearer half of that first choice and is priced at
+  // what its own row says, in the first year and in the fortieth.
+  const first = s.turn <= 1 && level === 0 && work.id === 'house';
+  /* And every other floor is priced by its own row rather than by the stage
+     it stands in. The two were the same number for every work in the game -
+     `costVillage` is 10 and every village row says 10 - which meant the row
+     was decoration and the only way to price one thing differently was to
+     reprice all of them. The row is the price now. */
+  const base = first ? CONFIG.works.costFirstYear : workPrice(s, work);
   const full = base + CONFIG.works.perLevel * level;
   return s.stats.economy >= CONFIG.works.freeAbove ? Math.ceil(full / 2) : full;
 }
@@ -723,12 +724,28 @@ export function workSubsidised(s: GameState): boolean {
  */
 export const FIRST_YEAR_WORKS: WorkId[] = ['house', 'woodcutter'];
 
+/**
+ * A year of work the place has to work out before it can spend one that way.
+ *
+ * Nobody in a valley of five knows how to hold a fair, and the fair sat on the
+ * shelf from the first spring, which made the one thing a hamlet can do about
+ * its own mood a thing it had always known. It is a rung on the tree now.
+ *
+ * TODO(architect): `WorkDef` has no `needsTech`, so the gate is here rather
+ * than on the content row where `needsLaw` and `needsWork` live. One line in
+ * `works.ts` would replace this table.
+ */
+const WORK_NEEDS_TECH: Partial<Record<WorkId, TechId>> = { fair: 'fair_day' };
+
 /** The works this place can build at all, in content order. */
 export function worksFor(s: GameState): WorkDef[] {
   const lawStands = (subject: SubjectId): boolean =>
     s.laws.some((l) => l.status === 'active' && l.subject === subject);
   if (s.turn <= 1) return allWorks().filter((w) => FIRST_YEAR_WORKS.includes(w.id));
   return allWorks().filter((w) => {
+    // a year the place has not worked out how to spend is not on the list
+    const tech = WORK_NEEDS_TECH[w.id];
+    if (tech !== undefined && !s.techs.includes(tech)) return false;
     // a year that is a permission rather than a building is not on the list
     // until the permission is written down and still standing
     if (w.needsLaw !== undefined && !lawStands(w.needsLaw)) return false;

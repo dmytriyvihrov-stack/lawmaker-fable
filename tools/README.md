@@ -65,11 +65,6 @@ version of every file it writes is copied into `tools/.backups` first.
 
 The console writes to `src/content/*` and `src/engine/config.ts` only.
 
-Two values on the Tree tab are worth a word: the loop timings in
-`src/content/loops.ts` are written as references to `CONFIG`, so editing them
-there would replace the reference with a literal. Edit the loop numbers on the
-Rates tab instead, under the engine dials.
-
 ## The reign simulator
 
 The second tool here, and the one to reach for after a balance edit. It plays

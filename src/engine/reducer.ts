@@ -547,7 +547,11 @@ export function chooseCase(
   const schedule = (caseId: string, inTurns: number): void => {
     if (!getCase(caseId)) return;
     const seq = draft.pending.reduce((m, p) => Math.max(m, p.seq), 0) + 1;
-    draft.pending.push({ onTurn: draft.turn + inTurns, caseId, seq });
+    /* Never sooner than the floor. A thing that comes back two springs after
+       the answer is the same scene with a gap in it; what makes a consequence
+       one is that the reign has moved on and stopped thinking about it. */
+    const wait = Math.max(CONFIG.year.consequenceAfter, inTurns);
+    draft.pending.push({ onTurn: draft.turn + wait, caseId, seq });
   };
   if (choice.schedule) schedule(choice.schedule.caseId, choice.schedule.inTurns);
 
@@ -624,11 +628,19 @@ export function continueYear(s: GameState): GameState {
   if (s.lastWorkTurn === s.turn) return advance(s);
   const draft = clone(s);
 
-  if (draft.eventsThisYear < CONFIG.year.dilemmasPerYear) {
+  /* One person at the door a year, and one thing coming back off an answer
+     you already gave. The second slot reads the diary and the people the
+     reign has already decided about, and nothing else: a year never produces
+     two fresh dilemmas, and a consequence never has to queue behind one. */
+  const slots = CONFIG.year.dilemmasPerYear + CONFIG.year.consequencesPerYear;
+  if (draft.eventsThisYear < slots) {
+    const consequencesOnly = draft.eventsThisYear >= CONFIG.year.dilemmasPerYear;
     const next = pickEvent(draft, {
       lawAllowed: false,
-      /* One hard thing a year. Whoever comes after it comes to talk. */
-      heavyAllowed: draft.eventsThisYear < CONFIG.year.heavyPerYear,
+      /* One hard thing a year. Whoever comes after it comes to talk, and a
+         consequence you wrote yourself is allowed to be the exception. */
+      heavyAllowed: consequencesOnly || draft.eventsThisYear < CONFIG.year.heavyPerYear,
+      consequencesOnly,
     });
     if (next) {
       draft.eventsThisYear += 1;

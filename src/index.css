@@ -1009,3 +1009,34 @@ body.dev-text-mode [data-dev-chrome] * {
   cursor: auto !important;
   outline: none !important;
 }
+
+/* What to put your hand on, and where it goes.
+
+   A scene at four times the town is a picture with people and things in it,
+   and the one line under it says what to do in words. Which loaf, and which
+   cart, was left to the player to work out by dragging things and finding out
+   what moved: the ring says which, and the arrow says where. Both are drawn
+   over the scene in the hand overlay, take no pointer events, and go out the
+   moment the thing is in hand. */
+@keyframes hand-hint-ring {
+  0%, 100% { transform: scale(0.86); opacity: 0.35; }
+  50% { transform: scale(1.06); opacity: 0.95; }
+}
+
+.hand-hint-ring {
+  animation: hand-hint-ring 1.5s ease-in-out infinite;
+}
+
+@keyframes hand-hint-run {
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: 0; }
+}
+
+.hand-hint-run {
+  animation: hand-hint-run 1.1s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hand-hint-ring { animation: none; opacity: 0.9; }
+  .hand-hint-run { animation: none; }
+}

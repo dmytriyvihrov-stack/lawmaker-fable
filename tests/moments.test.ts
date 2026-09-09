@@ -3,16 +3,14 @@ import { MOMENTS, MOMENT_SOURCE } from '../src/content/moments';
 import { CASE_SPOTS } from '../src/content/meta';
 import { CASES } from '../src/content/cases';
 import { MOMENTS_PER_YEAR, getMoment, momentTaken, momentsNow, momentsOfYear } from '../src/engine/moments';
-import { chooseWork, newGame, takeMoment } from '../src/engine/reducer';
+import { chooseWork, takeMoment } from '../src/engine/reducer';
 import type { GameState, Season } from '../src/engine/types';
+import { reignAt } from './helpers';
 
 const SEASONS: Season[] = ['spring', 'summer', 'autumn', 'winter'];
 
 function reign(turn = 4): GameState {
-  const s = newGame(11);
-  s.turn = turn;
-  s.population = 14;
-  return s;
+  return reignAt({ turn, population: 14 });
 }
 
 describe('the small things', () => {

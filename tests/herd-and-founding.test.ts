@@ -8,6 +8,7 @@ import { CASE_VERDICTS } from '../src/content/verdict-words';
 import { evaluate } from '../src/engine/conditions';
 import { doingsNow, foundingLooks, townFolk } from '../src/engine/folk';
 import { chooseCase, chooseWork, newGame } from '../src/engine/reducer';
+import { reignAt, withCase } from './helpers';
 import { herdKeep } from '../src/engine/simulation';
 import type { CaseEvent, GameState } from '../src/engine/types';
 
@@ -15,11 +16,7 @@ const goats = CASES.find((c) => c.id === 'w_goats') as CaseEvent;
 
 /** A reign far enough along that somebody could have been up there all summer. */
 function years(n: number, souls: number): GameState {
-  const s = newGame(11);
-  s.turn = n;
-  s.population = souls;
-  s.current = { kind: 'case', id: 'w_goats' };
-  return s;
+  return withCase(reignAt({ turn: n, population: souls }), 'w_goats');
 }
 
 describe('the herd on the common', () => {

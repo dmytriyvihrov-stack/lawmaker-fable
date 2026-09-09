@@ -91,6 +91,15 @@ import { PLACE_NAMES, PLOT_NAMES } from '../../content/meta';
 interface Props {
   stats: Record<StatId, number>;
   cityFlags: CityFlag[];
+  /**
+   * Which year of the reign this is.
+   *
+   * One thing in the picture reads it, and it is the first spring: the
+   * broken corner of the field and the hole that becomes the well are the
+   * two things this valley came with, and in year one they are not there
+   * yet either. Five people arrived last month at open ground.
+   */
+  turn?: number;
   /** Souls in the place. Roofs appear as the count grows. */
   population?: number;
   /** What has been built with the years, by level. */
@@ -252,6 +261,7 @@ const Stands = memo(function Stands({
 export function CityScape({
   stats,
   cityFlags,
+  turn = 2,
   population = 5,
   buildings = {},
   stage = 'village',
@@ -343,24 +353,31 @@ export function CityScape({
    * turning into a carpet of dots.
    */
   /**
-   * One figure is one person while a person can still be picked out, and after
-   * that a figure is a rougher and rougher count of them.
+   * One figure is one person only while a person can still be picked out.
+   * After that a figure is a household, and then a rougher and rougher count
+   * of them.
    *
-   * Up to ten souls the picture counts heads exactly: the year a sixth arrives
-   * you can see the sixth standing there. Past that nobody is counting anyway,
-   * and the rate of sharing steps down as the place grows, because the
-   * difference between two hundred and two hundred and five is not a
-   * difference anybody can see from up here. One figure per two souls to
-   * thirty, per three to fifty, and per five after that. The old rule was a
-   * flat one per two forever, which drew seventy three figures on a town of a
-   * hundred and thirty and made the place hard to read and hard to click in.
+   * The founding five are five, because the year a sixth arrives you can see
+   * the sixth standing there, and that is the whole of what the first spring
+   * has to show. Past that nobody out there is counting, and the rate of
+   * sharing steps down as the place fills, because the difference between two
+   * hundred and two hundred and five is not a difference anybody can see from
+   * up here.
+   *
+   * It has been flat one per two forever (73 figures on a town of 130), then
+   * one to ten and per two, three and five above it (18 on a hamlet of 25,
+   * which a player read as the picture counting heads and called
+   * overcrowding). One per three from six, per five from twenty, per eight
+   * from fifty and per twelve past a hundred and twenty: 12 on a hamlet of
+   * 25, 26 on a town of 130.
    */
-  const COUNTED = 10;
+  const COUNTED = 6;
   const figuresFor = (pop: number): number => {
     if (pop <= COUNTED) return Math.round(pop);
-    if (pop <= 30) return COUNTED + Math.ceil((pop - COUNTED) / 2);
-    if (pop <= 50) return 20 + Math.ceil((pop - 30) / 3);
-    return 27 + Math.ceil((pop - 50) / 5);
+    if (pop <= 20) return COUNTED + Math.ceil((pop - COUNTED) / 3);
+    if (pop <= 50) return 11 + Math.ceil((pop - 20) / 5);
+    if (pop <= 120) return 17 + Math.ceil((pop - 50) / 8);
+    return 26 + Math.ceil((pop - 120) / 12);
   };
   const dots = Math.max(1, Math.min(84, figuresFor(population)));
 
@@ -381,6 +398,18 @@ export function CityScape({
     population < 60 ? 0 : Math.max(0.03, Math.min(0.2, (stats.economy - 40) / 220));
 
   const working = paint.crop !== 'bare';
+  /**
+   * The first spring, in which nothing has been built and nothing has been
+   * broken either.
+   *
+   * The corner of the first strip and the hole the well is lined into are
+   * both drawn before either is paid for, because a year of work finishes
+   * them rather than starting them. In the first spring there is neither:
+   * five people walked into this valley last month and it is open ground,
+   * which is the whole of what that year is about. From the second spring
+   * the ground they have been working on their own shows.
+   */
+  const founding = turn <= 1;
   const fieldLevel = level('fields');
   const roadLevel = level('road');
   /**
@@ -441,8 +470,8 @@ export function CityScape({
     if (!paint.ice) post('fish', town ? 5 : 2);
     post('haul', 2);
     if (roadLevel > 0) post('road', 2 + roadLevel);
-    // and somebody is at the well from the first spring, because there is one
-    post('water', wellLevel > 0 ? 2 : 1);
+    // and somebody is at the water, once there is water to be at
+    post('water', wellLevel > 0 ? 2 : founding ? 0 : 1);
     /* Somebody is in the apple trees whenever there are apples on them, and
        in the autumn everybody who can be spared is. */
     post('orchard', season === 'autumn' ? 3 : 1);
@@ -913,7 +942,7 @@ export function CityScape({
   workNode('well', (l) => <Well paint={paint} level={l} />, [
     <ellipse key="o" rx="17" ry="8" />,
     <path key="b" d="M-19 0 v-24 M14 0 v-24 M-24 -26 h48" />,
-  ], true);
+  ], !founding);
 
   /**
    * The eaves whatever has moved in is hanging off. The long room is the one
@@ -1241,6 +1270,7 @@ export function CityScape({
       <Fields
         paint={paint}
         level={fieldLevel}
+        broken={!founding}
         ghost={ghostOf === 'fields'}
         breaking={raisingOf === 'fields'}
       />

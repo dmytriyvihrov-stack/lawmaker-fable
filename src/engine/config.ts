@@ -120,7 +120,37 @@ export const CONFIG = {
    *  about the place itself. */
   year: {
     lawEvery: 2,          // a decree at most this often, in years
-    dilemmasPerYear: 2,   // at most this many people in front of you a year
+    /**
+     * How many people knock in one year, and what the second one may be.
+     *
+     * One, and the user has now asked for it twice. The first time it was
+     * taken as one scene a year full stop, which emptied the warm half of the
+     * game (see `heavyPerYear` below) and is why the cap moved onto the hard
+     * ones instead. This time it is one *dilemma* and one *consequence*: the
+     * year has a second slot and nothing new may stand in it. Only something
+     * an earlier answer already put in the diary - the `pending` list, and
+     * nothing else the scheduler can reach - fills it, which is why a year
+     * that holds two people is a year you can see coming.
+     */
+    dilemmasPerYear: 1,
+    /** And the second slot, which only an old answer of yours can fill. */
+    consequencesPerYear: 1,
+    /**
+     * And nothing an answer schedules comes back sooner than this many years.
+     *
+     * A consequence two springs later is the same scene with a gap in it. The
+     * point of a delayed answer is that the reign has moved on and the person
+     * who answered has stopped thinking about it, and that takes years rather
+     * than a year. Content may ask for longer; it cannot ask for shorter.
+     */
+    consequenceAfter: 4,
+    /**
+     * Where the warm half of the game starts, on the same priority scale the
+     * scheduler files everything else on. At or above this a case is somebody
+     * with a bee swarm rather than somebody with a body, and the one slot a
+     * year takes turns between the two.
+     */
+    warmFrom: 12,
     /**
      * And at most this many of them may be a hard one.
      *

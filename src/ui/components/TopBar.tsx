@@ -259,12 +259,15 @@ export function TopBar({
     activeStats(state).includes(id),
   );
 
+  /* h-7 and not h-8: this strip is the one piece of furniture on screen the
+     whole time, and every pixel of it is a pixel of valley. Nothing in it
+     got smaller except the air round it. */
   const box =
-    'flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-ink-line px-2.5 text-[14px] leading-none text-parchment-dim hover:border-parchment-dim/60 disabled:cursor-default';
+    'flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-ink-line px-2 text-[14px] leading-none text-parchment-dim hover:border-parchment-dim/60 disabled:cursor-default';
 
   return (
-    <header className="pointer-events-auto border-b-2 border-ink-line bg-ink-soft">
-      <div className="ruler-topbar-row flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-2.5 sm:px-6 sm:py-3">
+    <header className="pointer-events-auto border-b border-ink-line bg-ink-soft">
+      <div className="ruler-topbar-row flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-1.5 sm:px-6 sm:py-2">
         {/* what the place is, and what it is called */}
         <span
           className="flex shrink-0 items-center gap-1.5 text-parchment"

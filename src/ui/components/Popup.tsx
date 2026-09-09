@@ -55,8 +55,12 @@ const EDGE = { bench: 'var(--color-bench)', seal: 'var(--color-seal)' };
  * of paint the width of the card, which reads as the floor of the card and
  * not as a thing to press.
  */
+/* 38 and not 44. The bar this sits on is the last thing between the card and
+   the bottom of the window, and at 44 with the bar's own padding round it the
+   whole floor of a card was 74 pixels of nothing but one button. Still over a
+   finger wide, and the words inside it are the same size. */
 export const CARD_BUTTON =
-  'min-h-[44px] max-w-full rounded-lg px-9 py-2 text-[16px] tracking-[0.2em] disabled:opacity-30';
+  'min-h-[38px] max-w-full rounded-lg px-8 py-1.5 text-[15px] tracking-[0.2em] disabled:opacity-30';
 
 /**
  * The card that opens over the town.
@@ -125,14 +129,14 @@ export function CardFoot({
   pad?: 4 | 5;
   children: ReactNode;
 }) {
-  const cancel = pad === 5 ? '-mx-5 -mb-5 px-5 pb-3' : '-mx-4 -mb-4 px-4 pb-3';
+  const cancel = pad === 5 ? '-mx-5 -mb-5 px-5 pb-2' : '-mx-4 -mb-4 px-4 pb-2';
   return (
     /* Centred, and the button inside is the width of what it says. A bar of
        colour the whole width of the card reads as the card's own floor
        rather than as one thing to press, and on a wide window it was eight
        hundred pixels of paint carrying three words. */
     <div
-      className={`sticky z-10 mt-3 flex justify-center border-t border-ink-line/60 bg-ink-soft/95 pt-2 backdrop-blur-[2px] [bottom:0] ${cancel}`}
+      className={`sticky z-10 mt-2 flex justify-center border-t border-ink-line/60 bg-ink-soft/95 pt-1.5 backdrop-blur-[2px] [bottom:0] ${cancel}`}
     >
       {children}
     </div>

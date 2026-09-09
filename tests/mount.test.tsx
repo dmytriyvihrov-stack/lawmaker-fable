@@ -21,6 +21,9 @@ import { MonarchPanel } from '../src/ui/components/MonarchPanel';
 import { StandingLaws } from '../src/ui/components/StandingLaws';
 import { TopBar } from '../src/ui/components/TopBar';
 import { GrowthLadder } from '../src/ui/components/GrowthLadder';
+import { Register } from '../src/ui/overlays/Register';
+import { BOND_UI } from '../src/content/bonds';
+import { CONFIG } from '../src/engine/config';
 import { DevBar } from '../src/ui/components/DevCorner';
 import { DevDials } from '../src/ui/components/DevDials';
 import { DevVerdict } from '../src/ui/components/DevVerdict';
@@ -237,6 +240,33 @@ describe('every screen renders', () => {
     // the thumbs alone out on the map, the line of why only where there is room
     expect(draw(<DevVerdict {...props} dev />)).not.toContain('why');
     expect(on).toContain('why');
+  });
+
+  /**
+   * The one page in the game where a lawmaker spends something on a person
+   * rather than on the place, with the two things a player asked to be able
+   * to see on it: what the crown gets out of a bond, and the fact that the
+   * thing at the woodpile is on this page like anybody else.
+   */
+  it('the register offers both kindnesses, and offers them to the wolf', () => {
+    let s = newGame(9);
+    s = { ...s, turn: 6, population: 14, current: { kind: 'case', id: 'w_wolf' } };
+    s = chooseCase(s, 'w_wolf', 'feed_it');
+    const page = draw(
+      <Register
+        state={s}
+        season="summer"
+        onGift={noop}
+        onTake={noop}
+        onVisit={noop}
+        onClose={noop}
+      />,
+    );
+    // it is on the page, in the words a wolf gets
+    expect(page).toContain(BOND_UI.wolfGiftLabel);
+    expect(page).toContain(BOND_UI.wolfTakeLabel);
+    // and what the crown gets out of it, as a number rather than a sentence
+    expect(page).toContain(`+${CONFIG.bond.loverSanity}`);
   });
 
   it('a fresh reign draws its first three screens in order', () => {
