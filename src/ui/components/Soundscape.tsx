@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
-import { HUSHED_CASES, SOUND_UI } from '../../content/sound';
+import { HUSHED_CASES, SOUND_UI, voiceOf } from '../../content/sound';
+import { monarchOf } from '../../engine/monarch';
 import { getCase } from '../../engine/registry';
 import type { GameState, Season } from '../../engine/types';
 import { attach, environment, play, preference, setEnabled, setVolume, speak } from '../audio/sound';
@@ -41,7 +42,8 @@ export function Soundscape({ game, season, ready, zoomed, mapRef }: Props) {
     if (!ready || !current) return;
     const key = `${game.seed}:${game.turn}:${current.id}`;
     const greet = () => {
-      if (greeted.current !== key && speak(current.character ?? 'clerk', hushed)) greeted.current = key;
+      const voice = voiceOf(current.character, monarchOf(game.seed).voice);
+      if (greeted.current !== key && speak(voice, hushed)) greeted.current = key;
     };
     greet();
     // A saved scene or the prototype may precede the browser's first gesture.

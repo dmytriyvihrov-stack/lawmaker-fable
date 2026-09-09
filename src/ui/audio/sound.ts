@@ -1,3 +1,4 @@
+import type { VoiceKind } from '../../content/sound';
 import type { Season } from '../../engine/types';
 import { cue, murmur, texture } from './synthesis';
 import type { Cue } from './synthesis';
@@ -120,10 +121,11 @@ export function play(name: Cue, gap = .09): void {
   cue(ctx, master, buffer, name);
 }
 
-export function speak(character: string, hushed: boolean): boolean {
+/** The caller has already been read down to one of the two voices by `voiceOf`. */
+export function speak(voice: VoiceKind, hushed: boolean): boolean {
   if (!audible() || !ctx || !master || ctx.currentTime < voiceUntil) return false;
   voiceUntil = ctx.currentTime + 1.1;
-  murmur(ctx, master, character, hushed);
+  murmur(ctx, master, voice, hushed);
   return true;
 }
 

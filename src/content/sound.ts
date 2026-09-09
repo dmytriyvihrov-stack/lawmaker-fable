@@ -1,16 +1,50 @@
-/** Authored voices, independent of the reign's dice. Pitch, vowel and pace. */
-export const VOICES: Record<string, readonly [number, number, number]> = {
-  monarch: [145, 560, .15], iva: [310, 1450, .085], widow: [185, 730, .17],
-  miller: [130, 800, .12], lever: [170, 970, .10], pusher: [110, 610, .15],
-  chaplain: [155, 520, .18], clerk: [235, 1350, .085], tam: [105, 470, .19],
-  marta: [220, 900, .13], millwright: [160, 1150, .105], riders: [125, 680, .11],
-  charter: [205, 1200, .095], treasurer: [180, 1050, .09], healer: [250, 850, .15],
-  captain: [115, 750, .12], fool: [285, 1250, .08], crowd: [165, 950, .105],
-  lark: [275, 1100, .10], ferrier: [140, 650, .16], wolf: [78, 310, .24],
-  players: [260, 1300, .09], singer: [240, 1000, .14], runner: [200, 1450, .085],
-  brother: [150, 830, .135], aunt: [190, 690, .16], digger: [120, 580, .145],
-  odo: [268, 1180, .095],
+/**
+ * Two voices.
+ *
+ * There used to be twenty eight, one authored pitch and vowel per caller, and
+ * the difference between the Cooper and the Ferryman was nine hertz that
+ * nobody has ever named out loud. What a player actually hears at the door is
+ * whether the person standing there is a man or a woman, so that is what is
+ * left: one low voice, one high one, and the hush that grave scenes already
+ * ask for. Fewer things, each of them audible.
+ *
+ * The reading is in `VOICE_OF`. The Monarch is not in it, because who is
+ * upstairs is a function of the seed: `monarchOf(seed).voice` answers that
+ * one, and `Soundscape` asks.
+ */
+export type VoiceKind = 'man' | 'woman';
+
+/** Pitch in hertz, the vowel the formant sits on, and the pace of a syllable. */
+export const VOICES: Record<VoiceKind, readonly [number, number, number]> = {
+  man: [124, 620, .15],
+  woman: [228, 1080, .125],
 };
+
+/**
+ * Who is at the door. Everyone in `CHARACTERS` except the Monarch, and the
+ * validator holds that: a caller with no line here is a silent caller.
+ *
+ * The four that are not one person take the low voice, because a crowd, a
+ * troupe, a column of riders and a wolf all read as weight rather than pitch.
+ */
+export const VOICE_OF: Record<string, VoiceKind> = {
+  iva: 'woman', widow: 'woman', marta: 'woman', healer: 'woman', aunt: 'woman',
+  tam: 'man', miller: 'man', lever: 'man', pusher: 'man', chaplain: 'man',
+  clerk: 'man', millwright: 'man', charter: 'man', treasurer: 'man',
+  captain: 'man', fool: 'man', lark: 'man', ferrier: 'man', singer: 'man',
+  runner: 'man', brother: 'man', digger: 'man', odo: 'man',
+  riders: 'man', crowd: 'man', players: 'man', wolf: 'man',
+};
+
+/**
+ * Which voice answers for whoever is at the door. A caller who is not in the
+ * table gets the low one rather than silence, so a new case is never mute
+ * while somebody is deciding what it sounds like.
+ */
+export function voiceOf(character: string | undefined, monarch: VoiceKind): VoiceKind {
+  if (character === 'monarch') return monarch;
+  return (character && VOICE_OF[character]) || 'man';
+}
 
 /** Keep arrivals restrained around death, punishment and collapse. */
 export const HUSHED_CASES = new Set([

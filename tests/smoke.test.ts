@@ -74,7 +74,7 @@ describe('the bench', () => {
     expect(parseVerdict('v1_idle_hand', 'eats', null, s)?.choiceId).toBe('feed_him');
     expect(parseVerdict('v1_idle_hand', 'gets_half', null, s)?.choiceId).toBe('half_share');
     expect(parseVerdict('v1_idle_hand', 'share_is_cut', null, s)?.sentence).toBe(
-      'TAM HAS HIS SHARE CUT',
+      'TAM HAS HIS SHARE CUT, AND THE LAW READ OUT',
     );
   });
 

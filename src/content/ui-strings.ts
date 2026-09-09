@@ -141,15 +141,12 @@ export const UI = {
     costLabel: 'from the store',
     moves: 'What it changes',
     atOnce: 'at once',
-    cannotPay: 'The store cannot pay for it this year.',
-    /** Said once over the shelf when nothing on it is within the store. */
-    storeShort: 'The store holds {have}. Nothing on the shelf is within it this year; the year can rest.',
     /**
-     * Not the same sentence as the one above it. A store that cannot pay
-     * this year may pay next year; a store whose shelf ends below the price
-     * will not pay in any year of the reign, and saying "this year" to
-     * somebody in that position leaves them waiting on a number that has
-     * already stopped.
+     * The one sentence about the store that is still worth saying, and it is
+     * not about this year. A store that cannot pay this year may pay next
+     * year, and the card says so already by dimming the work and leaving the
+     * price on it; a store whose shelf ends below the price will not pay in
+     * any year of the reign, and that is a fact no amount of waiting fixes.
      */
     overShelf: 'Needs a granary before the store can hold it.',
     maxed: 'Already the biggest in the county.',

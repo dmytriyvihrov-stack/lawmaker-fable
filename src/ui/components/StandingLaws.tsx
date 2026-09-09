@@ -9,6 +9,12 @@ interface Props {
   /** A law is on the table right now, so the list says where it will land. */
   writing?: boolean;
   dev?: boolean;
+  /**
+   * The card is against the right edge of the window, under the crown, so it
+   * has no right edge of its own. False on the bench, where it is a card on a
+   * page like any other.
+   */
+  flush?: boolean;
 }
 
 /**
@@ -23,13 +29,17 @@ interface Props {
  * furniture over a picture, so it takes one click to put them away and one to
  * bring them back, in the place they already are.
  */
-export function StandingLaws({ state, writing = false, dev = false }: Props) {
+export function StandingLaws({ state, writing = false, dev = false, flush = false }: Props) {
   const [open, setOpen] = useState(true);
   const laws = state.laws.filter((l) => l.status === 'active');
   if (laws.length === 0 && !writing) return null;
 
   return (
-    <div className="rounded-xl border border-ink-line bg-ink-soft/95 p-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.4)] backdrop-blur-[2px]">
+    <div
+      className={`border border-ink-line bg-ink-soft/95 p-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.4)] backdrop-blur-[2px] ${
+        flush ? 'rounded-l-xl rounded-r-none border-r-0' : 'rounded-xl'
+      }`}
+    >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

@@ -94,10 +94,11 @@ interface Props {
   /**
    * Which year of the reign this is.
    *
-   * One thing in the picture reads it, and it is the first spring: the
-   * broken corner of the field and the hole that becomes the well are the
-   * two things this valley came with, and in year one they are not there
-   * yet either. Five people arrived last month at open ground.
+   * Nothing in the picture reads it any more. It stays on the props because
+   * the callers pass it and because the next thing that wants to know how old
+   * the place is will want it here: the field corner and the well hole, which
+   * were the two things that did read it, are drawn the year they are paid
+   * for now and not a year before.
    */
   turn?: number;
   /** Souls in the place. Roofs appear as the count grows. */
@@ -261,7 +262,6 @@ const Stands = memo(function Stands({
 export function CityScape({
   stats,
   cityFlags,
-  turn = 2,
   population = 5,
   buildings = {},
   stage = 'village',
@@ -399,17 +399,16 @@ export function CityScape({
 
   const working = paint.crop !== 'bare';
   /**
-   * The first spring, in which nothing has been built and nothing has been
-   * broken either.
+   * Nothing stands in this valley that a year was not spent on.
    *
-   * The corner of the first strip and the hole the well is lined into are
-   * both drawn before either is paid for, because a year of work finishes
-   * them rather than starting them. In the first spring there is neither:
-   * five people walked into this valley last month and it is open ground,
-   * which is the whole of what that year is about. From the second spring
-   * the ground they have been working on their own shows.
+   * The corner of the first strip and the hole the well is lined into were
+   * drawn from the second spring, before either was paid for, on the grounds
+   * that a year of work finishes them rather than starting them. From the
+   * other side of the screen that is the place clearing a field and sinking a
+   * well on its own the year after the first roof went up, which is the one
+   * thing this picture may never say: everything in it was voted for. Both
+   * wait for the year that buys them now.
    */
-  const founding = turn <= 1;
   const fieldLevel = level('fields');
   const roadLevel = level('road');
   /**
@@ -471,7 +470,7 @@ export function CityScape({
     post('haul', 2);
     if (roadLevel > 0) post('road', 2 + roadLevel);
     // and somebody is at the water, once there is water to be at
-    post('water', wellLevel > 0 ? 2 : founding ? 0 : 1);
+    post('water', wellLevel > 0 ? 2 : 0);
     /* Somebody is in the apple trees whenever there are apples on them, and
        in the autumn everybody who can be spared is. */
     post('orchard', season === 'autumn' ? 3 : 1);
@@ -935,14 +934,14 @@ export function CityScape({
     );
   }
 
-  /* The one thing on this map that was here before the reign was. The place
-     was stopped at for the water and the year of work lines the well rather
-     than digging it, so the hole is in the ground from the first spring and
-     what a year buys is the timber round it. */
+  /* The place was stopped at for the water, and the year of work lines the
+     well rather than digging it. The hole is not drawn before that year is
+     spent: an unpaid-for well in the ground reads as a well nobody asked
+     for. */
   workNode('well', (l) => <Well paint={paint} level={l} />, [
     <ellipse key="o" rx="17" ry="8" />,
     <path key="b" d="M-19 0 v-24 M14 0 v-24 M-24 -26 h48" />,
-  ], !founding);
+  ]);
 
   /**
    * The eaves whatever has moved in is hanging off. The long room is the one
@@ -1270,7 +1269,6 @@ export function CityScape({
       <Fields
         paint={paint}
         level={fieldLevel}
-        broken={!founding}
         ghost={ghostOf === 'fields'}
         breaking={raisingOf === 'fields'}
       />

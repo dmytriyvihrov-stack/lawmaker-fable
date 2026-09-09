@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { along, pathLength } from './routes';
-import { canAnswer, chooseJob, followVisitor, newJourney, queueErrand, requestVisit, setOpenJobs, skipJourney, tickJourney, WALK_SPEED } from './model';
+import { canAnswer, chooseJob, followVisitor, newJourney, queueErrand, requestVisit, setOpenJobs, skipJourney, speedOf, tickJourney } from './model';
 import type { Errand, Job, Journey, Visit } from './model';
 
 export function useJourney({ reign, visit, speed, paused, instant, jobs, onComplete }: {
@@ -25,12 +25,12 @@ export function useJourney({ reign, visit, speed, paused, instant, jobs, onCompl
   const paint = useCallback((s: Journey) => {
     rulerRef.current?.setAttribute('transform', `translate(${s.at.x} ${s.at.y})`);
     const caller = s.mode === 'event-walk'
-      ? along(s.path, s.elapsed * WALK_SPEED + 24)
+      ? along(s.path, s.elapsed * speedOf(s.mode) + 24)
       : s.mode === 'arrived' ? { x: s.at.x + 22, y: s.at.y - 3 } : s.callerAt;
     if (caller) callerRef.current?.setAttribute('transform', `translate(${caller.x} ${caller.y})`);
     const length = pathLength(s.path);
     const progress = s.mode === 'collect-work' ? s.elapsed / 2.2
-      : length > 0 ? s.elapsed * WALK_SPEED / length : 0;
+      : length > 0 ? s.elapsed * speedOf(s.mode) / length : 0;
     progressRef.current?.setAttribute('stroke-dashoffset', String(100 * (1 - Math.min(1, progress))));
   }, []);
 

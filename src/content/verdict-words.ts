@@ -76,7 +76,13 @@ export const VERDICT_VERBS: WordTile[] = [
   { id: 'eats', text: 'EATS' },
   { id: 'gets_half', text: 'GETS HALF A SHARE' },
   { id: 'eats_when_he_digs', text: 'EATS WHEN HE DIGS' },
-  { id: 'share_is_cut', text: 'HAS HIS SHARE CUT' },
+  /* Not 'HAS HIS SHARE CUT'. Beside 'GETS HALF A SHARE', which is the plain
+     word on the same bench, that was one ruling written twice: both of them
+     read as less bread for Tam, and a player picking between them was picking
+     between two wordings. What this one actually is, and what the law is for,
+     is the cut being made in the open with the law said out loud over it,
+     which is what the four who dig then go home and build fences about. */
+  { id: 'share_is_cut', text: 'HAS HIS SHARE CUT, AND THE LAW READ OUT' },
   { id: 'mends_tools', text: 'MENDS TOOLS, THE HEADMAN SAYS' },
   { id: 'his_own_field', text: 'EATS WHAT HIS OWN FIELD GIVES' },
   { id: 'is_shared_thin', text: 'IS SHARED THIN, ALL WEEK' },

@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CHARACTERS } from '../src/content/meta';
 import { CASES } from '../src/content/cases';
-import { HUSHED_CASES, VOICES } from '../src/content/sound';
+import { MONARCHS } from '../src/content/monarchs';
+import { HUSHED_CASES, VOICES, VOICE_OF, voiceOf } from '../src/content/sound';
 import { cue, murmur, texture } from '../src/ui/audio/synthesis';
 
 function audioMock() {
@@ -9,7 +10,7 @@ function audioMock() {
   const param = () => ({ value: 0, setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn(),
     exponentialRampToValueAtTime: vi.fn(), setTargetAtTime: vi.fn(), cancelScheduledValues: vi.fn() });
   function node() {
-    const value = { gain: param(), frequency: param(), Q: param(), threshold: param(), ratio: param(),
+    const value = { gain: param(), frequency: param(), detune: param(), Q: param(), threshold: param(), ratio: param(),
       playbackRate: param(), loop: false, buffer: null as unknown, type: '' as string,
       connect: vi.fn((next: unknown) => next), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn(),
       onended: (() => {}) as () => void };
@@ -32,9 +33,20 @@ function audioMock() {
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe('settlement audio', () => {
-  it('gives every named character a distinct authored voice, and hushes real cases', () => {
-    expect(Object.keys(CHARACTERS).every((id) => VOICES[id])).toBe(true);
-    expect(new Set(Object.values(VOICES).map(String)).size).toBe(Object.keys(VOICES).length);
+  /**
+   * Two voices, and every caller reads down to one of them. The Monarch is
+   * the exception on purpose: who is upstairs comes off the seed, so the
+   * voice comes off the monarch, and every one of the six carries one.
+   */
+  it('reads every caller down to one of the two voices, and hushes real cases', () => {
+    expect(Object.keys(VOICES)).toEqual(['man', 'woman']);
+    const named = Object.keys(CHARACTERS).filter((id) => id !== 'monarch');
+    expect(named.every((id) => VOICE_OF[id])).toBe(true);
+    expect(Object.keys(VOICE_OF).every((id) => CHARACTERS[id])).toBe(true);
+    expect(MONARCHS.every((m) => VOICES[m.voice])).toBe(true);
+    expect(voiceOf('monarch', 'woman')).toBe('woman');
+    expect(voiceOf('iva', 'man')).toBe('woman');
+    expect(voiceOf(undefined, 'woman')).toBe('man');
     expect([...HUSHED_CASES].every((id) => CASES.some((c) => c.id === id))).toBe(true);
   });
 
@@ -47,8 +59,8 @@ describe('settlement audio', () => {
     for (const name of ['seal', 'ruling', 'wood', 'rustle', 'water', 'stone', 'bird', 'strain', 'fire'] as const) {
       cue(ctx, ctx.destination, buffer, name);
     }
-    murmur(ctx, ctx.destination, 'tam');
-    murmur(ctx, ctx.destination, 'iva', true);
+    murmur(ctx, ctx.destination, 'man');
+    murmur(ctx, ctx.destination, 'woman', true);
     for (const source of sources) {
       expect(source.stop).toHaveBeenCalledOnce();
       const at = source.start.mock.calls[0][0] as number;
@@ -83,8 +95,8 @@ describe('settlement audio', () => {
     const count = sources.length;
     sound.play('wood');
     expect(sources.length).toBe(count);
-    expect(sound.speak('tam', false)).toBe(true);
-    expect(sound.speak('iva', false)).toBe(false);
+    expect(sound.speak('man', false)).toBe(true);
+    expect(sound.speak('woman', false)).toBe(false);
     sound.setEnabled(false);
     expect(context.close).toHaveBeenCalledOnce();
     expect(vi.getTimerCount()).toBe(0);
@@ -143,6 +155,56 @@ describe('settlement audio', () => {
     sound.play('seal');
     expect(sources.length).toBeGreaterThan(0);
     detach();
+  });
+
+  /**
+   * The music is the one thing here that is allowed to repeat, because a
+   * harmony that never comes back is not a harmony. What it may not do is
+   * arrive on the beat: four chords in a fixed circle at a fixed length is a
+   * loop, the ear finds it in about three minutes, and after that it hears
+   * nothing else. So the pad is four voices that never stop and never jump,
+   * the chord walks over six seconds, and no two turns of it are the same
+   * length.
+   */
+  it('walks the pad to a new chord, never on the beat, and stops clean', async () => {
+    vi.useFakeTimers();
+    vi.resetModules();
+    const { context, sources } = audioMock();
+    const win = new EventTarget();
+    Object.assign(win, { AudioContext: function () { return context; }, setInterval, clearInterval });
+    vi.stubGlobal('window', win);
+    vi.stubGlobal('localStorage', { getItem: () => null, setItem: vi.fn() });
+    const music = await import('../src/ui/music');
+    music.setSeed(4242);
+    music.start();
+    expect(music.isPlaying()).toBe(true);
+    // the light over the pad, its four voices, and the weight under them
+    expect(sources.length, 'the pad is not four voices and a floor').toBe(6);
+
+    const voice = sources[1];
+    const ranTo = () => voice.frequency.linearRampToValueAtTime.mock.calls as [number, number][];
+    expect(ranTo().length, 'the pad moved before anybody could have heard it').toBe(0);
+
+    // ten minutes of somebody laying out a town
+    for (let t = 0; t < 600; t += 2) {
+      context.currentTime = t;
+      vi.advanceTimersByTime(1000);
+      if (t === 300) music.setSeason('autumn');
+    }
+
+    const walks = ranTo();
+    expect(walks.length, 'the harmony never moved').toBeGreaterThan(8);
+    expect(walks.every(([hz]) => Number.isFinite(hz) && hz > 20 && hz < 4000)).toBe(true);
+    // every move is a walk and not a cut: the ramp lands six seconds on
+    for (const [, at] of walks) expect(Number.isFinite(at)).toBe(true);
+    const holds = walks.slice(1).map(([, at], i) => Math.round(at - walks[i][1]));
+    expect(new Set(holds).size, 'the chords turn on a metronome').toBeGreaterThan(3);
+    // and the bells over it are sounds, not silence
+    expect(sources.length, 'nothing rang over the pad').toBeGreaterThan(6);
+
+    music.stop();
+    expect(music.isPlaying()).toBe(false);
+    expect(vi.getTimerCount(), 'the music is still on a clock').toBe(0);
   });
 
   it('stays playable when storage and audio are unavailable', async () => {

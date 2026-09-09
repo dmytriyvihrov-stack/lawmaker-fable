@@ -1,4 +1,5 @@
 import { VOICES } from '../../content/sound';
+import type { VoiceKind } from '../../content/sound';
 
 export type Cue = 'seal' | 'ruling' | 'wood' | 'rustle' | 'water' | 'stone' | 'bird' | 'strain' | 'fire';
 
@@ -74,17 +75,29 @@ export function cue(ctx: BaseAudioContext, out: AudioNode, buffer: AudioBuffer,
   }
 }
 
-/** A little voiced breath, with a stable pitch, vowel and rhythm for each caller. */
-export function murmur(ctx: BaseAudioContext, out: AudioNode, character: string,
+/**
+ * A little voiced breath: somebody is at the door and about to speak.
+ *
+ * Two things changed here at once, and both are easy to put back. The voice
+ * is one of two now, `man` or `woman`, instead of one per caller, because the
+ * only thing a player was ever hearing was which of the two it was. And the
+ * body of it is a triangle where it used to be a sawtooth, which is the wave
+ * `tests/sound.test.ts` refuses to allow anywhere in the bed because it reads
+ * as a murmuring crowd. It read as one here too, four times a year.
+ *
+ * Four syllables open, three when the scene is a grave one, and the hushed
+ * one is lower as well as slower: a hush is not the same voice turned down.
+ */
+export function murmur(ctx: BaseAudioContext, out: AudioNode, voice: VoiceKind,
   hushed = false, at = ctx.currentTime): void {
-  const [pitch, vowel, pace] = VOICES[character] ?? VOICES.clerk;
-  const phrase = hushed ? [1, .96, .89] : [1, 1.12, .94, 1.05, .88];
+  const [pitch, vowel, pace] = VOICES[voice] ?? VOICES.man;
+  const phrase = hushed ? [.94, .9, .84] : [1, 1.11, .95, .88];
   phrase.forEach((ratio, i) => {
-    const time = at + i * pace * (hushed ? 1.25 : 1);
+    const time = at + i * pace * (hushed ? 1.3 : 1);
     const frequency = pitch * ratio;
-    tone(ctx, out, time, frequency, frequency * .93, pace * .86,
-      hushed ? .22 : .32, 'sawtooth', vowel * (i % 2 ? 1.15 : .9));
-    tone(ctx, out, time, frequency, frequency * .93, pace * .9,
-      hushed ? .045 : .065, 'sine');
+    tone(ctx, out, time, frequency, frequency * .94, pace * .84,
+      hushed ? .2 : .28, 'triangle', vowel * (i % 2 ? 1.12 : .92));
+    tone(ctx, out, time, frequency, frequency * .94, pace * .88,
+      hushed ? .05 : .07, 'sine');
   });
 }

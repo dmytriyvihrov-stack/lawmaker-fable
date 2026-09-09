@@ -88,23 +88,27 @@ export function MonarchPanel({ state, variant, dev = false, doing }: Props) {
   }
 
   return (
-    <div className={variant === 'card' ? 'w-[176px]' : 'sticky top-[var(--rail-top,1rem)] w-[176px] shrink-0'}>
+    <div className={variant === 'card' ? 'w-full' : 'sticky top-[var(--rail-top,1rem)] w-[176px] shrink-0'}>
       {/* under the header, not behind it: the header is sticky and tall */}
       {/* No heading over the face. A drawn person with a name and an age under
           them is already labelled; a caption saying they are on the throne is
           the picture explained back to the person looking at it. */}
+      {/* The card is sewn into the top right corner of the picture, so it has
+          no right edge of its own: the window is its right edge. The rail,
+          which is a column on a page and not a thing on a picture, keeps all
+          four. */}
       <div
-        className={`rounded-xl border border-ink-line p-2.5 ${
+        className={`border border-ink-line p-2.5 ${
           variant === 'card'
-            ? 'bg-ink-soft/95 shadow-[0_10px_28px_rgba(0,0,0,0.4)] backdrop-blur-[2px]'
-            : 'bg-ink-soft'
+            ? 'rounded-l-xl rounded-r-none border-r-0 border-t-0 bg-ink-soft/95 shadow-[0_10px_28px_rgba(0,0,0,0.4)] backdrop-blur-[2px]'
+            : 'rounded-xl bg-ink-soft'
         }`}
       >
         <div className="flex justify-center">
           <MonarchPortrait stage={state.stage}
             monarch={monarch}
             mood={mood}
-            size={variant === 'card' ? 92 : 132}
+            size={variant === 'card' ? 84 : 132}
             bracing={bracing}
           />
         </div>

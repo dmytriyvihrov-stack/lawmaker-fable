@@ -61,6 +61,20 @@ export function openJobs(buildings: Partial<Record<string, number>> | undefined)
   });
 }
 export const WALK_SPEED = 108;
+/**
+ * And the two legs with a person at the end of them.
+ *
+ * A round of the day is the day passing and is watched at the pace of one;
+ * somebody coming across the valley to find you, and the walk out to whatever
+ * they came about, are the game waiting to start. Both are half again as
+ * quick, which is the same lane, the same corners and the same river, walked
+ * by somebody with a reason.
+ */
+export const ERRAND_SPEED = WALK_SPEED * 1.7;
+/** How fast the feet move in this mode. Presentation only; see `tickJourney`. */
+export function speedOf(mode: Mode): number {
+  return mode === 'caller' || mode === 'event-walk' ? ERRAND_SPEED : WALK_SPEED;
+}
 export const ACTION_SECONDS = 2.2;
 export function newJourney(open: Job[] = JOB_ORDER): Journey {
   const jobs = open.length ? open : ['lanes' as Job];
@@ -126,7 +140,7 @@ export function tickJourney(s: Journey, seconds: number): Journey {
     const [finished, ...rest] = s.errands;
     return nextTask({ ...s, elapsed: 0, errands: rest, completed: [...s.completed, finished] });
   }
-  const length = pathLength(s.path), travelled = elapsed * WALK_SPEED;
+  const length = pathLength(s.path), travelled = elapsed * speedOf(s.mode);
   const at = along(s.path, travelled);
   const next = s.mode === 'caller' ? { ...s, elapsed, callerAt: at } : { ...s, elapsed, at };
   if (travelled < length) return next;

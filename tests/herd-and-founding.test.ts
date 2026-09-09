@@ -3,7 +3,7 @@ import { HERD_HIS, HERD_WALKED } from '../src/content/animals';
 import { CASES } from '../src/content/cases';
 import { CASE_DOING, CHOICE_DOING, DOING_LINES, STATIONS } from '../src/content/folk';
 import { CHARACTERS } from '../src/content/meta';
-import { VOICES } from '../src/content/sound';
+import { VOICE_OF } from '../src/content/sound';
 import { CASE_VERDICTS } from '../src/content/verdict-words';
 import { evaluate } from '../src/engine/conditions';
 import { doingsNow, foundingLooks, townFolk } from '../src/engine/folk';
@@ -98,7 +98,7 @@ describe('the herd on the common', () => {
     expect(DOING_LINES.herding.length).toBeGreaterThan(10);
     expect(STATIONS.herding.span, 'a herder who does not walk is a statue').toBeGreaterThan(0);
     expect(CHARACTERS.odo).toBeDefined();
-    expect(VOICES.odo).toBeDefined();
+    expect(VOICE_OF.odo).toBeDefined();
 
     const walked = chooseCase(years(6, 14), 'w_goats', 'he_walks_them');
     expect(doingsNow(walked).get('odo')).toBe('herding');

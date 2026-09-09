@@ -1,4 +1,5 @@
 import type { Effects, StatId, Stage } from '../engine/types';
+import type { VoiceKind } from './sound';
 
 export const DEFAULT_MONARCH_ID = 'vaelis';
 export const ROYAL_WARDROBE: Record<Stage, { cloth: string; cloak: string; trim: string }> = {
@@ -48,6 +49,12 @@ export interface MonarchDef {
   /** Which board the trait touches, for the small tag in the UI. */
   touches: StatId;
   /**
+   * Which of the two voices this one has at the door. The Monarch is the
+   * only caller whose voice is not fixed in `content/sound.ts`, because
+   * who is upstairs is drawn from the seed.
+   */
+  voice: VoiceKind;
+  /**
    * Years old on the day you take the seal, and a year older every year after.
    * They start young on purpose: a reign of twenty years is a whole life on
    * the throne, and the number changing is the clearest thing on the screen
@@ -67,6 +74,7 @@ export const MONARCHS: MonarchDef[] = [
       'Queen Marigold outlived your reign and three of your laws. She still counts the vault herself, on Sundays, out loud.',
     trait: { economyGainBonus: 4, yearly: { economy: 1, mood: -1 } },
     touches: 'economy',
+    voice: 'woman',
     age: 24,
   },
   {
@@ -79,6 +87,7 @@ export const MONARCHS: MonarchDef[] = [
       'King Aldous told visitors you were his favourite lawmaker, which he also said about the previous one, warmly, at the same table.',
     trait: { exceptionSanityCost: 0, yearly: { mood: 1, economy: -1 } },
     touches: 'mood',
+    voice: 'man',
     age: 22,
   },
   {
@@ -91,6 +100,7 @@ export const MONARCHS: MonarchDef[] = [
       'Queen Ottiline remembers your reign ruling by ruling, and remembers best the ones you made for somebody in particular.',
     trait: { exceptionSanityCost: 16, yearly: { crownSanity: 1, mood: -1 } },
     touches: 'mood',
+    voice: 'woman',
     age: 20,
   },
   {
@@ -103,6 +113,7 @@ export const MONARCHS: MonarchDef[] = [
       'King Corvin kept every sick list of your reign in one drawer. He has read them more recently than you have.',
     trait: { healthLossRelief: 4, yearly: { health: 1, culture: -1 } },
     touches: 'health',
+    voice: 'man',
     age: 27,
   },
   {
@@ -123,6 +134,7 @@ export const MONARCHS: MonarchDef[] = [
       'Daenerys never found one. She is still certain, still not from here, and the fourth expedition leaves in the spring.',
     trait: { yearly: { army: 2, economy: -2 } },
     touches: 'army',
+    voice: 'woman',
     age: 21,
   },
   {
@@ -135,6 +147,7 @@ export const MONARCHS: MonarchDef[] = [
       'Queen Beatrix announced your best law from the balcony and your worst one from the same balcony, at the same volume.',
     trait: { moodAmplify: 4, yearly: { culture: 1, crownSanity: -1 } },
     touches: 'mood',
+    voice: 'woman',
     age: 19,
   },
 ];

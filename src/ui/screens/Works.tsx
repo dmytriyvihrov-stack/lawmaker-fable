@@ -98,30 +98,12 @@ export function Works({
     .sort((a, b) => (a.id === 'rest' ? -1 : b.id === 'rest' ? 1 : 0));
   const reopenable = reopenableProposals(state);
 
-  /**
-   * What is in the store, as a whole number.
-   *
-   * The store is a float in the engine, because trends and drifts are, and it
-   * was printed straight onto the card: "10 of 0.8", "17 of 4.7". A price of
-   * ten against a store of nought point eight is arithmetic in a game whose
-   * rule is that there are no dials to read.
-   */
-  const store = Math.round(state.stats.economy);
-  /**
-   * And whether anything on the shelf is within it. Seven cards each saying
-   * "The store cannot pay for it this year." is one fact told seven times; it
-   * is a fact about the store, so it is said once, over the shelf, by the
-   * store.
-   */
-  const affordable = [...works, ...chainShown].filter((w) => {
-    const cost = workCost(state, w);
-    const waiting =
-      w.needsWork !== undefined && (state.buildings[w.needsWork.id] ?? 0) < w.needsWork.level;
-    const maxed = w.maxLevel > 0 && (state.buildings[w.id] ?? 0) >= w.maxLevel;
-    return !waiting && !maxed && cost <= state.stats.economy;
-  });
-  /** `rest` is free and always there, so "nothing" means nothing but resting. */
-  const nothingAfford = affordable.every((w) => w.cost === 0);
+  /* There used to be a red line over the shelf on the years nothing on it was
+     within the store: what the store held, and that the year could rest. Every
+     price on the card is already beside its own work, the store is in the top
+     bar all year, and a work that cannot be paid for is drawn dim and takes no
+     click. The line said the arithmetic back to somebody who had just done
+     it. */
 
   const card = 'answer w-full rounded-lg border p-3 text-left';
   const cardOpen = 'border-ink-line bg-ink-soft';
@@ -308,13 +290,6 @@ export function Works({
               </div>
             )}
           </section>
-        )}
-
-        {nothingAfford && (
-          <p className={`mt-3 flex flex-wrap items-baseline gap-1.5 rounded-lg border border-bad/40 bg-bad/[0.07] px-3 py-2 ${TYPE.note} leading-snug text-parchment-dim`}>
-            <span aria-hidden>{STORE.emoji}</span>
-            {UI.works.storeShort.replace('{have}', String(store))}
-          </p>
         )}
 
         {/* Three across, not two.

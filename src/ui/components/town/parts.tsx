@@ -1354,39 +1354,15 @@ export function WatchHouse({ paint, level }: { paint: TownPaint; level: number }
 
 /** Clean water, in the middle of the square. */
 /**
- * The well, at four levels, and the first of them is the one nobody built.
+ * The well, at three levels, and none of them is free.
  *
- * This place was stopped at for the water, so the hole comes before the work:
- * from the second spring there is a hole with stones round it, and what a year
- * of work buys is the lining, the windlass and the roof. That is what a scene
- * about a well giving four buckets and then mud is standing on, and it is
- * exactly what an unlined well does.
- *
- * Not in the first spring, though. Five people walked in last month and the
- * valley is open ground: `CityScape` passes `found` as false that year and
- * nothing of this is drawn at all.
- *
- * Level 0 is a hole with a ring of stones round it and a plank across one
- * side. No posts, no timber rim, nothing anybody carried here.
+ * There used to be a fourth below them: a hole with a ring of stones round it,
+ * drawn from the second spring on the grounds that the place was stopped at
+ * for the water and a year of work only lines what is already there. It read
+ * as the valley sinking a well nobody voted for, so it is gone. The first
+ * level is the year that buys the lining and the timber round it.
  */
 export function Well({ paint, level }: { paint: TownPaint; level: number }) {
-  if (level <= 0) {
-    return (
-      <g>
-        <Shade paint={paint} cy={8} rx={20} ry={6} />
-        <ellipse rx="15" ry="7" fill={paint.waterDeep} stroke="#8a8375" strokeWidth="3.5" className="city-tint" />
-        {/* the stones somebody set round the lip, and the plank to kneel on */}
-        <g fill="#9d968a" stroke={OUTLINE} strokeWidth="0.7">
-          <ellipse cx="-15" cy="-3" rx="4" ry="2.6" />
-          <ellipse cx="-6" cy="-7" rx="3.6" ry="2.4" />
-          <ellipse cx="6" cy="-7" rx="3.4" ry="2.3" />
-          <ellipse cx="15" cy="-2" rx="4" ry="2.6" />
-        </g>
-        <rect x="-13" y="5" width="26" height="4" rx="1.6" fill="#9a7d5c" stroke={OUTLINE} strokeWidth="0.7" />
-        {paint.roofSnow && <ellipse cy="-6" rx="19" ry="3" fill={SNOW} opacity="0.7" />}
-      </g>
-    );
-  }
   return (
     <g>
       <Shade paint={paint} cy={10} rx={24} ry={7} />
@@ -1502,7 +1478,6 @@ export function Fields({
   level,
   ghost = false,
   breaking = false,
-  broken = true,
 }: {
   paint: TownPaint;
   level: number;
@@ -1510,12 +1485,6 @@ export function Fields({
   ghost?: boolean;
   /** This year's field is being turned over rather than standing finished. */
   breaking?: boolean;
-  /**
-   * Whether the corner nobody paid for is broken yet. False in the first
-   * spring only, where the valley is open ground and the whole of that
-   * year is deciding what to put on it.
-   */
-  broken?: boolean;
 }) {
   /**
    * Three strips and no more.
@@ -1548,33 +1517,14 @@ export function Fields({
   const turning = breaking && level > 0 ? patches[level - 1] : null;
   const offering = !breaking && level < patches.length && (level > 0 || ghost);
 
-  /**
-   * The corner broken in the first year anybody lived here.
-   *
-   * There is ground under the plough in this valley before the reign spends
-   * a thing on it, because drawing nothing until the first field is paid for
-   * puts every scene that mentions a furrow over open grass. It is the near
-   * end of the first strip and no new ground: clearing the first field
-   * finishes the strip this corner is the start of.
-   *
-   * `broken` is false for one year of the reign, the first, where nobody has
-   * turned anything over yet.
-   */
-  const found = broken && level <= 0 && !breaking ? cutAcross(patches[0], 0.42) : null;
+  /* There used to be a corner broken here before the reign had spent a thing
+     on it, the near end of the first strip, on the grounds that a scene about
+     a furrow wants a furrow to stand on. What it looked like was the valley
+     clearing ground on its own, so it is gone: no field until the year that
+     breaks one. */
 
   return (
     <g>
-      {found && (
-        <polygon
-          points={found}
-          fill="url(#rows)"
-          stroke={OUTLINE}
-          strokeWidth="1.2"
-          strokeLinejoin="round"
-          opacity="0.9"
-          className="city-tint"
-        />
-      )}
       {patches.map((points, i) => {
         if (i >= done) return null;
         return (

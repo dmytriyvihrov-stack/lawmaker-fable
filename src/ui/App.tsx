@@ -1084,10 +1084,18 @@ export function App() {
    * screen where you cannot, teaches the wrong thing. It goes once the player
    * has set off for one, and the year it went up is the only year it is up.
    */
+  /* And not over a card. `townIsPokeable` lets the shelf stand, because a
+     small thing can be taken with the year of work still open; a note
+     explaining what a small thing is, on top of the card asking how the year
+     is spent, is a second lesson over the one being read. It waits for a frame
+     with no year in front of it: the drift between cards, or a year already
+     spent. */
+  const noteRoom = idling || (game.phase !== 'works' && game.phase !== 'composer');
   const noteMoment =
     smallNote &&
     (smallNoteTurn === null || smallNoteTurn === game.turn) &&
     townIsPokeable &&
+    noteRoom &&
     !primer &&
     !doorNoteUp &&
     journey.snapshot.errands.length === 0
@@ -1254,13 +1262,15 @@ export function App() {
             what puts the note away for good. */}
         {noteMoment && noteAt && (
           <SmallThingNote
-            /* Clear of the crown, which is 176 wide against the right edge and
+            /* Clear of the crown, which is 150 wide against the right edge and
                is painted after the map: a note that runs under it is a note
-               with its last two words missing. Only where the crown is
-               actually drawn, which is Tailwind's `lg` and no narrower: below
-               that the column is hidden and holding the note off an edge that
-               has nothing on it only moves it away from the thing it names. */
-            left={Math.max(125, Math.min(fit.w - (fit.w >= 1024 ? 340 : 125), noteAt.x))}
+               with its last two words missing. Half this note is 115, so the
+               stop is that plus the crown plus a little air. Only where the
+               crown is actually drawn, which is Tailwind's `lg` and no
+               narrower: below that the column is hidden and holding the note
+               off an edge that has nothing on it only moves it away from the
+               thing it names. */
+            left={Math.max(125, Math.min(fit.w - (fit.w >= 1024 ? 315 : 125), noteAt.x))}
             top={Math.max(140, noteAt.y - 30)}
             onShown={() => {
               markNoteSeen('smallThing');
@@ -1342,14 +1352,21 @@ export function App() {
           onWeather={idle !== null && idle !== 'waiting' ? () => setIdle({ ...idle, step: idle.step + 1 }) : undefined} />
       </div>}
 
-      {/* the crown, and under it what is written down. Nothing below that:
-          there is no game information down there, there is the town. */}
+      {/* The crown, and under it what is written down. Nothing below that:
+          there is no game information down there, there is the town.
+
+          Into the corner, and narrower. It used to float twenty pixels in from
+          the top right, which put a strip of meadow between it and both edges
+          and made the whole column read as a thing lying on the picture. It is
+          furniture, not weather: it is sewn to the corner now, with its right
+          edge squared off against the window, and twenty-six pixels came off
+          its width, which is the hill behind it back. */}
       {game.phase !== 'intro' && (
-      <div className="pointer-events-none absolute right-5 top-[18px] z-20 hidden w-[176px] flex-col gap-4 lg:flex">
+      <div className="pointer-events-none absolute right-0 top-0 z-20 hidden w-[150px] flex-col gap-2.5 lg:flex">
         {/* Both cards carry `backdrop-blur`, and a backdrop filter makes a
             stacking context: the crown's hovers are `z-50` inside its own card
             and were therefore trapped in it, so the laws card, being the later
-            sibling, painted its whole 176 by 92 over the bottom half of the
+            sibling, painted its whole width over the bottom half of the
             sentence about the monarch's mood. What decides the order is these
             two numbers, not the ones inside the cards. */}
         <div className="pointer-events-auto relative z-20">
@@ -1368,7 +1385,7 @@ export function App() {
           {/* "1 being written now" used to go up the moment the phase changed,
               which is while the wheel is still turning and the drafting table
               is minutes away. It says it when the table is actually open. */}
-          <StandingLaws state={game} writing={game.phase === 'composer' && !idling} dev={dev} />
+          <StandingLaws state={game} writing={game.phase === 'composer' && !idling} dev={dev} flush />
         </div>
       </div>
       )}

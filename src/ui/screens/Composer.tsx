@@ -148,9 +148,18 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
             ))}
           </div>
 
-          {/* and the predicates, in full lines, because they are sentences */}
+          {/* And the predicates, two across.
+
+              They are sentences, so each of them had a full line of its own,
+              and three sentences of six words down a column eleven hundred
+              wide is three short lines with half a card of empty paper beside
+              them. Two across is the same three answers in two rows, and the
+              same shape as the word bank on the bench, which is the other
+              screen in this game where a sentence is assembled out of tiles.
+              The rows align to the top: the picked one grows a line of boards
+              underneath it and its neighbour must not grow with it. */}
           {subject !== null && (
-            <div className="mt-2 space-y-1.5">
+            <div className="mt-2 grid items-start gap-1.5 sm:grid-cols-2">
               {ACTIONS.filter((a) => openActions.has(a.id)).map((a) => {
                 const isStanding = standing !== undefined && standing.action === a.id;
                 return (
