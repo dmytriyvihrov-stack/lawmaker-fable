@@ -71,18 +71,22 @@ if:
 - there is neither synthesised sound in the bundle nor a single audio file -
   the sound went missing entirely.
 
-Today this game has no audio file at all: the sound is synthesised in
-`src/ui/audio/synthesis.ts`, and the guard counts the Web Audio calls
-(`createOscillator`, `createGain`) in the shipped bundle instead. Those are DOM
-API names, so no minifier can rename them and the count is a real assertion.
+Most of the sound has no audio file at all: it is synthesised in
+`src/ui/audio/synthesis.ts` and `src/ui/music.ts`'s fallback pad, and the
+guard counts the Web Audio calls (`createOscillator`, `createGain`) in the
+shipped bundle. Those are DOM API names, so no minifier can rename them and
+the count is a real assertion.
 
-The published site is a **directory**, not the single inlined
-`lawmaker-fable.html`. That file carries only the stylesheet and the script
-inside it; a directory carries whatever else the build emits - fonts, pictures,
-audio - each as its own file with its own URL. So the day this game stops
-synthesising its sound and starts loading it, the files travel on their own and
-the first guard above starts doing the work. Nothing about this script has to
-change.
+The music behind the toggle can also be one or two recorded tracks, when
+`assets/music/*.mp3` has anything in it. They do not travel as their own
+files under `docs/`: `deploy.ps1` reads them, base64 encodes them and sews a
+`window.__lawmakerMusic` script into `docs/index.html` directly, the same way
+`bundle.mjs` does for the single inlined `lawmaker-fable.html`. That is why
+the media-file rule above only ever fires on a literal path (an `<img>`, a
+future `<audio src>`) and not on a recorded track: a data URI names nothing
+on disk to go missing. A track that IS meant to be there and is not gets its
+own check, right after the guard's build-tag assertion, on
+`window.__lawmakerMusic` itself.
 
 One thing the guard cannot check, because it is not a property of a file: a
 browser will not start an `AudioContext` until the player has clicked

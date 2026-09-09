@@ -26,11 +26,13 @@
 # this script ever writes back into the desk.
 #
 # THE ONE THING THIS SCRIPT EXISTS TO PREVENT: shipping a page that is silent
-# for everyone but you. In this game the sound is SYNTHESISED - there is no
-# audio\ folder and no .mp3 to forget - so the guard below asserts the
-# synthesis is present in the shipped bundle, and ALSO that every media file
-# the bundle names is actually on disk under docs\, for the day real audio
-# files are added. See "the guard" in README.md.
+# for everyone but you. Most of the sound is SYNTHESISED and needs no file at
+# all; step 5 below sews whatever is in assets\music\*.mp3 into docs\index.html
+# as base64, the same way `bundle.mjs` sews it into the single-file build, so
+# the guard after it can assert the synthesis is present in the shipped
+# bundle, and separately that every media file the bundle actually NAMES (a
+# literal path, not a data URI) is on disk under docs\. See "the guard" in
+# README.md.
 #
 # KEEP THIS FILE PURE ASCII. PowerShell 5.1 reads a .ps1 as ANSI and the path
 # to this repo contains Cyrillic ("Google <disk>"): a literal non-ASCII
@@ -74,7 +76,10 @@ if ($NoSync) {
 } else {
   $desk = (Resolve-Path -LiteralPath $desk).Path
   Step 1 "refreshing the source from $desk"
-  foreach ($dir in @('src', 'tests', 'tools')) {
+  # `assets` is the mp3s step 5 sews into the page, mirrored the same way as
+  # the code: this repo stands on its own, so the source of a recorded track
+  # lives here too, not only the built page it ends up inside.
+  foreach ($dir in @('src', 'tests', 'tools', 'assets')) {
     $from = Join-Path $desk $dir
     if (-not (Test-Path $from)) { continue }
     & robocopy $from (Join-Path $root $dir) /MIR /NFL /NDL /NJH /NJS /NP | Out-Null
@@ -89,7 +94,7 @@ if ($NoSync) {
     $from = Join-Path $desk $f
     if (Test-Path $from) { Copy-Item -LiteralPath $from -Destination (Join-Path $root $f) -Force }
   }
-  "      src, tests, tools and the build configuration are now the desk's"
+  "      src, tests, tools, assets and the build configuration are now the desk's"
 }
 if (-not (Test-Path (Join-Path $root 'src'))) { Die "there is no src\ in this repo and no desk to copy one from." }
 
@@ -125,13 +130,50 @@ if ($NoCheck) {
 # ---- 4. build --------------------------------------------------------------
 # Built from THIS repo's source, into this repo's docs\, so what is published
 # is what a visitor to the repository can read. Vite empties docs\ first, which
-# is why nothing but build output may live there; the trimmings that belong to
-# the published site are written back in step 5, every time.
+# is why nothing but build output may live there; the music is sewn in and
+# the trimmings that belong to the published site are written back in steps
+# 5 and 6, every time.
 Step 4 "building the page"
 & node $vite build --outDir $site --emptyOutDir
 if ($LASTEXITCODE -ne 0) { Die "vite build failed. Nothing was published." }
 
-# ---- 5. the trimmings ------------------------------------------------------
+# ---- 5. the music -----------------------------------------------------------
+# Whatever is in assets\music\*.mp3, base64 encoded and written into
+# docs\index.html as `window.__lawmakerMusic`, the same object `bundle.mjs`
+# writes for the single-file build. `music.ts` decodes it locally with `atob`
+# the first time the sound card opens - never a fetch, so this is still no
+# network call - and falls back to the synthesised pad if the folder is empty
+# or a track fails to decode, which is every deploy before this one.
+$musicDir = Join-Path $root 'assets\music'
+$musicFiles = @()
+if (Test-Path $musicDir) {
+  $musicFiles = @(Get-ChildItem -LiteralPath $musicDir -Filter *.mp3 -ErrorAction SilentlyContinue)
+}
+if ($musicFiles.Count -gt 0) {
+  Step 5 "sewing $($musicFiles.Count) recorded track(s) into the page"
+  $entries = foreach ($f in $musicFiles) {
+    $key = [IO.Path]::GetFileNameWithoutExtension($f.Name)
+    $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($f.FullName))
+    # Base64's alphabet (A-Z a-z 0-9 + / =) holds nothing JSON needs escaped.
+    '"' + $key + '":"data:audio/mpeg;base64,' + $b64 + '"'
+  }
+  $musicScript = '<script>window.__lawmakerMusic = {' + ($entries -join ',') + '};</script>'
+  $page0 = Join-Path $site 'index.html'
+  $html0 = [System.IO.File]::ReadAllText($page0)
+  if ($html0 -notmatch '(?i)<script[^>]*type="module"') {
+    Die "docs\index.html has no module script to sew the music ahead of."
+  }
+  # Single quoted: PowerShell never interpolates `$1` here, so it reaches the
+  # regex engine as the literal backreference to what the pattern captured.
+  $html0 = $html0 -replace '(?i)(<script[^>]*type="module")', ($musicScript + '$1')
+  [System.IO.File]::WriteAllText($page0, $html0, (New-Object System.Text.UTF8Encoding($false)))
+  $kb = [Math]::Round(($musicFiles | Measure-Object Length -Sum).Sum / 1KB, 0)
+  "      $($musicFiles.Count) track(s), $kb kB raw: $(($musicFiles | ForEach-Object { $_.BaseName }) -join ', ')"
+} else {
+  Step 5 "no assets\music\*.mp3 found, the page keeps the synthesised pad"
+}
+
+# ---- 6. the trimmings ------------------------------------------------------
 # .nojekyll   : GitHub Pages otherwise runs Jekyll, which drops _underscored
 #               files. Vite emits none today, but this costs one empty file.
 # robots.txt  : the repo has to be public for Pages to serve it on a free plan,
@@ -139,7 +181,7 @@ if ($LASTEXITCODE -ne 0) { Die "vite build failed. Nothing was published." }
 # the meta    : robots.txt is a crawl rule, the meta is an index rule. A page
 #               linked from somewhere else can be indexed WITHOUT being
 #               crawled, so both are needed to keep the link quiet.
-Step 5 "writing .nojekyll, robots.txt and the noindex line"
+Step 6 "writing .nojekyll, robots.txt and the noindex line"
 Set-Content -LiteralPath (Join-Path $site '.nojekyll') -Value '' -NoNewline -Encoding ascii
 Set-Content -LiteralPath (Join-Path $site 'robots.txt') -Encoding ascii -Value @'
 User-agent: *
@@ -163,10 +205,10 @@ if ($html -notmatch 'name="robots"') {
   [System.IO.File]::WriteAllText($page, $html, (New-Object System.Text.UTF8Encoding($false)))
 }
 
-# ---- 6. the guard ----------------------------------------------------------
+# ---- 7. the guard ----------------------------------------------------------
 # Read the built site back and count what is actually in it. Asserting on the
 # thing that ships, not on the thing that was meant to ship, is the point.
-Step 6 "checking the built page"
+Step 7 "checking the built page"
 $html = [System.IO.File]::ReadAllText($page)
 if ($html -notmatch 'id="root"') { Die "docs\index.html has no #root. React would have nothing to mount to." }
 if ($html -notmatch 'name="robots"') { Die "docs\index.html lost the noindex line. The page would be indexable." }
@@ -177,6 +219,11 @@ if ($html -notmatch 'name="robots"') { Die "docs\index.html lost the noindex lin
 # checked against what is running - so it is asserted on the shipped page.
 if ($html -notmatch 'name="lawmaker-build"') { Die "docs\index.html has no build tag. The corner badge would read 'dev' and nobody could tell what is live." }
 if ($html[0] -eq [char]0xFEFF) { Die "docs\index.html starts with a byte order mark. Write it with UTF8Encoding(`$false)." }
+# Step 5 meant to sew tracks in; assert they actually landed, not just that
+# the step ran without throwing.
+if ($musicFiles.Count -gt 0 -and $html -notmatch '__lawmakerMusic') {
+  Die "assets\music\ has $($musicFiles.Count) track(s) but docs\index.html has no __lawmakerMusic. Step 5's injection did not take."
+}
 $bundles = @(Get-ChildItem -LiteralPath (Join-Path $site 'assets') -Filter *.js -ErrorAction SilentlyContinue)
 if ($bundles.Count -eq 0) { Die "no javascript bundle under docs\assets. The page would be blank." }
 $js = ($bundles | ForEach-Object { [System.IO.File]::ReadAllText($_.FullName) }) -join "`n"
@@ -189,9 +236,11 @@ $osc  = ([regex]::Matches($js, 'createOscillator')).Count
 $gain = ([regex]::Matches($js, 'createGain')).Count
 $actx = ([regex]::Matches($js, 'AudioContext')).Count
 
-# The media files, for the day this game has some. Every path the bundle, the
-# stylesheet or the page names must exist on disk under docs\, or the shipped
-# page is the silent build: perfect here, mute for everyone else.
+# The media files. Recorded tracks travel as base64 inside the page now, not
+# as files under docs\, so this only ever catches a literal path (an <img>, a
+# future <audio src>): every one the bundle, the stylesheet or the page names
+# must exist on disk under docs\, or the shipped page is the silent build:
+# perfect here, mute for everyone else.
 $ext = '(?:mp3|ogg|wav|m4a|webm|aac|flac|opus)'
 $css = ''
 Get-ChildItem -LiteralPath (Join-Path $site 'assets') -Filter *.css -ErrorAction SilentlyContinue | ForEach-Object {
@@ -208,6 +257,7 @@ foreach ($n in $named) {
 
 "      bundle    : $mb MB in $($bundles.Count) file(s)"
 "      synthesis : $osc oscillators, $gain gains, $actx AudioContext mentions"
+"      music     : $($musicFiles.Count) recorded track(s) embedded as base64"
 "      media     : $($onDisk.Count) file(s) shipped, $($named.Count) named by the build"
 
 if ($missing.Count -gt 0) {
@@ -217,8 +267,8 @@ if ($onDisk.Count -eq 0 -and ($osc -lt 1 -or $gain -lt 3)) {
   Die "no synthesised sound in the bundle ($osc oscillators, $gain gains) and no audio files either.`n         The page would be SILENT. Nothing was pushed."
 }
 
-# ---- 7. commit -------------------------------------------------------------
-Step 7 "committing"
+# ---- 8. commit -------------------------------------------------------------
+Step 8 "committing"
 $sweep = & git status --porcelain
 if ($sweep) {
   $n = ($sweep | Measure-Object).Count
@@ -237,7 +287,7 @@ if (-not $dirty) {
   "      " + (& git log --oneline -1)
 }
 
-# ---- 8. push ---------------------------------------------------------------
+# ---- 9. push ---------------------------------------------------------------
 # `git remote get-url` on a missing remote writes to stderr, and PowerShell 5.1
 # turns a native command's stderr into a terminating error under
 # ErrorActionPreference Stop. Ask the question that cannot fail instead.
@@ -254,7 +304,7 @@ if (-not $remote) {
 
 if ($NoPush) { Step 8 "committed, not pushed (-NoPush)"; exit 0 }
 
-Step 8 "pushing"
+Step 9 "pushing"
 & git push -q -u origin HEAD
 if ($LASTEXITCODE -ne 0) { Die "git push failed. If it asks for a password, GitHub wants a personal access token, not the account password." }
 
