@@ -12,7 +12,9 @@ import type { FolkPin } from '../../engine/folk';
 import { PAINT } from './town/paint';
 import type { TownPaint } from './town/paint';
 import { GroundWashes, MeadowDetails, River } from './town/atmosphere';
-import { TownDog } from './town/parts';
+import { Cart, Hen, TownDog } from './town/parts';
+import { lengthOf, stopsFrom, walkOver } from './town/paths';
+import type { Pt } from './town/paths';
 import type { Moment } from '../../content/moments';
 import {
   Bonfire,
@@ -73,7 +75,13 @@ import {
   CAMP_FIRE,
   CAMP_RING,
   homeDoor,
+  hutSites,
   siteOf,
+  DANCE_PAIRS,
+  HEN_YARD,
+  KID_RUNS,
+  ROAD_IN,
+  ROAD_OVER,
 } from './town/sites';
 import type { CrowdJob } from './town/sites';
 import { HORIZON_WOOD, LEFT_PINES, LEFT_WOOD, RIGHT_WOOD, RIGHT_WOOD_FLOOR } from './town/woods';
@@ -293,8 +301,23 @@ export function CityScape({
   /* Roofs come with the count, and with the years spent on putting one up:
      a house is the one work whose whole point is that there is one more of
      them, so every floor of it is another roof standing here. */
+  /**
+   * The bridge as it stands to be walked on this year. The store is charged
+   * the moment the year is spent, so while the deck is still two piles and a
+   * plank the level already says one, and what can be crossed is last
+   * year's bridge, which for a first bridge is no bridge at all.
+   */
+  const bridgeLevel = level('bridge');
+  const shownBridge = raising === 'bridge' ? bridgeLevel - 1 : bridgeLevel;
+  const bridged = shownBridge > 0;
+  /* Where a roof can go: the near bank, and once there is a way over the
+     water, the far bank after it. The far sites come last on purpose (see
+     `FAR_SITES`), so a place fills the near bank before anybody builds over
+     there, and nothing already standing moves the year the bridge is paid
+     for. */
+  const homes = hutSites(bridged);
   const huts = Math.min(
-    HUT_SITES.length,
+    homes.length,
     level('house') + Math.floor((population - 5) / 12),
   );
 
@@ -423,6 +446,10 @@ export function CityScape({
     /* Somebody is in the apple trees whenever there are apples on them, and
        in the autumn everybody who can be spared is. */
     post('orchard', season === 'autumn' ? 3 : 1);
+    /* And the far bank, which is a morning's work once there is a bridge to
+       it and was a day's walk round by the ford before: two go over with a
+       basket in a hamlet, three in a town, and the beeches are the point. */
+    if (bridged) post('far', town ? 3 : 2);
   } else {
     post(indoors, 4);
     post(together, 2);
@@ -433,6 +460,12 @@ export function CityScape({
     post('warm', 6);
   }
   if (raisingOf && WORK_SITES[raisingOf]) post('site', 4);
+
+  /* A day nobody works, with a fiddle if there is one. In the year of the
+     fair there is one, whatever the board says, because that is the year
+     somebody went and found it. */
+  const fair = raisingOf === 'fair' || on('bunting');
+  if (fair && working) post('music', 1);
 
   /* A hole in the crag is backs in the hole, in every season: the one job here
      the weather cannot stop. */
@@ -462,7 +495,7 @@ export function CityScape({
    * and a building site with nobody arriving at it is a building putting
    * itself up.
    */
-  const COMMUTES: CrowdJob[] = ['fish', 'wood', 'site', 'mine', 'orchard'];
+  const COMMUTES: CrowdJob[] = ['fish', 'wood', 'site', 'mine', 'orchard', 'far'];
 
   /**
    * Taking them in flat passes gave every job the same first man, so a place
@@ -509,8 +542,10 @@ export function CityScape({
     paint: 'paint',
     guard: 'guard',
     warm: 'warm',
+    far: 'gather',
   };
-  const TRAVELS: CrowdJob[] = ['road', 'square', 'yard'];
+  /* The road is not a stroll any more: it is walked end to end, below. */
+  const TRAVELS: CrowdJob[] = ['square', 'yard'];
   /* A pike and a fiddle both face the same way all day, like a rod does. */
   const FACES_FIXED: CrowdJob[] = ['fish', 'wood', 'guard', 'music', 'paint', 'mine', 'warm', 'camp'];
 
@@ -536,10 +571,20 @@ export function CityScape({
 
     let x: number;
     let y: number;
+    /* A road is walked, not stood on. Whoever is posted to it takes one of
+       the two trips the road has (`ROAD_IN`, `ROAD_OVER` in `sites.ts`) end
+       to end and back, loaded on the way in: in from the hills to the cart
+       ground, and, once there is a bridge, from the square over the deck to
+       the far bank. The figure is drawn at the near end of its trip and
+       carried along it by the animation; `rest` is the step it stands at
+       when nothing is allowed to move. */
+    let trip: Pt[] | null = null;
+    let rest: Pt | null = null;
     if (job === 'road') {
-      const step = ROAD_WALK[nth % ROAD_WALK.length];
-      x = step.x + ((i * 11) % 22) - 11;
-      y = step.y + ((i * 7) % 16) - 8;
+      trip = bridged && nth % 2 === 1 ? ROAD_OVER : ROAD_IN;
+      rest = ROAD_WALK[nth % ROAD_WALK.length];
+      x = trip[0].x;
+      y = trip[0].y;
     } else if (job === 'fish') {
       /* A bank is a line, not a patch, and a man with a rod is standing on
          the one spot of it where the water is deep enough to be worth it. */
@@ -607,32 +652,59 @@ export function CityScape({
 
     const travels = TRAVELS.includes(job);
     const commutes = COMMUTES.includes(job);
+    const here = { x: Math.round(x), y: Math.round(y) };
     /* The door this one leaves by. Their number picks the hut, so the same
        soul comes out of the same house every year, and a hamlet of one roof
        sends everybody out of it. */
-    const door = commutes ? homeDoor(i, huts) : null;
+    const door = commutes ? homeDoor(i, homes.slice(0, huts)) : null;
+    /* The way from that door to the work. On one bank it is the straight
+       line it always was. Across the water it is the bridge, stop by stop,
+       and the day is drawn with the corners in it: out of a door on the far
+       bank, down to the deck, over, and up to the furrows or the rods. A
+       door on the far bank with no bridge under it cannot happen, because
+       the far bank has no doors until there is one. */
+    const route = door ? walkOver(door, here, bridged) : null;
+    const via = route && route.length > 2 ? stopsFrom(route, here) : null;
+    /* A trip is drawn at its near end and takes as long as its length says,
+       at a walking pace, plus a little of its own. */
+    const tripSecs = trip ? Math.round((2 * lengthOf(trip)) / 0.92 / 21) + ((i * 5) % 9) : 0;
     return {
-      x: Math.round(x),
-      y: Math.round(y),
+      x: here.x,
+      y: here.y,
       cloth,
       job,
       pose: job === 'field' ? fieldPose(nth) : POSE[job],
       travels,
-      span: travels ? (job === 'road' ? 44 : 18) : 0,
+      span: travels ? 18 : 0,
       /* A load off the wood is a walk of its own length and takes as long as
          it takes; a day that starts at a door is a long loop of out, work and
-         home; everything else is a stroll or a stoop. */
+         home; a road is as long as the road; everything else is a stroll or
+         a stoop. */
       dur:
         job === 'haul'
           ? `${pace * 1.7 + ((i * 5) % 7)}s`
-          : commutes
-            ? `${46 + ((i * 7) % 19)}s`
-            : travels
-              ? `${pace + ((i * 7) % 9)}s`
-              : `${2.4 + ((i * 5) % 7) * 0.3}s`,
+          : trip
+            ? `${tripSecs}s`
+            : commutes
+              ? `${46 + ((i * 7) % 19)}s`
+              : travels
+                ? `${pace + ((i * 7) % 9)}s`
+                : `${2.4 + ((i * 5) % 7) * 0.3}s`,
       /* The commuters are spread round the whole day, so at any moment one is
-         on the way out, two are at it and one is walking home. */
-      delay: commutes ? `-${(i * 13.7) % 46}s` : `-${(i * 1.7) % 9}s`,
+         on the way out, two are at it and one is walking home; the road is
+         spread the same way, so it is never empty and never a procession. */
+      delay: trip
+        ? `-${(i * 13.7) % Math.max(1, tripSecs)}s`
+        : commutes
+          ? `-${(i * 13.7) % 46}s`
+          : `-${(i * 1.7) % 9}s`,
+      via,
+      trip: trip ? stopsFrom(trip, here) : null,
+      /* Under a picture nothing may move in, a trip stands at its own step. */
+      rest: rest ? `${rest.x - here.x}px ${rest.y - here.y}px` : null,
+      /* Which way the trip sets out. The turn at the far end is a mirror, so
+         the figure is drawn facing home and mirrored on the way out. */
+      tripFacing: (trip ? (trip[trip.length - 1].x >= trip[0].x ? -1 : 1) : 1) as 1 | -1,
       /* The small nod of somebody working, on its own short clock. */
       toilDur: `${2.4 + ((i * 5) % 7) * 0.3}s`,
       /* A hut is four metres and a person is under two, so a figure a fifth
@@ -646,8 +718,11 @@ export function CityScape({
          always faces the trunk on their right. */
       facing: ((FACES_FIXED.includes(job) ? 1 : (i * 13) % 2 === 0 ? 1 : -1) as 1 | -1),
       door,
-      /* What is carried on the way out: timber to a site, nothing to a bank. */
+      /* What is carried each way. Timber out to a site and nothing home from
+         it; nothing out to the far bank and a full basket home, which is the
+         whole of what the far bank is for. */
       walkOut: (job === 'site' ? 'carry' : 'stand') as Pose,
+      walkHome: (job === 'far' ? 'carry' : 'stand') as Pose,
     };
   });
   /**
@@ -756,11 +831,14 @@ export function CityScape({
   }
 
   // the roofs people live under, which is the count of souls made of wood
-  HUT_SITES.slice(0, huts).forEach((h, i) => {
+  homes.slice(0, huts).forEach((h, i) => {
     put(
       `hut${i}`,
       h.y + 55 * h.scale,
-      <g transform={`translate(${h.x} ${h.y}) scale(${h.scale})`}>
+      <g
+        transform={`translate(${h.x} ${h.y}) scale(${h.scale})`}
+        data-bank={i >= HUT_SITES.length ? 'far' : undefined}
+      >
         <Hut paint={paint} kind={h.kind} />
         {on('graves_in_the_yards') && i < 3 && (
           <g transform="translate(72 46)">
@@ -1426,9 +1504,9 @@ export function CityScape({
             [424, 622, 1],
             [478, 706, 1.25],
             [534, 654, 1.05],
-          ].map(([x, y, s]) => (
+          ].map(([x, y, s], k) => (
             <g key={x} transform={`translate(${x} ${y}) scale(${s})`}>
-              <Goat paint={paint} />
+              <Goat paint={paint} grazing delay={`-${k * 1.7}s`} />
             </g>
           ))}
         </g>
@@ -1558,7 +1636,7 @@ export function CityScape({
              hands, and round again. */
           if (c.job === 'haul') {
             return (
-              <g key={i} className="town-resident" style={life} data-activity={c.pose} transform={`translate(${c.x} ${c.y})`}>
+              <g key={i} className="town-resident" style={life} data-job={c.job} data-activity={c.pose} transform={`translate(${c.x} ${c.y})`}>
                 <g
                   className="city-haul"
                   style={
@@ -1591,26 +1669,64 @@ export function CityScape({
              Two figures share the spot: the one walking, who faces the way
              they are going and turns round for the walk home, and the one
              working, who faces whatever the work is. Only one is ever lit. */
+          /* A road, walked end to end. Drawn at the near end of the trip and
+             carried along it stop by stop, loaded on the way in and turned
+             round and empty on the way out, on the same clock the haul uses
+             for the same three things. */
+          if (c.trip) {
+            const tripStyle = { ...beat, ...c.trip, '--w-rest': c.rest ?? '0px 0px' } as CSSProperties;
+            return (
+              <g key={i} className="town-resident" style={life} data-job={c.job} data-activity="carry" transform={`translate(${c.x} ${c.y})`}>
+                <g className="city-trip" style={tripStyle}>
+                  <g className="city-turn" style={beat}>
+                    <g transform={`scale(${c.scale})`}>
+                      <g className="city-footfall" style={{ animationDelay: c.delay }}>
+                        <g className="city-load" style={beat}>
+                          <Worker paint={paint} cloth={c.cloth} pose="carry" facing={c.tripFacing} />
+                        </g>
+                        <g className="city-unload" opacity="0" style={beat}>
+                          <Worker paint={paint} cloth={c.cloth} pose="stand" facing={c.tripFacing} />
+                        </g>
+                      </g>
+                    </g>
+                  </g>
+                </g>
+              </g>
+            );
+          }
           if (c.door) {
             const toilBeat = { animationDuration: c.toilDur, animationDelay: c.delay } as CSSProperties;
             const outFacing: 1 | -1 = c.x >= c.door.x ? 1 : -1;
+            /* The straight walk carries its door as two offsets; the walk
+               with corners in it carries every stop, from `stopsFrom`. */
+            const walkStyle = (
+              c.via
+                ? { ...beat, ...c.via }
+                : { ...beat, '--home-x': `${c.door.x - c.x}px`, '--home-y': `${c.door.y - c.y}px` }
+            ) as CSSProperties;
             return (
-              <g key={i} className="town-resident" style={life} data-activity={c.pose} transform={`translate(${c.x} ${c.y})`}>
-                <g
-                  className="city-commute"
-                  style={
-                    {
-                      ...beat,
-                      '--home-x': `${c.door.x - c.x}px`,
-                      '--home-y': `${c.door.y - c.y}px`,
-                    } as CSSProperties
-                  }
-                >
+              <g
+                key={i}
+                className="town-resident"
+                style={life}
+                data-job={c.job}
+                data-activity={c.pose}
+                data-via={c.via ? 'bridge' : undefined}
+                transform={`translate(${c.x} ${c.y})`}
+              >
+                <g className={c.via ? 'city-commute-via' : 'city-commute'} style={walkStyle}>
                   <g transform={`scale(${c.scale})`}>
-                    <g className="city-commute-walk" style={beat}>
-                      <g className="city-commute-face" style={beat}>
+                    <g className="city-commute-face" style={beat}>
+                      {/* two walkers, one each way, so what is carried home
+                          is not what was carried out */}
+                      <g className="city-commute-out" style={beat}>
                         <g className="city-footfall" style={{ animationDelay: c.delay }}>
                           <Worker paint={paint} cloth={c.cloth} pose={c.walkOut} facing={outFacing} />
+                        </g>
+                      </g>
+                      <g className="city-commute-home" style={beat}>
+                        <g className="city-footfall" style={{ animationDelay: c.delay }}>
+                          <Worker paint={paint} cloth={c.cloth} pose={c.walkHome} facing={outFacing} />
                         </g>
                       </g>
                     </g>
@@ -1625,7 +1741,7 @@ export function CityScape({
             );
           }
           return (
-            <g key={i} className="town-resident" style={life} data-activity={c.pose} transform={`translate(${c.x} ${c.y}) scale(${c.scale})`}>
+            <g key={i} className="town-resident" style={life} data-job={c.job} data-activity={c.pose} transform={`translate(${c.x} ${c.y}) scale(${c.scale})`}>
               <g
                 className={c.travels ? 'city-person' : c.pose === 'fish' ? undefined : 'city-toil'}
                 style={{ ...beat, '--stroll': `${c.span / c.scale}px` } as CSSProperties}
@@ -1640,6 +1756,122 @@ export function CityScape({
           );
         })}
       </g>
+      {/* THE CARTS.
+
+          A road wide enough for a cart has one on it. In from the hills
+          loaded and back out empty, which is the road's own line: carts
+          bring a little more than they take. And once there is a bridge, a
+          second one from the square over the deck to the far bank and back,
+          because what was carted round by the ford is carted over now. Not
+          counted among the souls: a cart is a thing the road has, the way
+          the bank has a rod. */}
+      {shownRoad >= 2 && working && (
+        <g>
+          {[ROAD_IN, ...(bridged ? [ROAD_OVER] : [])].map((road, k) => {
+            const start = road[0];
+            const end = road[road.length - 1];
+            const secs = Math.round((2 * lengthOf(road)) / 0.92 / 15) + k * 7;
+            const beat = { animationDuration: `${secs}s`, animationDelay: `-${k * 19 + 7}s` } as CSSProperties;
+            const facing: 1 | -1 = end.x >= start.x ? -1 : 1;
+            /* the cart ground for the one coming in, the deck for the other */
+            const rest = k === 0 ? road[road.length - 2] : road[3];
+            const style = {
+              ...beat,
+              ...stopsFrom(road, start),
+              '--w-rest': `${rest.x - start.x}px ${rest.y - start.y}px`,
+            } as CSSProperties;
+            return (
+              <g key={k} className="town-resident" data-cart={k === 0 ? 'in' : 'over'} transform={`translate(${start.x} ${start.y})`}>
+                <g className="city-trip" style={style}>
+                  <g className="city-turn" style={beat}>
+                    <g transform="scale(1.15)">
+                      <g className="city-load" style={beat}>
+                        <Cart paint={paint} cloth={CLOTH_WORK} loaded facing={facing} />
+                      </g>
+                      <g className="city-unload" opacity="0" style={beat}>
+                        <Cart paint={paint} cloth={CLOTH_WORK} loaded={false} facing={facing} />
+                      </g>
+                    </g>
+                  </g>
+                </g>
+              </g>
+            );
+          })}
+        </g>
+      )}
+
+      {/* THE YARDS, LIVED IN.
+
+          Children, once there are enough souls for some of them to be small:
+          two running the lane between the roofs, faster than anybody else in
+          the picture and carrying nothing, which is what tells them apart.
+          Hens at the foot of the fifth roof, once there is a yard to keep
+          them in. Neither is a job and neither is counted: they are what a
+          place looks like when it is lived in rather than worked. */}
+      {working && population >= 20 && huts >= 2 && (
+        <g>
+          {KID_RUNS.map((run, k) => {
+            const secs = 4.6 + k * 1.3;
+            const beat = { animationDuration: `${secs}s`, animationDelay: `-${k * 2.1}s` } as CSSProperties;
+            const life = { '--gait-cycle': '.5s', '--life-delay': `-${k * .3}s` } as CSSProperties;
+            return (
+              <g key={k} className="town-resident" style={life} data-kid transform={`translate(${run.x} ${run.y}) scale(0.72)`}>
+                <g className="city-person" style={{ ...beat, '--stroll': `${run.span / 0.72}px` } as CSSProperties}>
+                  <g className="city-footfall" style={{ animationDelay: beat.animationDelay }}>
+                    <g className="city-stroll-turn" style={beat}>
+                      <Person paint={paint} cloth={k === 0 ? CLOTH_WORK : CLOTH_POOR} />
+                    </g>
+                  </g>
+                </g>
+              </g>
+            );
+          })}
+        </g>
+      )}
+      {working && huts >= 3 && (
+        <g>
+          {[0, 1, 2].map((k) => {
+            const secs = 9 + k * 2.4;
+            const beat = { animationDuration: `${secs}s`, animationDelay: `-${k * 3.7}s` } as CSSProperties;
+            return (
+              <g key={k} data-hen transform={`translate(${HEN_YARD.x + k * 16} ${HEN_YARD.y + (k % 2) * 6})`}>
+                <g className="city-person" style={{ ...beat, '--stroll': '10px' } as CSSProperties}>
+                  <g className="city-stroll-turn" style={beat}>
+                    <Hen paint={paint} delay={`-${k * 1.1}s`} />
+                  </g>
+                </g>
+              </g>
+            );
+          })}
+        </g>
+      )}
+
+      {/* THE FAIR.
+
+          A day nobody works, in the square, in the one year it happens: two
+          pairs facing each other and hopping, which is a jig from up here.
+          The bunting over them is the fair's own layer and lasts the year
+          the fair does. */}
+      {fair && working && (
+        <g>
+          {DANCE_PAIRS.map((pair, k) => (
+            <g key={k} className="town-resident" data-dance transform={`translate(${pair.x} ${pair.y}) scale(1.15)`}>
+              <g transform="translate(-6 0)">
+                <g className="city-jig" style={{ animationDelay: `-${k * .3}s` } as CSSProperties}>
+                  <Person paint={paint} cloth={k === 0 ? CLOTH_WORK : CLOTH_RICH} />
+                </g>
+              </g>
+              <g transform="translate(6 0) scale(-1 1)">
+                <g className="city-jig" style={{ animationDelay: `-${k * .3 + .46}s` } as CSSProperties}>
+                  <Person paint={paint} cloth={CLOTH_WORK} />
+                </g>
+              </g>
+            </g>
+          ))}
+        </g>
+      )}
+
+      {/* everybody you have actually met, doing what your rulings left them doing */}
       {/* everybody you have actually met, doing what your rulings left them doing */}
       <g>
         {folkPins.map((pin) => (
@@ -1676,15 +1908,24 @@ export function CityScape({
       )}
       {working && (
         <g>
-          <g transform="translate(400 636)">
-            <Goat paint={paint} />
-          </g>
-          <g transform="translate(440 656) scale(.9)">
-            <Goat paint={paint} />
-          </g>
-          <g transform="translate(370 664) scale(1.1)">
-            <Goat paint={paint} />
-          </g>
+          {/* grazing, each on its own clock, and drifting a few steps along
+              the grass the way an animal with nowhere to be does */}
+          {[
+            { x: 400, y: 636, k: 1, span: 14, secs: 19 },
+            { x: 440, y: 656, k: 0.9, span: 10, secs: 23 },
+            { x: 370, y: 664, k: 1.1, span: 12, secs: 27 },
+          ].map((goat, k) => (
+            <g key={k} transform={`translate(${goat.x} ${goat.y}) scale(${goat.k})`}>
+              <g
+                className="city-person"
+                style={{ animationDuration: `${goat.secs}s`, animationDelay: `-${k * 7}s`, '--stroll': `${goat.span}px` } as CSSProperties}
+              >
+                <g className="city-stroll-turn" style={{ animationDuration: `${goat.secs}s`, animationDelay: `-${k * 7}s` }}>
+                  <Goat paint={paint} grazing delay={`-${k * 3.1}s`} />
+                </g>
+              </g>
+            </g>
+          ))}
         </g>
       )}
       <g transform="translate(580 628) scale(1.5)">

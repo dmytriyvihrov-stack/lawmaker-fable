@@ -120,7 +120,14 @@ export const PLOT_MARK: Record<PlotId, { x: number; y: number }> = {
  * town covers the near meadow, so the first roof a new reign has has to stand
  * where it can be seen.
  */
-export const HUT_SITES: { x: number; y: number; scale: number; kind: 0 | 1 }[] = [
+export interface HutSite {
+  x: number;
+  y: number;
+  scale: number;
+  kind: 0 | 1;
+}
+
+export const HUT_SITES: HutSite[] = [
   { x: 816, y: 378, scale: 1, kind: 0 },
   { x: 650, y: 272, scale: 0.84, kind: 1 },
   { x: 846, y: 266, scale: 0.84, kind: 0 },
@@ -134,6 +141,35 @@ export const HUT_SITES: { x: number; y: number; scale: number; kind: 0 | 1 }[] =
   { x: 620, y: 508, scale: 1.16, kind: 0 },
   { x: 462, y: 512, scale: 1.2, kind: 1 },
 ];
+
+/**
+ * The far bank, once there is a way over the water.
+ *
+ * The bridge's own line says it: the far bank stops being a day away, and
+ * people build on that side now. These are the two pieces of ground over
+ * there a roof can stand on, one above the road on the shoulder by the big
+ * trees and one below it on the top of the far meadow, and they are opened
+ * only while a bridge stands. They come after the near sites rather than
+ * among them, because the picture has no memory: a site that took its turn
+ * earlier would move a roof that was already standing across the river the
+ * year the bridge was paid for. So the far bank fills last, in a place big
+ * enough to have filled the near bank, and everybody living there walks to
+ * work over the bridge (`homeDoor`, `walkOver` in `paths.ts`).
+ *
+ * Checked against the water: the river at x 1296 runs at about y 403 and
+ * its bank reaches 441; the road at level two passes under the first site at
+ * about y 538, and over the second at about y 528. Neither site touches
+ * either.
+ */
+export const FAR_SITES: HutSite[] = [
+  { x: 1296, y: 460, scale: 0.86, kind: 1 },
+  { x: 1188, y: 600, scale: 0.9, kind: 0 },
+];
+
+/** Where a roof can go this reign: the near bank, and the far bank once bridged. */
+export function hutSites(bridged: boolean): HutSite[] {
+  return bridged ? [...HUT_SITES, ...FAR_SITES] : HUT_SITES;
+}
 
 /**
  * Where a work actually stands in this reign.
@@ -224,7 +260,16 @@ export type CrowdJob =
   | 'music'
   | 'paint'
   | 'guard'
-  | 'warm';
+  | 'warm'
+  /**
+   * The beeches on the far bank, which is a job the bridge makes.
+   *
+   * Nothing over the water was ever walked to: the far bank was a day away
+   * round by the ford and the picture drew nobody on it. With a bridge
+   * standing it is a morning, so somebody goes over with an empty basket and
+   * comes home with a full one, every day, across the deck.
+   */
+  | 'far';
 
 export const CROWD_SPOTS: Record<CrowdJob, { x: number; y: number; w: number; h: number }> = {
   field: { x: 298, y: 318, w: 168, h: 152 },
@@ -262,6 +307,12 @@ export const CROWD_SPOTS: Record<CrowdJob, { x: number; y: number; w: number; h:
   guard: { x: 640, y: 250, w: 150, h: 22 },
   /* The fallback for a crowd bigger than the ring round the fire. */
   warm: { x: 668, y: 388, w: 96, h: 40 },
+  /* The edge of the beeches on the far bank, just under the road and above
+     the far meadow: the river is a hundred and thirty units up from here,
+     the road's lower edge is at about 545, and the far roof at 1188,600 is
+     under it. Clear of the beeches scene at 1306,512 and of the two crisis
+     spots at 1206,524 and 1252,534. */
+  far: { x: 1176, y: 550, w: 74, h: 24 },
 };
 
 /**
@@ -351,8 +402,8 @@ export const CUTTER_STANDOFF = 11;
  * hut, cross the ground, do the work and walk home, and the door they use is
  * decided by their number so the same soul always leaves the same house.
  */
-export function homeDoor(nth: number, huts: number): { x: number; y: number } {
-  const h = HUT_SITES[nth % Math.max(1, Math.min(huts, HUT_SITES.length))];
+export function homeDoor(nth: number, homes: HutSite[]): { x: number; y: number } {
+  const h = homes[nth % Math.max(1, homes.length)] ?? HUT_SITES[0];
   return { x: h.x + 30 * h.scale, y: h.y + 57 * h.scale };
 }
 
@@ -402,3 +453,63 @@ export const ROAD_WALK = [
  * makes it sit back a rank further than it did.
  */
 export const RIGHT_WOOD_SHIFT = { x: 120, y: -8 };
+
+/**
+ * The road, walked.
+ *
+ * Whoever was on the road used to stand at one of the steps above and
+ * stroll twenty units either side of it under a sack, which is a man
+ * pacing, not a road in use. A road is a line between the place and
+ * everywhere else, so the people on it go the whole way: in from the hills
+ * at the top of the picture, down through the gate to the granary side of
+ * the square, and back out again. And once there is a bridge, on from the
+ * square over the deck to the far bank and back. Two trips, and the carts
+ * take the same two once the road is wide enough for one.
+ *
+ * `ROAD_IN` starts just under the horizon, on the first bend of the track,
+ * and ends where the cart ground is. `ROAD_OVER` picks up at the same bend
+ * of the square, follows the steps down to the water, crosses on the deck
+ * (`DECK` in `paths.ts`, the same three points the ruler's walk uses) and
+ * stops on the far bank short of the map's edge.
+ */
+export const ROAD_IN = [
+  { x: 766, y: 210 },
+  { x: 756, y: 248 },
+  { x: 790, y: 320 },
+  { x: 842, y: 360 },
+  { x: 900, y: 390 },
+  { x: 914, y: 396 },
+];
+
+export const ROAD_OVER = [
+  { x: 900, y: 390 },
+  { x: 958, y: 416 },
+  { x: 1016, y: 442 },
+  { x: 1040, y: 440 },
+  { x: 1090, y: 482 },
+  { x: 1150, y: 530 },
+  { x: 1230, y: 530 },
+];
+
+/**
+ * The yards, lived in.
+ *
+ * Three of the people who come to the door in this game are children, and
+ * until now none were ever in the picture. Two run the lane between the
+ * roofs once there are enough souls for some of them to be small: across the
+ * top of the square under the third roof, and across the doorstep of the
+ * first one. The runs are the ground they cover, from x to x plus span.
+ */
+export const KID_RUNS = [
+  { x: 688, y: 388, span: 44 },
+  { x: 836, y: 440, span: 34 },
+];
+
+/** The foot of the fifth roof, where the hens are, once there is a yard to keep them in. */
+export const HEN_YARD = { x: 556, y: 392 };
+
+/** Two pairs in the square, in the year of the fair. */
+export const DANCE_PAIRS = [
+  { x: 734, y: 408 },
+  { x: 806, y: 438 },
+];

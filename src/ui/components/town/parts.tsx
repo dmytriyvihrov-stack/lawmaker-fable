@@ -304,7 +304,11 @@ export type Pose =
   | 'play'
   | 'paint'
   | 'guard'
-  | 'warm';
+  | 'warm'
+  /* And the far bank's job, once there is a way over to it: bent over the
+     beech mast with a basket in the grass. Not the orchard's arm up into
+     the branches, because nothing on the far bank was planted. */
+  | 'gather';
 
 /** A haft, an edge, and everything woven: the whole tool cupboard. */
 const HAFT = '#6b573f';
@@ -322,13 +326,21 @@ export function Worker({
   pose: Pose;
   facing?: 1 | -1;
 }) {
-  if (pose === 'stand') return <Person paint={paint} cloth={cloth} />;
+  /* Somebody with nothing in their hands still faces the way they are going. */
+  if (pose === 'stand') {
+    return (
+      <g transform={facing === -1 ? 'scale(-1 1)' : undefined}>
+        <Person paint={paint} cloth={cloth} />
+      </g>
+    );
+  }
 
   /* The bend of the back is the half of a job that reads from the other side
      of a valley. A reaper is folded over the corn, a digger is over the spade,
      a sower walks upright with a hand out, and a fisher does not move at all. */
   const lean =
     pose === 'reap' ? 30
+    : pose === 'gather' ? 24
     : pose === 'dig' ? 22
     : pose === 'mine' ? 18
     : pose === 'carry' ? 16
@@ -364,6 +376,17 @@ export function Worker({
           <path d="M4.6 6 q3.7 -2.6 7.4 0" fill="none" stroke={HAFT} strokeWidth="0.6" />
           <circle cx="7" cy="7.6" r="1" fill="#c1553f" />
           <circle cx="9.6" cy="8" r="0.9" fill="#c1553f" />
+        </g>
+      )}
+      {/* the basket in the grass, filling, and what has not gone in it yet */}
+      {pose === 'gather' && (
+        <g>
+          <path d="M-12.4 6 h7 l-1 4.4 h-5 z" fill={STRAW} stroke={HAFT} strokeWidth="0.6" />
+          <path d="M-12.4 6 q3.5 -2.4 7 0" fill="none" stroke={HAFT} strokeWidth="0.6" />
+          <g fill="#8a6a3a" opacity="0.9">
+            <circle cx="6.4" cy="9.4" r="0.9" />
+            <circle cx="9.2" cy="8.2" r="0.8" />
+          </g>
         </g>
       )}
       {/* three legs and a board, which is the whole of an easel from here */}
@@ -478,6 +501,13 @@ export function Worker({
           <g className="life-tool">
             <line x1="1" y1="-3" x2="5.6" y2="-11.4" stroke={cloth} strokeWidth="1.9" strokeLinecap="round" />
             <circle cx="6.2" cy="-12.4" r="1.2" fill="#c1553f" />
+          </g>
+        )}
+
+        {/* one hand down in the grass, which is what gathering looks like */}
+        {pose === 'gather' && (
+          <g className="life-tool">
+            <line x1="1" y1="-2" x2="6.6" y2="4.6" stroke={cloth} strokeWidth="1.9" strokeLinecap="round" />
           </g>
         )}
 
@@ -869,8 +899,23 @@ export function BreadBoard({ paint }: { paint: TownPaint }) {
   );
 }
 
-/** Four legs and a bad idea, out on the near meadow. */
-export function Goat({ paint }: { paint: TownPaint }) {
+/**
+ * Four legs and a bad idea, out on the near meadow.
+ *
+ * A goat that is grazing puts its head down every so often and brings it up
+ * again, which is the whole of what a goat does with a meadow and the one
+ * thing that tells a live animal from a drawn one. The head turns about the
+ * neck on its own clock, so a field of them is never nodding together.
+ */
+export function Goat({
+  paint,
+  grazing = false,
+  delay = '0s',
+}: {
+  paint: TownPaint;
+  grazing?: boolean;
+  delay?: string;
+}) {
   return (
     <g>
       <Shade paint={paint} cy={8} rx={7} ry={2} />
@@ -879,8 +924,119 @@ export function Goat({ paint }: { paint: TownPaint }) {
         <line x1="4" y1="3" x2="4" y2="8" />
       </g>
       <ellipse rx="7" ry="4" fill="#efe6cd" />
-      <circle cx="8" cy="-3" r="2.6" fill="#efe6cd" />
-      <line x1="8" y1="-5" x2="10" y2="-9" stroke="#7a6a52" strokeWidth="1" strokeLinecap="round" />
+      <g className={grazing ? 'city-graze' : undefined} style={{ animationDelay: delay } as CSSProperties}>
+        <circle cx="8" cy="-3" r="2.6" fill="#efe6cd" />
+        <line x1="8" y1="-5" x2="10" y2="-9" stroke="#7a6a52" strokeWidth="1" strokeLinecap="round" />
+      </g>
+    </g>
+  );
+}
+
+/**
+ * A hen, at the size a person is ten units tall: a body, a head that goes
+ * down to the ground and comes up again, a comb so it is not a pigeon. There
+ * are hens in a yard from about the third roof, because a yard with nothing
+ * scratching in it is a lawn.
+ */
+export function Hen({ paint, delay = '0s' }: { paint: TownPaint; delay?: string }) {
+  const feather = '#e9dcc3';
+  const dark = '#c9b48e';
+  return (
+    <g>
+      <Shade paint={paint} cy={2.4} rx={3.2} ry={1} />
+      <g stroke="#b58a3f" strokeWidth="0.6" strokeLinecap="round">
+        <line x1="-0.8" y1="1.2" x2="-1" y2="2.4" />
+        <line x1="0.9" y1="1.2" x2="1.1" y2="2.4" />
+      </g>
+      <path d="M-3.8 -1.4 l1.6 -2.2 l0.9 1.9 z" fill={dark} />
+      <ellipse rx="2.9" ry="1.8" fill={feather} />
+      <path d="M-1.2 -0.4 q1.4 1.2 2.8 0" fill="none" stroke={dark} strokeWidth="0.5" />
+      <g className="city-peck" style={{ animationDelay: delay } as CSSProperties}>
+        <circle cx="2.8" cy="-1.7" r="1.15" fill={feather} />
+        <path d="M3.8 -1.6 l1.4 0.4 l-1.4 0.5 z" fill="#d9a441" />
+        <path d="M2.2 -2.9 q0.7 -1 1.4 0" fill="none" stroke="#c9503f" strokeWidth="0.7" strokeLinecap="round" />
+      </g>
+    </g>
+  );
+}
+
+/**
+ * A cart, which is what a road is for.
+ *
+ * Two wheels, a bed, a pony in the shafts and somebody walking at its head,
+ * facing right, on the same ground line as a person: the wheels touch the
+ * ground where a figure's feet do, so a cart and a walker on one road are on
+ * one road. Loaded, there are sacks on the bed. The wheels turn on their own
+ * clock and the pony's legs swing on the skew the wolf already uses, because
+ * a leg is a leg.
+ */
+export function Cart({
+  paint,
+  cloth,
+  loaded,
+  facing = 1,
+}: {
+  paint: TownPaint;
+  cloth: string;
+  loaded: boolean;
+  facing?: 1 | -1;
+}) {
+  const hide = '#7a5c44';
+  const hideDark = '#5e4634';
+  return (
+    <g transform={facing === -1 ? 'scale(-1 1)' : undefined}>
+      <Shade paint={paint} cx={10} cy={10} rx={26} ry={3.2} />
+      {/* the pony, drawn first so the shafts and the bed sit over its flank */}
+      <g transform="translate(21 0)">
+        <g stroke={hideDark} strokeWidth="1.6" strokeLinecap="round">
+          <g className="city-wolf-step">
+            <line x1="-4.5" y1="2" x2="-5" y2="10" />
+            <line x1="4.5" y1="2" x2="5" y2="10" />
+          </g>
+          <g className="city-wolf-step city-wolf-step-back">
+            <line x1="-2" y1="2" x2="-1.5" y2="10" />
+            <line x1="6.5" y1="2" x2="7" y2="10" />
+          </g>
+        </g>
+        <path d="M-7 -2 q-3 3 -2.4 8" fill="none" stroke={hideDark} strokeWidth="1.6" strokeLinecap="round" />
+        <ellipse cx="0" cy="-1" rx="7.4" ry="3.8" fill={hide} />
+        <path d="M4.6 -3.6 L8.4 -9.4 L11.2 -8.4 L8 -3 Z" fill={hide} />
+        <ellipse cx="11" cy="-9.2" rx="3" ry="2" fill={hide} />
+        <path d="M9.2 -10.6 l-0.6 -2 l1.8 1.2 z M11.2 -11 l0.6 -1.9 l1 1.7 z" fill={hideDark} />
+        <path d="M5.4 -4.4 q2.6 -3.6 4.6 -6" fill="none" stroke={hideDark} strokeWidth="1.4" strokeLinecap="round" />
+        <circle cx="12.2" cy="-9.6" r="0.55" fill="#2b241b" />
+      </g>
+      {/* the shafts, which is what makes the pony a pony in a cart */}
+      <line x1="3" y1="-2" x2="16" y2="-1.6" stroke={HAFT} strokeWidth="1.3" strokeLinecap="round" />
+      {/* the bed, with a board along it */}
+      <rect x="-17" y="-5.5" width="21" height="8.5" rx="1.5" fill={TIMBER_DIM} stroke={OUTLINE} strokeWidth="1" />
+      <path d="M-16 -1.2 h19" stroke={OUTLINE} strokeWidth="0.8" opacity="0.5" />
+      {/* what is on it, on the way in and not on the way out */}
+      {loaded && (
+        <g fill={STRAW} stroke={HAFT} strokeWidth="0.7">
+          <ellipse cx="-12" cy="-7.6" rx="4.2" ry="3" />
+          <ellipse cx="-4.4" cy="-7.8" rx="4" ry="2.9" />
+          <ellipse cx="-8.4" cy="-10.6" rx="3.8" ry="2.7" />
+        </g>
+      )}
+      {/* the far wheel, a shade back, and the near one over it */}
+      <circle cx="-4.8" cy="4.6" r="4.6" fill={TIMBER_DARK} stroke={OUTLINE} strokeWidth="0.8" />
+      <g className="city-wheel">
+        <circle cx="-6.5" cy="5" r="5" fill={TIMBER} stroke={OUTLINE} strokeWidth="1" />
+        <g stroke={OUTLINE} strokeWidth="0.8" opacity="0.8">
+          <line x1="-6.5" y1="0.4" x2="-6.5" y2="9.6" />
+          <line x1="-11.1" y1="5" x2="-1.9" y2="5" />
+          <line x1="-9.8" y1="1.7" x2="-3.2" y2="8.3" />
+          <line x1="-9.8" y1="8.3" x2="-3.2" y2="1.7" />
+        </g>
+        <circle cx="-6.5" cy="5" r="1.1" fill={OUTLINE} />
+      </g>
+      {/* and the one who walks at its head, a hand on the bridle */}
+      <g transform="translate(38 0)">
+        <g className="city-footfall">
+          <Person paint={paint} cloth={cloth} />
+        </g>
+      </g>
     </g>
   );
 }

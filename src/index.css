@@ -335,6 +335,33 @@ button:disabled {
   animation-iteration-count: infinite;
 }
 
+/* Two walkers to a day, one each way, so what comes home is not what went
+   out: a basket that left empty comes back full, timber that went out to a
+   site does not come back. Each is lit for its own leg and nothing else. */
+@keyframes commute-out {
+  0%, 5.99% { opacity: 0; }
+  6%, 23.99% { opacity: 1; }
+  24%, 100% { opacity: 0; }
+}
+
+.city-commute-out {
+  animation-name: commute-out;
+  animation-timing-function: steps(1);
+  animation-iteration-count: infinite;
+}
+
+@keyframes commute-home {
+  0%, 77.99% { opacity: 0; }
+  78%, 95.99% { opacity: 1; }
+  96%, 100% { opacity: 0; }
+}
+
+.city-commute-home {
+  animation-name: commute-home;
+  animation-timing-function: steps(1);
+  animation-iteration-count: infinite;
+}
+
 /* nobody walks home backwards */
 @keyframes commute-face {
   0%, 77.99% { transform: scaleX(1); }
@@ -345,6 +372,123 @@ button:disabled {
   animation-name: commute-face;
   animation-timing-function: steps(1);
   animation-iteration-count: infinite;
+}
+
+/* A walk with corners in it.
+
+   The commute above is a straight line from a door to the work, and a
+   straight line from a door to the far bank is a line through the river.
+   This is the same day with stops in it: home, five stops on the way, the
+   work, and the same five back. The stops are `--w0` to `--w5`, offsets from
+   where the figure is drawn (which is the work, so `--w6` would be nought and
+   is not read), cut by `resample()` in `town/paths.ts` so they are the same
+   distance apart and the walk keeps one speed. The percentages are the
+   commute's own, so `.city-commute-walk`, `.city-commute-work` and
+   `.city-commute-face` run alongside it unchanged.
+
+   The `translate` property rather than `transform`, so the inner group's own
+   transform is left alone; the position still goes on an outer group. */
+@keyframes commute-via {
+  0%, 6% { translate: var(--w0, 0px 0px); }
+  9% { translate: var(--w1, 0px 0px); }
+  12% { translate: var(--w2, 0px 0px); }
+  15% { translate: var(--w3, 0px 0px); }
+  18% { translate: var(--w4, 0px 0px); }
+  21% { translate: var(--w5, 0px 0px); }
+  24%, 78% { translate: 0px 0px; }
+  81% { translate: var(--w5, 0px 0px); }
+  84% { translate: var(--w4, 0px 0px); }
+  87% { translate: var(--w3, 0px 0px); }
+  90% { translate: var(--w2, 0px 0px); }
+  93% { translate: var(--w1, 0px 0px); }
+  96%, 100% { translate: var(--w0, 0px 0px); }
+}
+
+.city-commute-via {
+  animation-name: commute-via;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* A trip: there and back with a stop at the far end, on a road with bends in
+   it. The haul above is the two stop version of this. The figure is drawn at
+   the start, `--w1` to `--w6` are the stops out, and the same stops come back
+   in reverse, so `.city-turn`, `.city-load` and `.city-unload`, which all
+   flip at the halfway mark, run alongside it: loaded on the way out, turned
+   and empty on the way back. The eight percent stood at the far end is the
+   unloading. */
+@keyframes trip {
+  0% { translate: var(--w0, 0px 0px); }
+  7.67% { translate: var(--w1, 0px 0px); }
+  15.33% { translate: var(--w2, 0px 0px); }
+  23% { translate: var(--w3, 0px 0px); }
+  30.67% { translate: var(--w4, 0px 0px); }
+  38.33% { translate: var(--w5, 0px 0px); }
+  46%, 54% { translate: var(--w6, 0px 0px); }
+  61.67% { translate: var(--w5, 0px 0px); }
+  69.33% { translate: var(--w4, 0px 0px); }
+  77% { translate: var(--w3, 0px 0px); }
+  84.67% { translate: var(--w2, 0px 0px); }
+  92.33% { translate: var(--w1, 0px 0px); }
+  100% { translate: var(--w0, 0px 0px); }
+}
+
+.city-trip {
+  animation-name: trip;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* a cart wheel, which turns because the cart is moving and is the one thing
+   about a cart that says so from up here */
+@keyframes wheel-turn {
+  to { rotate: 360deg; }
+}
+
+.city-wheel {
+  animation: wheel-turn 2.6s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* a goat's head going down to the grass and coming up again, on its own
+   clock, so a meadow of them is never nodding in time */
+@keyframes graze {
+  0%, 52% { rotate: 0deg; }
+  60%, 84% { rotate: 34deg; }
+  92%, 100% { rotate: 0deg; }
+}
+
+.city-graze {
+  animation: graze 9s ease-in-out infinite;
+  transform-origin: 5px -1.5px;
+}
+
+/* a hen's head, twice to the ground and up */
+@keyframes peck {
+  0%, 58% { rotate: 0deg; }
+  66% { rotate: 44deg; }
+  74% { rotate: 0deg; }
+  82% { rotate: 44deg; }
+  90%, 100% { rotate: 0deg; }
+}
+
+.city-peck {
+  animation: peck 3.4s ease-in-out infinite;
+  transform-origin: 1.8px -1px;
+}
+
+/* two people in the square in the year of the fair, hopping toward each
+   other and away, which is a jig from up here and needs nothing more */
+@keyframes jig {
+  0%, 100% { translate: 0 0; }
+  25% { translate: 1.8px -1.6px; }
+  50% { translate: 0 0; }
+  75% { translate: -1.8px -1.6px; }
+}
+
+.city-jig {
+  animation: jig 0.92s ease-in-out infinite;
 }
 
 /* a body at work: the small nod of somebody who is not standing still and is
@@ -654,7 +798,9 @@ button:disabled {
   .city-world *, .town-folk * { animation: none !important; transition: none !important; }
   .city-water-glint { opacity: .35; }
   /* with nothing moving, the one at work is the one that is there */
-  .city-commute-walk { opacity: 0; }
+  .city-commute-walk, .city-commute-out, .city-commute-home { opacity: 0; }
+  /* and a trip that is not walked stands at its own stop on the road */
+  .city-trip { translate: var(--w-rest, 0px 0px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -685,6 +831,14 @@ button:disabled {
   .city-commute-walk,
   .city-commute-work,
   .city-commute-face,
+  .city-commute-out,
+  .city-commute-home,
+  .city-commute-via,
+  .city-trip,
+  .city-wheel,
+  .city-graze,
+  .city-peck,
+  .city-jig,
   .city-ghost {
     animation: none !important;
   }
