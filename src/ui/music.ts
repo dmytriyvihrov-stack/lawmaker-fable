@@ -4,24 +4,33 @@ import type { Season } from '../engine/types';
 /**
  * The music.
  *
- * There are no sound files, because there are no dependencies and no network
- * requests: every note here is made out of an oscillator and an envelope, in
- * the browser, the moment it is heard. That constraint turns out to suit the
- * game.
+ * Behind the toggle is a recorded track when the build carries one, and a
+ * synthesised pad when it does not. `bundle.mjs` sews whatever it finds in
+ * `assets/music/*.mp3` into the page as `window.__lawmakerMusic`, a plain
+ * object of base64 data URIs keyed by filename; this file looks for that
+ * object the moment somebody first asks for music, and falls back to the pad
+ * below when the object is missing or a track fails to decode. The dev
+ * server never has one, so `npm run dev` always plays the pad. Nothing here
+ * is a network request either way: a data URI is decoded locally with
+ * `atob`, never fetched. See `AUDIO.md` for how a track gets made.
  *
- * What it plays is what a settlement being built wants under it: a warm pad
- * of four voices that never stops, a chord that changes about every half
- * minute and takes six seconds to get there, one low breath under the whole
- * thing, and a bell over the top now and then. Nothing marches. The first cut
- * of this file was a drone and a plucked line, which is a lute in an empty
- * room; a place with people in it wants harmony that moves, because that is
- * what says the year is going somewhere.
+ * Which track plays is drawn from the reign's seed once, the moment the
+ * sound card is first opened, the same way the pad below is built once and
+ * never rebuilt. A reign that starts after music is already playing keeps
+ * the track already chosen; that is judged the lesser oddity against
+ * rebuilding a live audio graph for a preference nobody asked to change.
  *
- * The year picks the mode and the progression. Spring and summer are open and
- * major, autumn drops to the minor, and the long winter is the same chords,
- * lower, slower and further apart. Which chord comes next and which bell rings
- * over it are `rng.ts`, seeded from the reign, so the same reign always sounds
- * the same way.
+ * The pad, when it is what plays: a warm bed of four voices that never
+ * stops, a chord that changes about every half minute and takes six seconds
+ * to get there, one low breath under the whole thing, and a bell over the
+ * top now and then. Nothing marches. The year picks the mode and the
+ * progression: spring and summer are open and major, autumn drops to the
+ * minor, and the long winter is the same chords, lower, slower and further
+ * apart. Which chord comes next and which bell rings over it are `rng.ts`,
+ * seeded from the reign, so the same reign always sounds the same way. A
+ * recorded track does not follow the season; the room the game is set in
+ * does not change key four times a year, and neither does a place playing
+ * behind it.
  *
  * This is UI, not engine: it is all side effect, it holds a handle to the
  * sound card, and nothing in `src/engine` knows it exists.
@@ -107,6 +116,20 @@ function remember(on: boolean): void {
   } catch {
     // a browser that will not remember it is a browser that asks every time
   }
+}
+
+/** What `bundle.mjs` leaves on `window` when a build carries recorded music. */
+function recordedTracks(): Record<string, string> | undefined {
+  return (window as unknown as { __lawmakerMusic?: Record<string, string> }).__lawmakerMusic;
+}
+
+/** A base64 data URI, decoded locally. Never a fetch, never a network request. */
+function decodeDataUri(dataUri: string): ArrayBuffer {
+  const base64 = dataUri.slice(dataUri.indexOf(',') + 1);
+  const binary = window.atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
 }
 
 let ctx: AudioContext | null = null;
@@ -204,6 +227,8 @@ function moveTo(chord: Chord, at: number): void {
  * Write whatever falls inside the look-ahead window into the sound card and
  * get out of the way. This is a scheduler for audio, not for the game: the
  * reign does not advance by a millisecond because of anything in this file.
+ * Never called while a recorded track is playing; a loop on tape schedules
+ * nothing.
  */
 function schedule(): void {
   if (!ctx) return;
@@ -235,6 +260,20 @@ function schedule(): void {
     nextBellAt += mode.pace * (0.7 + rand01(seed, 'gap', bell) * 0.9);
     bell += 1;
   }
+}
+
+/**
+ * (Re)arm the chord and bell scheduler. Called from `start()` every time
+ * playback resumes, the same as before a recorded track existed at all;
+ * never called while a recorded track is the thing playing, because a loop
+ * on tape does not need a look-ahead window written into it every 700ms.
+ */
+function startPad(): void {
+  if (!ctx) return;
+  nextChordAt = ctx.currentTime + MODES[season].hold * 0.5;
+  nextBellAt = ctx.currentTime + 3.5;
+  schedule();
+  timer = window.setInterval(schedule, 700);
 }
 
 /**
@@ -295,12 +334,57 @@ function buildPad(): void {
 }
 
 /**
+ * True from the moment `start()` decides to reach for a recorded track,
+ * whether or not the decode behind it has finished yet. `start()` reads this
+ * synchronously to know whether to arm the pad scheduler; `buildRecorded`
+ * flips it back on any failure, decode included.
+ */
+let usingRecorded = false;
+
+/**
+ * Decode the reign's chosen track and start it looping into `master`. Built
+ * once, the same as the pad: once a source is running its `loop` flag keeps
+ * it going for good, and every later toggle only ramps `master`, never
+ * touches this again. Falls back to the pad on any failure, so a corrupt or
+ * missing track never leaves the toggle silent. Decoding is asynchronous, so
+ * if playback has already been asked for by the time it settles into the
+ * fallback, the pad scheduler is armed here rather than left for a `start()`
+ * call that already happened.
+ */
+async function buildRecorded(): Promise<void> {
+  const tracks = recordedTracks();
+  const keys = tracks ? Object.keys(tracks).sort() : [];
+  if (!ctx || !master || !tracks || keys.length === 0) {
+    usingRecorded = false;
+    buildPad();
+    if (playing) startPad();
+    return;
+  }
+  const key = keys[Math.min(keys.length - 1, Math.floor(rand01(seed, 'music-track') * keys.length))];
+  try {
+    const buffer = await ctx.decodeAudioData(decodeDataUri(tracks[key]));
+    if (!ctx || !master) return; // torn down while decoding
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    source.connect(master);
+    source.start();
+  } catch {
+    usingRecorded = false;
+    buildPad();
+    if (playing) startPad();
+  }
+}
+
+/**
  * Move to the season without stopping. A year turns, it does not cut.
  *
- * The root is not ramped here. It arrives with the next chord change, which is
- * a walk of six seconds that was going to happen anyway: a season that pulled
- * every voice down a tone on the spot is a key change, and nobody in this
- * valley announces the autumn.
+ * Only touches the pad, so it is a silent no-op behind a recorded track: the
+ * room a mp3 was recorded in does not change key because the calendar did.
+ * The root is not ramped here either way. It arrives with the next chord
+ * change, which is a walk of six seconds that was going to happen anyway: a
+ * season that pulled every voice down a tone on the spot is a key change,
+ * and nobody in this valley announces the autumn.
  */
 export function setSeason(next: Season): void {
   season = next;
@@ -308,7 +392,11 @@ export function setSeason(next: Season): void {
   pad.gain.gain.linearRampToValueAtTime(MODES[next].padGain, ctx.currentTime + 4);
 }
 
-/** The reign the notes are drawn from, so one seed always sounds like itself. */
+/**
+ * The reign the pad's notes are drawn from, and the reign whose seed picks a
+ * recorded track the first time the sound card opens. A reign that starts
+ * after the card is already open keeps whichever track is already running.
+ */
 export function setSeed(next: number): void {
   seed = next;
 }
@@ -331,16 +419,18 @@ export function start(): void {
       master = ctx.createGain();
       master.gain.value = 0;
       master.connect(ctx.destination);
-      buildPad();
+      if (recordedTracks()) {
+        usingRecorded = true;
+        void buildRecorded();
+      } else {
+        buildPad();
+      }
     }
     void ctx.resume();
     master?.gain.cancelScheduledValues(ctx.currentTime);
     master?.gain.linearRampToValueAtTime(MASTER, ctx.currentTime + 4);
-    // the first chord is the one already under the fingers, so it only moves
-    nextChordAt = ctx.currentTime + MODES[season].hold * 0.5;
-    nextBellAt = ctx.currentTime + 3.5;
-    schedule();
-    timer = window.setInterval(schedule, 700);
+    // a recorded track loops on its own; only the pad needs its scheduler rearmed
+    if (!usingRecorded) startPad();
     playing = true;
     remember(true);
   } catch {
