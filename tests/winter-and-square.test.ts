@@ -6,6 +6,7 @@ import {
   squareHasHadEnough,
   trendOf,
   walkOutLine,
+  winterBill,
   winterMouths,
 } from '../src/engine/simulation';
 import { computePortrait } from '../src/engine/portrait';
@@ -52,6 +53,39 @@ describe('the long winter, and the store', () => {
     const after = advance(s); // into year 10, the long winter
     expect(isWinter(after.turn)).toBe(true);
     expect(after.stats.economy).toBeLessThan(60);
+  });
+
+  it('takes somebody however good the year was', () => {
+    // everything a place can put between itself and February: a full board of
+    // health, a full store, a lidded store and a slate roof
+    const s = at(9, 400);
+    s.stats.health = 100;
+    s.stats.economy = 100;
+    s.techs = ['lidded_store', 'slate'];
+    s.buildings.granary = 2;
+    const bill = winterBill({ ...s, turn: 10 });
+    expect(bill.shelter).toBeGreaterThan(0);
+    // the arithmetic alone would have spared everybody, and the floor does not
+    expect(
+      CONFIG.winter.loss.base -
+        s.stats.health * CONFIG.winter.loss.healthWeight -
+        s.stats.economy * CONFIG.winter.loss.economyWeight -
+        bill.shelter,
+    ).toBeLessThan(0);
+    expect(-bill.soulsPercent).toBe(CONFIG.winter.loss.floor);
+
+    const after = advance(s); // into year 10, the long winter
+    expect(isWinter(after.turn)).toBe(true);
+    expect(after.population).toBeLessThan(400);
+  });
+
+  it('and a bad year still takes more than the floor', () => {
+    const s = at(9, 400);
+    s.stats.health = 20;
+    s.stats.economy = 10;
+    expect(-winterBill({ ...s, turn: 10 }).soulsPercent).toBeGreaterThan(
+      CONFIG.winter.loss.floor,
+    );
   });
 
   it('and a plain year still fills it', () => {

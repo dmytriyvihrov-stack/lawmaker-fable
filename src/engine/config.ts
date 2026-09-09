@@ -300,8 +300,19 @@ export const CONFIG = {
     /** And it takes more from a bigger place: every this many souls adds one
      *  to the weight of it, up to `maxWeight`. A hamlet huddles; a town queues. */
     weightPer: 120, maxWeight: 3,
-    /** Percent of souls lost = base - health*hw - economy*ew - shelter, floor 0. */
-    loss: { base: 40, healthWeight: 0.3, economyWeight: 0.2 },
+    /** Percent of souls lost = base - health*hw - economy*ew - shelter, and
+     *  never under `floor`.
+     *
+     *  The floor is new, and it is there because the winter had stopped
+     *  happening. Health at a hundred spares thirty points of it on its own,
+     *  a store at eighty spares sixteen more, and the lidded store and the
+     *  slate roof spare seven between them: a thriving town of four hundred
+     *  came out of the twentieth winter with exactly as many people in it as
+     *  went in, which is not a long winter, it is a cold week. Whatever is in
+     *  the barn and however well the place has been living, February takes
+     *  somebody. That is the one thing in the game a good year cannot buy its
+     *  way out of, and the boards are drained on top as they always were. */
+    loss: { base: 40, healthWeight: 0.3, economyWeight: 0.2, floor: 6 },
     /**
      * A long winter is not a bad year for the store, it is a year the store
      * does not have. Nothing is sown, nothing is carted, and no law anybody
@@ -379,11 +390,32 @@ export const CONFIG = {
    * term bends, because the four hundredth pair of hands is not the news the
    * fortieth was.
    */
+  /*
+   * And then the rate was cut, because the tree turned out to be the easiest
+   * thing in the game.
+   *
+   * Twelve reigns before and after the tree became a choice said the same
+   * thing twice over: the kind player stopped dying of an empty store (eight
+   * economy deaths in twelve down to one), the middling player stopped walking
+   * out, and every efficient reign reached the crown. None of that came from
+   * the ceiling or the crowd - zeroing `room`, `answers` and `shelter` outright
+   * moves the table by almost nothing - and all of it came from here. A pot
+   * that fills at eleven a year in a town of a hundred and fifty lands a step
+   * every other spring, and the steps carry trends, and the trends carry the
+   * reign.
+   *
+   * So the count is still the driver, which was the whole point of the change,
+   * and it is worth a third of what it was: the year itself pays one instead
+   * of two, a pair of hands is worth less, and past the bend a pair of hands
+   * is worth much less. A place of six hundred worked out eighteen points a
+   * year and now works out ten. It is still faster than a hamlet. It is no
+   * longer faster than the reign is long.
+   */
   research: {
-    base: 2,              // points a year for the year itself
-    perSoul: 15,          // and one more for every this many souls
+    base: 1,              // points a year for the year itself
+    perSoul: 20,          // and one more for every this many souls
     bendsAt: 100,         // past this many, the next ones count for less
-    perSoulPast: 25,      // one for every this many beyond the bend
+    perSoulPast: 60,      // one for every this many beyond the bend
     perCulture: 30,       // and one for every this much culture
     surplusShare: 1,      // the whole surplus turns into points, at this rate
     /** The tree is not a switch. The rumour of it starts at `hintFrom` souls

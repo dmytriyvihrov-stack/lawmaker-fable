@@ -317,10 +317,10 @@ export function deathsOf(s: GameState): number {
 
 export function yearlyChange(s: GameState): number {
   if (isWinter(s.turn)) {
-    const { base, healthWeight, economyWeight } = CONFIG.winter.loss;
+    const { base, healthWeight, economyWeight, floor } = CONFIG.winter.loss;
     const shelter = shelterOf(s);
     const percent = Math.max(
-      0,
+      floor,
       base - s.stats.health * healthWeight - s.stats.economy * economyWeight - shelter,
     );
     return -Math.round((s.population * percent) / 100);
@@ -391,9 +391,9 @@ export function growthSourcesOf(
   const pct = (n: number): number => Math.round(n * 1000) / 10;
 
   if (isWinter(s.turn)) {
-    const { base, healthWeight, economyWeight } = CONFIG.winter.loss;
+    const { base, healthWeight, economyWeight, floor } = CONFIG.winter.loss;
     const loss = Math.max(
-      0,
+      floor,
       base - s.stats.health * healthWeight - s.stats.economy * economyWeight - shelterOf(s),
     );
     out.push({ kind: 'winter', label: '', percent: -Math.round(loss * 10) / 10 });
@@ -464,10 +464,10 @@ export function winterBill(s: GameState): {
   shelter: number;
   weight: number;
 } {
-  const { base, healthWeight, economyWeight } = CONFIG.winter.loss;
+  const { base, healthWeight, economyWeight, floor } = CONFIG.winter.loss;
   const shelter = shelterOf(s);
   const loss = Math.max(
-    0,
+    floor,
     base - s.stats.health * healthWeight - s.stats.economy * economyWeight - shelter,
   );
   return {

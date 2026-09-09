@@ -343,7 +343,9 @@ describe('the tree as a choice', () => {
   it('pointed at nothing, the place still buys the cheapest thing it can', () => {
     let s = { ...at(5, 4), research: 0 };
     expect(focusOf(s)).toBeNull();
-    for (let i = 0; i < 8 && s.techs.length === 0; i++) s = spring(s);
+    // long enough for a hamlet at the slowed rate: it is the choice that is
+    // being checked here and never the number of springs it took
+    for (let i = 0; i < 30 && s.techs.length === 0; i++) s = spring(s);
     // the day off is the cheapest thing anybody here could start on
     expect(s.techs[0]).toBe('fair_day');
   });
