@@ -27,8 +27,12 @@ import {
   lawTrend,
   storeCap,
   winterWeight,
+  focusOf,
+  nextOnPath,
   openTechs,
+  progressOn,
   researchGain,
+  techReachable,
   scaleEffects,
   squareHasHadEnough,
   stageRule,
@@ -61,6 +65,7 @@ import type {
   PhilTag,
   PlotId,
   StatId,
+  TechId,
   WorkId,
 } from './types';
 
@@ -287,6 +292,8 @@ export function newGame(seed: number): GameState {
     eventsThisYear: 0,
     research: 0,
     techs: [],
+    techFocus: null,
+    techProgress: {},
     lastLawTurn: -99,
     lastWorkTurn: 0,
     lastWork: null,
@@ -387,6 +394,65 @@ export function nameTown(s: GameState, name: string): GameState {
  * value it has been quietly sitting at, and everything that ever promised it
  * something pays out at once.
  */
+/**
+ * One spring of the workshops.
+ *
+ * Whatever the place is pointed at takes the whole pot, and at most one
+ * thing lands in a spring: what is left over waits, so a pot that could pay
+ * for three things still buys them one year at a time. A thing that lands
+ * hands the focus to the next step of its own path, because that is what
+ * somebody who has just worked something out starts thinking about.
+ *
+ * Pointed at nothing, the place does what it always did: buys the cheapest
+ * thing anybody could start on. A player who never opens the screen has the
+ * game they had before the tree was a choice.
+ */
+function workOutSomething(draft: GameState): void {
+  const focus = focusOf(draft);
+  if (focus) {
+    const have = progressOn(draft, focus.id) + draft.research;
+    if (!draft.techProgress) draft.techProgress = {};
+    if (have < focus.cost) {
+      draft.techProgress[focus.id] = have;
+      draft.research = 0;
+      return;
+    }
+    draft.research = have - focus.cost;
+    delete draft.techProgress[focus.id];
+    draft.techs.push(focus.id);
+    const next = nextOnPath(focus.id);
+    draft.techFocus = next && techReachable(draft, next) ? next.id : null;
+    return;
+  }
+  const open = openTechs(draft).sort((a, b) => a.cost - b.cost);
+  for (const tech of open) {
+    if (draft.research < tech.cost) break;
+    draft.research -= tech.cost;
+    draft.techs.push(tech.id);
+    break;
+  }
+}
+
+/**
+ * Point the place at one thing, or at nothing.
+ *
+ * Nothing lands on the click and nothing is spent by it: the pot pours in
+ * next spring, so a thing is always worked out in a year rather than in a
+ * moment. Points already put into whatever was being worked on before stay
+ * where they are, so changing your mind costs the years and not the work.
+ */
+export function focusTech(s: GameState, id: TechId | null): GameState {
+  if (id !== null) {
+    if (s.techs.includes(id)) return s;
+    const tech = allTechs().find((t) => t.id === id);
+    if (!tech || !techReachable(s, tech)) return s;
+  }
+  if ((s.techFocus ?? null) === id) return s;
+  const draft = clone(s);
+  draft.techFocus = id;
+  return draft;
+}
+
 export function openBoard(s: GameState, board: StatId): GameState {
   if (s.boards.includes(board)) return s;
   const draft = clone(s);
@@ -888,14 +954,7 @@ export function advance(s: GameState): GameState {
     points += CONFIG.works.surplusSpend * CONFIG.research.surplusShare;
   }
   draft.research += points;
-  // the cheapest thing anybody could start on is the one that gets finished
-  const open = openTechs(draft).sort((a, b) => a.cost - b.cost);
-  for (const tech of open) {
-    if (draft.research < tech.cost) break;
-    draft.research -= tech.cost;
-    draft.techs.push(tech.id);
-    break;
-  }
+  workOutSomething(draft);
 
   // 6. the count, and the charter that follows it
   const countBefore = draft.population;

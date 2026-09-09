@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { AFTERMATHS } from '../src/content/aftermaths';
 import { CASES } from '../src/content/cases';
 import { WORKS } from '../src/content/works';
-import { TECHS } from '../src/content/techs';
+import { PATHS, SPHERES, TECHS } from '../src/content/techs';
 import { MONARCHS } from '../src/content/monarchs';
 import { CASE_VERDICTS, VERDICT_OBJECTS, VERDICT_VERBS } from '../src/content/verdict-words';
 import { lawGatedChoiceIds } from '../src/engine/verdict';
@@ -24,6 +24,8 @@ import type { Doing } from '../src/content/folk';
 import { TRIAL_LEANS } from '../src/content/trials';
 import { TAVERN_LINES } from '../src/content/portrait-text';
 import { CONFIG } from '../src/engine/config';
+import { newGame } from '../src/engine/reducer';
+import { researchGain } from '../src/engine/simulation';
 import type {
   ActionId,
   CaseChoice,
@@ -1063,6 +1065,95 @@ describe('content validator', () => {
         ).toBe(true);
       }
     }
+  });
+
+  it('37. the tree is three spheres, and every path is a chain of two or three', () => {
+    // every sphere is worked on, and none of them is one lane in a coat
+    for (const sphere of SPHERES) {
+      const paths = PATHS.filter((p) => p.sphere === sphere.id);
+      expect(paths.length, `${sphere.id} has no paths`).toBeGreaterThanOrEqual(2);
+      expect(paths.length, `${sphere.id} has too many paths to read`).toBeLessThanOrEqual(3);
+      expect(sphere.name.length, sphere.id).toBeGreaterThan(0);
+      expect(sphere.line.length, sphere.id).toBeGreaterThan(0);
+    }
+    expect(new Set(PATHS.map((p) => p.id)).size, 'two paths under one name').toBe(PATHS.length);
+
+    for (const path of PATHS) {
+      expect(SPHERES.map((s) => s.id), `${path.id} hangs off no sphere`).toContain(path.sphere);
+      const chain = TECHS.filter((t) => t.path === path.id);
+      expect(chain.length, `${path.id} is not a chain`).toBeGreaterThanOrEqual(2);
+      expect(chain.length, `${path.id} is a chain nobody finishes`).toBeLessThanOrEqual(3);
+      // the first step grows from the place itself, and every one after it
+      // waits on the one before, which is what makes a path a path
+      expect(chain[0].requires ?? [], `${path.id} starts halfway up`).toEqual([]);
+      for (let i = 1; i < chain.length; i++) {
+        expect(chain[i].requires, `${chain[i].id} waits on nothing`).toEqual([chain[i - 1].id]);
+        expect(
+          chain[i].cost,
+          `${chain[i].id} is cheaper than the step under it`,
+        ).toBeGreaterThan(chain[i - 1].cost);
+        expect(chain[i].era, chain[i].id).toBe(chain[i - 1].era + 1);
+      }
+    }
+
+    // and every step belongs to a sphere and a path that exist
+    for (const tech of TECHS) {
+      expect(SPHERES.map((s) => s.id), `${tech.id} is in no sphere`).toContain(tech.sphere);
+      const path = PATHS.find((p) => p.id === tech.path);
+      expect(path, `${tech.id} walks no path`).toBeDefined();
+      expect(path?.sphere, `${tech.id} is filed under two spheres`).toBe(tech.sphere);
+    }
+  });
+
+  it('38. no reign works out the whole tree, and each sphere is worth a reign', () => {
+    /* The tree is a choice because it is longer than a reign. Play the years
+       out at the rate the rules give a place that has filled its valley, and
+       the whole tree has to still be out of reach at the hard cap. */
+    /* The rate a place that has filled its valley makes, and not a point
+       more. The surplus is deliberately left out: it wants the store at
+       seventy and fires in about one played year in eleven, so a reign that
+       earns it every spring is not a hard player, it is an impossible one. */
+    const full = { ...newGame(7), population: CONFIG.population.room.base };
+    const perYear = researchGain(full);
+    const whole = TECHS.reduce((n, t) => n + t.cost, 0);
+    expect(whole, 'the whole tree fits in a reign').toBeGreaterThan(perYear * CONFIG.hardCapTurn);
+
+    // and no one sphere is so dear that a reign could never finish a path in it
+    for (const sphere of SPHERES) {
+      const cheapest = Math.min(
+        ...PATHS.filter((p) => p.sphere === sphere.id).map((p) =>
+          TECHS.filter((t) => t.path === p.id).reduce((n, t) => n + t.cost, 0),
+        ),
+      );
+      expect(cheapest, `${sphere.id} has no path a reign could walk`).toBeLessThan(
+        perYear * CONFIG.hardCapTurn,
+      );
+    }
+  });
+
+  it('39. what a step does off the boards is a number the engine already had', () => {
+    /* room, answers and shelter are the ceiling, the crowd and the winter,
+       reached from the tree. Each of them has to be worth something and none
+       of them may be so large that one card rewrites the place. */
+    for (const tech of TECHS) {
+      for (const [field, cap] of [['room', 60], ['answers', 40], ['shelter', 6]] as const) {
+        const value = tech[field];
+        if (value === undefined) continue;
+        expect(value, `${tech.id} ${field}`).toBeGreaterThan(0);
+        expect(value, `${tech.id} ${field} is a whole new game`).toBeLessThanOrEqual(cap);
+      }
+    }
+    // the ground raises the ceiling, the body answers for the crowd. If those
+    // two ever swap, the three spheres stop meaning anything.
+    const roomFrom = new Set(TECHS.filter((t) => t.room).map((t) => t.sphere));
+    const answersFrom = new Set(TECHS.filter((t) => t.answers).map((t) => t.sphere));
+    expect([...roomFrom].sort()).toEqual(['body', 'ground']);
+    expect([...answersFrom]).toEqual(['body']);
+    // and what the tree can add to the ceiling never doubles the valley
+    const allRoom = TECHS.reduce((n, t) => n + (t.room ?? 0), 0);
+    expect(allRoom, 'the tree is a bigger valley than the valley').toBeLessThan(
+      CONFIG.population.room.base,
+    );
   });
 });
 

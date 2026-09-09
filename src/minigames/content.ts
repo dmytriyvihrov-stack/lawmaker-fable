@@ -4,6 +4,8 @@
  */
 export const DEV = {
   title: 'MINIGAMES',
+  /** The other bench behind this file, one hash away. */
+  tree: 'the tree',
   reset: 'Reset',
   acts: 'All acts',
   every: 'every answer',

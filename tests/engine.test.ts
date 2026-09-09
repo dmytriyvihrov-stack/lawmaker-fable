@@ -6,13 +6,18 @@ import {
   continueYear,
   chooseCase,
   chooseWork,
+  focusTech,
   newGame,
   reopenLaw,
 } from '../src/engine/reducer';
 import { traitOf } from '../src/engine/monarch';
 import {
+  focusOf,
   isWinter,
+  researchGain,
+  roomFor,
   seasonOf,
+  shelteredSouls,
   storeCap,
   trendOf,
   workCost,
@@ -279,5 +284,95 @@ describe('reopening a law', () => {
     expect(s.laws.map((l) => l.status)).toEqual(['replaced', 'active']);
     expect(s.stats.crownSanity).toBeLessThan(crownBefore);
     expect(s.ledger.some((e) => e.source.includes('reopened'))).toBe(true);
+  });
+});
+
+describe('the tree as a choice', () => {
+  /** A year of the place doing nothing but thinking. */
+  function spring(s: GameState): GameState {
+    return chooseWork({ ...s, lastWorkTurn: 0, shownCases: [] }, 'rest');
+  }
+
+  it('points the place at one thing, and nothing lands on the click', () => {
+    const s = { ...at(5, 4), research: 100 };
+    const picked = focusTech(s, 'plough');
+    expect(picked.techFocus).toBe('plough');
+    expect(picked.techs).toEqual([]);
+    expect(picked.research).toBe(100);
+    // and the spring after, it is simply true
+    expect(spring(picked).techs).toContain('plough');
+  });
+
+  it('refuses a thing the place cannot start on, and forgets one it knows', () => {
+    const s = at(5, 4);
+    // the second step of a path, with the first not worked out
+    expect(focusTech(s, 'mill')).toBe(s);
+    expect(focusTech(s, 'three_fields')).toBe(s);
+    // and one that wants a crowd this place has not got
+    const few = { ...s, population: 10 };
+    expect(focusTech(few, 'ballads')).toBe(few);
+    // a thing already worked out is not a plan either
+    const known = { ...s, techs: ['plough' as const] };
+    expect(focusTech(known, 'plough')).toBe(known);
+  });
+
+  it('the whole pot goes to the focus, and only one thing lands a spring', () => {
+    let s: GameState = { ...at(5, 4), research: 500, techFocus: 'plough' };
+    s = spring(s);
+    expect(s.techs).toEqual(['plough']);
+    // the rest waits: a pot that could buy the whole path still buys it a
+    // year at a time, and the focus walks on to the next step of the path
+    expect(s.techFocus).toBe('three_fields');
+    expect(s.research).toBeGreaterThan(0);
+    s = spring(s);
+    expect(s.techs).toEqual(['plough', 'three_fields']);
+  });
+
+  it('keeps what was already spent when you change your mind', () => {
+    let s = focusTech({ ...at(5, 4), research: 0 }, 'herb_garden');
+    s = spring(s);
+    const spent = s.techProgress?.herb_garden ?? 0;
+    expect(spent).toBeGreaterThan(0);
+    expect(s.techs).toEqual([]);
+    s = spring(focusTech(s, 'cistern'));
+    // the herbs keep their points and the water starts its own pile
+    expect(s.techProgress?.herb_garden).toBe(spent);
+    expect(s.techProgress?.cistern ?? 0).toBeGreaterThan(0);
+  });
+
+  it('pointed at nothing, the place still buys the cheapest thing it can', () => {
+    let s = { ...at(5, 4), research: 0 };
+    expect(focusOf(s)).toBeNull();
+    for (let i = 0; i < 8 && s.techs.length === 0; i++) s = spring(s);
+    // the day off is the cheapest thing anybody here could start on
+    expect(s.techs[0]).toBe('fair_day');
+  });
+
+  it('the count is what pays for the thinking, and the songs help', () => {
+    const small = at(5, 4);
+    const big = { ...small, population: 200 };
+    expect(researchGain(big)).toBeGreaterThan(researchGain(small));
+    // and the bend: the four hundredth pair of hands is not the fortieth
+    const huge = { ...small, population: 400 };
+    expect(researchGain(huge) - researchGain(big)).toBeLessThan(
+      researchGain(big) - researchGain(small),
+    );
+    // the store is not in it any more; the songs are
+    expect(researchGain({ ...small, stats: { ...small.stats, economy: 99 } })).toBe(
+      researchGain(small),
+    );
+    expect(
+      researchGain({ ...small, stats: { ...small.stats, culture: 90 } }),
+    ).toBeGreaterThan(researchGain(small));
+  });
+
+  it('the ground raises the ceiling and the body answers for the crowd', () => {
+    const s = at(5, 4);
+    const ground = { ...s, techs: ['plough' as const] };
+    const body = { ...s, techs: ['cistern' as const] };
+    expect(roomFor(ground)).toBeGreaterThan(roomFor(s));
+    expect(shelteredSouls(ground)).toBe(shelteredSouls(s));
+    expect(shelteredSouls(body)).toBeGreaterThan(shelteredSouls(s));
+    expect(roomFor(body)).toBe(roomFor(s));
   });
 });

@@ -3,7 +3,15 @@ import { CASE_SPOTS, LAW_SPOT, WORKS_SPOT } from '../content/meta';
 import { HAND_INSTRUCTIONS } from '../content/hand';
 import { CONFIG } from '../engine/config';
 import { townFolk } from '../engine/folk';
-import { chooseCase, chooseLaw, chooseWork, continueYear, openBoard, reopenLaw } from '../engine/reducer';
+import {
+  chooseCase,
+  chooseLaw,
+  chooseWork,
+  continueYear,
+  focusTech,
+  openBoard,
+  reopenLaw,
+} from '../engine/reducer';
 import { turnDial } from '../engine/dev';
 import { getCase } from '../engine/registry';
 import { forgetEverything } from '../engine/save';
@@ -404,7 +412,13 @@ export function MiniApp() {
           onClose={() => setRegisterOpen(false)}
         />
       )}
-      {treeOpen && <TechTree state={game} onClose={() => setTreeOpen(false)} />}
+      {treeOpen && (
+        <TechTree
+          state={game}
+          onFocus={(id) => setGame((g) => focusTech(g, id))}
+          onClose={() => setTreeOpen(false)}
+        />
+      )}
 
       <div className="fixed bottom-2 right-9 z-40 flex items-center gap-2">
         <Soundscape game={game} season={season} ready={handReady} zoomed={hand.zoomed} mapRef={mapRef} />
@@ -414,6 +428,9 @@ export function MiniApp() {
       {/* the bench's own strip: which case, which laws, what the hand can do */}
       <div className="fixed left-2 top-14 z-50 flex flex-wrap items-center gap-2 rounded-lg border border-ink-line bg-ink/85 px-2 py-1.5 text-[11px] text-parchment-dim opacity-50 transition-opacity hover:opacity-100">
         <span className="tracking-[0.15em] text-seal">{DEV.title}</span>
+        <a href="#tree" className="rounded border border-ink-line px-2 py-0.5 text-parchment-dim">
+          {DEV.tree}
+        </a>
         {FORCED_CASES.map((id) => (
           <button
             key={id}

@@ -363,10 +363,27 @@ export const CONFIG = {
     surplusSpend: 10,     // and the surplus leaves the store anyway
   },
 
-  /** What the place learns while it is busy living. The surplus goes here, and
-   *  so does a share of the market and the songs. */
+  /**
+   * What the place learns while it is busy living, and what pays for it.
+   *
+   * It used to be the store and the songs: one point a year for every 25 of
+   * economy and every 30 of culture. It is the count now, and the songs on
+   * top, because how fast a place works things out is a fact about how many
+   * people are in it and not about how full the barn is. Ten people have ten
+   * people's worth of evenings whatever the harvest did. The store still pays
+   * through the surplus below, which is the one place a good year still buys
+   * thinking directly.
+   *
+   * `base` is the year itself: somebody is always turning something over, even
+   * in a valley of five. Past `bendsAt` the line bends the way the crowding
+   * term bends, because the four hundredth pair of hands is not the news the
+   * fortieth was.
+   */
   research: {
-    perEconomy: 25,       // one point a year for every this much economy
+    base: 2,              // points a year for the year itself
+    perSoul: 15,          // and one more for every this many souls
+    bendsAt: 100,         // past this many, the next ones count for less
+    perSoulPast: 25,      // one for every this many beyond the bend
     perCulture: 30,       // and one for every this much culture
     surplusShare: 1,      // the whole surplus turns into points, at this rate
     /** The tree is not a switch. The rumour of it starts at `hintFrom` souls

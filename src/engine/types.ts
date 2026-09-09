@@ -69,12 +69,46 @@ export type WorkGroup = 'infrastructure';
    user's word: the muster roll at forty souls came off the ladder, and the
    fair stopped being a thing a valley of five already knows how to hold. Two
    members of an id union, no field added, renamed or removed. */
+/* TODO(architect): twelve members were added to `TechId` in T-TECH-2, at the
+   user's word: the tree became three spheres of two or three paths each, and
+   a thing the player can point at. No member was renamed or removed, so every
+   save written before it loads and reads as a place that knew nine things. */
 export type TechId =
   | 'plough' | 'cistern' | 'ledger' | 'physician'
-  | 'fair_day' | 'rota' | 'ballads' | 'press' | 'scribes';
+  | 'fair_day' | 'rota' | 'ballads' | 'press' | 'scribes'
+  | 'three_fields' | 'mill' | 'lidded_store' | 'fold' | 'dairy'
+  | 'drain' | 'herb_garden' | 'quarantine' | 'chimney' | 'slate'
+  | 'letters' | 'school';
+
+/** The three questions a place works things out about. */
+export type SphereId = 'ground' | 'body' | 'word';
+
+/** A chain inside a sphere. The second step waits on the first. */
+export type PathId =
+  | 'field' | 'store' | 'herd'
+  | 'water' | 'healer' | 'roof'
+  | 'book' | 'song' | 'school';
+
+export interface SphereDef {
+  id: SphereId;
+  name: string;
+  emoji: string;
+  line: string;
+}
+
+export interface PathDef {
+  id: PathId;
+  sphere: SphereId;
+  name: string;
+  line: string;
+}
 
 export interface TechDef {
   id: TechId;
+  /** Which of the three this grew out of. */
+  sphere: SphereId;
+  /** And which chain inside it. Content is written first step first. */
+  path: PathId;
   /** 1, 2, 3: the row of the tree it sits in. */
   era: number;
   name: string;
@@ -85,6 +119,12 @@ export interface TechDef {
   requires?: TechId[];
   /** Nobody works this out in a hamlet: it wants this many souls in one place. */
   needsSouls?: number;
+  /** Souls the valley can hold on top of what it was found with. `roomFor`. */
+  room?: number;
+  /** Souls the crowding term stops counting, the way a roof does. */
+  answers?: number;
+  /** Percent points off what the long winter takes. */
+  shelter?: number;
 }
 
 /**
@@ -505,6 +545,20 @@ export interface GameState {
   eventsThisYear: number;                // people heard so far this year
   research: number;                      // points in the pot, spent on the next tech
   techs: TechId[];                       // what the place has worked out, in order
+  /**
+   * TODO(architect): `techFocus` is needed because the tree became a choice in
+   * T-TECH-2 and the reign has to remember what was pointed at. Optional, so a
+   * save written before it reads as a place nobody has directed, which is the
+   * old behaviour exactly: the pot buys the cheapest thing anybody could start
+   * on. Null and absent mean the same thing.
+   */
+  techFocus?: TechId | null;
+  /**
+   * TODO(architect): `techProgress` is needed because points already spent on
+   * a thing are kept when the focus moves, so changing your mind costs the
+   * years and not the work. Absent reads as nothing started.
+   */
+  techProgress?: Partial<Record<TechId, number>>;
   lastLawTurn: number;                   // the year the last decree was sealed
   lastWorkTurn: number;                  // the year that already spent its work
   /**

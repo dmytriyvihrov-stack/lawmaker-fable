@@ -6,6 +6,7 @@ import { BOND_UI } from '../content/bonds';
 import { DOGS_KEPT, HERD_HIS, HERD_WALKED, WOLF_FED, type AnimalKeep } from '../content/animals';
 import type {
   Effects,
+  PathId,
   TechDef,
   TechId,
   GameState,
@@ -89,8 +90,27 @@ export function shelteredSouls(s: GameState): number {
   return (
     (s.buildings.house ?? 0) * per.house +
     (s.buildings.well ?? 0) * per.well +
-    (s.buildings.long_room ?? 0) * per.long_room
+    (s.buildings.long_room ?? 0) * per.long_room +
+    /* And the body of the tree, whose whole argument is that a crowd is
+       survivable. A drain answers for people the way a lined well does: it
+       is the same term, reached from the other screen. */
+    techSum(s, 'answers')
   );
+}
+
+/**
+ * What everything the place has worked out adds up to, on one of the three
+ * numbers a step can carry besides its trend. Nothing here is a new rule: it
+ * is the ceiling, the crowd and the winter, each of them reached from the
+ * tree as well as from the works.
+ */
+export function techSum(s: GameState, field: 'room' | 'answers' | 'shelter'): number {
+  let out = 0;
+  for (const tech of allTechs()) {
+    if (!s.techs.includes(tech.id)) continue;
+    out += tech[field] ?? 0;
+  }
+  return out;
 }
 
 /**
@@ -350,7 +370,11 @@ export function roomFor(s: GameState): number {
     (s.buildings.well ?? 0) * R.well +
     (s.buildings.granary ?? 0) * R.granary +
     (s.buildings.road ?? 0) * R.road +
-    (s.buildings.bridge ?? 0) * R.bridge
+    (s.buildings.bridge ?? 0) * R.bridge +
+    /* and the ground of the tree: a plough, a third field, a mill and a
+       dairy make the same argument a cleared strip makes, made by somebody
+       thinking rather than by somebody digging */
+    techSum(s, 'room')
   );
 }
 
@@ -422,7 +446,7 @@ export function shelterOf(s: GameState): number {
     if (!work.winterShelter) continue;
     out += work.winterShelter * (s.buildings[work.id] ?? 0);
   }
-  return out;
+  return out + techSum(s, 'shelter');
 }
 
 /**
@@ -620,12 +644,69 @@ export function techOpening(s: GameState): number {
   return (s.population - hintFrom) / (openAt - hintFrom);
 }
 
-/** Points the year puts in the pot, before the surplus is counted. */
+/**
+ * Points the year puts in the pot, before the surplus is counted.
+ *
+ * The count is the driver: the year itself, plus a point for every so many
+ * souls, bending past `bendsAt` the way the crowding term bends. The songs are
+ * the one board still in it, so a place that keeps its culture up thinks
+ * faster than a place of the same size that does not.
+ */
 export function researchGain(s: GameState): number {
   const R = CONFIG.research;
+  const near = Math.min(s.population, R.bendsAt);
+  const past = Math.max(0, s.population - R.bendsAt);
   return (
-    Math.floor(s.stats.economy / R.perEconomy) + Math.floor(s.stats.culture / R.perCulture)
+    R.base +
+    Math.floor(near / R.perSoul) +
+    Math.floor(past / R.perSoulPast) +
+    Math.floor(s.stats.culture / R.perCulture)
   );
+}
+
+/** Every step of one path, in the order they have to be worked out. */
+export function pathTechs(path: PathId): TechDef[] {
+  return allTechs().filter((t) => t.path === path);
+}
+
+/** The step after this one on its own path, or null at the end of the chain. */
+export function nextOnPath(id: TechId): TechDef | null {
+  const tech = allTechs().find((t) => t.id === id);
+  if (!tech) return null;
+  const chain = pathTechs(tech.path);
+  const at = chain.findIndex((t) => t.id === id);
+  return at >= 0 && at + 1 < chain.length ? chain[at + 1] : null;
+}
+
+/**
+ * What the place is actually pointed at, or null.
+ *
+ * A focus already worked out, or one a save carried across a content change,
+ * is not a focus: the reign is read as undirected and the pot goes back to
+ * buying the cheapest thing anybody could start on.
+ */
+export function focusOf(s: GameState): TechDef | null {
+  const id = s.techFocus ?? null;
+  if (id === null || s.techs.includes(id)) return null;
+  const tech = allTechs().find((t) => t.id === id);
+  if (!tech || !techReachable(s, tech)) return null;
+  return tech;
+}
+
+/** Points already put into a thing that is not worked out yet. */
+export function progressOn(s: GameState, id: TechId): number {
+  return s.techProgress?.[id] ?? 0;
+}
+
+/**
+ * Roughly how many springs until this thing is known, if the place were
+ * pointed at it from now on at this year rate. Never less than one: nothing
+ * lands on the day it is picked.
+ */
+export function yearsToTech(s: GameState, tech: TechDef): number {
+  const left = tech.cost - progressOn(s, tech.id) - s.research;
+  const rate = Math.max(1, researchGain(s));
+  return Math.max(1, Math.ceil(left / rate));
 }
 
 /**
@@ -645,11 +726,18 @@ export function openTechs(s: GameState): TechDef[] {
   return allTechs().filter((t) => !s.techs.includes(t.id) && techReachable(s, t));
 }
 
-/** The next thing the place is working out, and how far along it is. */
+/**
+ * The next thing the place is working out, and how far along it is.
+ *
+ * Whatever the reign is pointed at, and the cheapest thing anybody could
+ * start on when it is pointed at nothing, because that is the one that lands
+ * first and that is what a place with nobody directing it does.
+ */
 export function nextTech(s: GameState): { tech: TechDef; have: number; need: number } | null {
+  const focus = focusOf(s);
+  if (focus) return { tech: focus, have: progressOn(s, focus.id) + s.research, need: focus.cost };
   const open = openTechs(s);
   if (open.length === 0) return null;
-  // the cheapest thing anybody could start on, because that is the one that lands first
   let best = open[0];
   for (const t of open) if (t.cost < best.cost) best = t;
   return { tech: best, have: s.research, need: best.cost };

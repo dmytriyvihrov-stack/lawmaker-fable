@@ -7,6 +7,7 @@ import {
   chooseLaw,
   chooseWork,
   continueYear,
+  focusTech,
   giveGift,
   nameTown,
   openBoard,
@@ -115,6 +116,7 @@ type Action =
   | { type: 'nameTown'; name: string }
   | { type: 'openBoard'; board: StatId }
   | { type: 'reopen'; proposalId: string }
+  | { type: 'focus'; tech: TechId }
   | { type: 'moment'; id: string }
   | { type: 'world'; action: WorldAction; target: string }
   | { type: 'begin'; chapter: Stage; seed: number }
@@ -159,6 +161,8 @@ function appReducer(game: GameState | null, action: Action): GameState | null {
       return turnDial(game, action.dial, action.delta);
     case 'reopen':
       return reopenLaw(game, action.proposalId);
+    case 'focus':
+      return focusTech(game, action.tech);
     case 'advance':
       return advance(game);
   }
@@ -1521,7 +1525,13 @@ export function App() {
         <LoverMoment state={game} character={visiting} onDone={() => setVisiting(null)} />
       )}
 
-      {treeOpen && <TechTree state={game} onClose={() => setTreeOpen(false)} />}
+      {treeOpen && (
+        <TechTree
+          state={game}
+          onFocus={(tech) => dispatch({ type: 'focus', tech })}
+          onClose={() => setTreeOpen(false)}
+        />
+      )}
 
       {/* A year spent abroad is spent from in here, and then the year turns the
           way it does after any other year of work, so the map shuts behind it. */}

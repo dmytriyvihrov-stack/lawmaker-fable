@@ -1,61 +1,55 @@
+import { PATHS, SPHERES, TECHS } from '../../content/techs';
 import { STATS } from '../../content/meta';
-import { TECHS } from '../../content/techs';
 import { UI } from '../../content/ui-strings';
+import { CONFIG } from '../../engine/config';
 import { movePoints } from '../../engine/format';
-import { nextTech, openTechs } from '../../engine/simulation';
-import type { GameState, StatId, TechDef, TechId } from '../../engine/types';
-import { isActiveStat } from '../../engine/simulation';
+import {
+  focusOf,
+  isActiveStat,
+  pathTechs,
+  progressOn,
+  researchGain,
+  techReachable,
+  yearsToTech,
+} from '../../engine/simulation';
+import type { GameState, PathDef, SphereDef, StatId, TechDef, TechId } from '../../engine/types';
 import { GrowthLadder } from '../components/GrowthLadder';
 
 interface Props {
   state: GameState;
+  onFocus: (id: TechId) => void;
   onClose: () => void;
 }
 
-/** The board the tree is drawn on. Fixed units, so the wires can be exact. */
-const NODE_W = 168;
-const NODE_H = 116;
-/** A rung nobody has thought of yet, at the height of the one line it holds. */
-const DARK_H = 34;
-const GAP_X = 56;
-const GAP_Y = 24;
-const ROOT_W = 104;
-
 /**
- * Known, being worked out, half thought of, waiting for a crowd, or not
- * thought of at all. `souls` is its own state on purpose: a thing nobody has
- * had the idea for and a thing nobody has had the *people* for are two
- * different facts, and only one of them is a plan.
+ * What the place is working out, and the one thing on this screen you can
+ * actually do about it.
+ *
+ * It used to be a picture of a decision nobody made: nine things in two lanes,
+ * bought cheapest first out of the surplus, and the only interaction was
+ * reading it. It is three spheres now, each answering a different question,
+ * each a stack of short chains. One card is the focus and takes the whole pot
+ * every spring. Nothing on one path closes another, so the screen never asks
+ * you to give something up, only to say what the place should get to first,
+ * and the years take care of the rest: a reign reaches about a third of this.
+ *
+ * Pointed at nothing, the place buys the cheapest thing it can, which is
+ * exactly what it did before there was a card to press. A player who never
+ * opens this screen has the game they always had.
  */
-type Reveal = 'known' | 'working' | 'glimpsed' | 'souls' | 'dark';
 
-/**
- * Which of the two branches a thing grew along. The field wants a good year;
- * the crowd wants a crowd, and says so, however good the year was.
- */
-function branchOf(tech: TechDef): string {
-  if (tech.needsSouls !== undefined) return UI.techs.branchCrowd;
-  for (const need of tech.requires ?? []) {
-    const parent = TECHS.find((t) => t.id === need);
-    if (parent && branchOf(parent) === UI.techs.branchCrowd) return UI.techs.branchCrowd;
-  }
-  return UI.techs.branchField;
+/** Known, being worked on, startable, waiting on the step before, or on people. */
+type Reveal = 'known' | 'focus' | 'open' | 'after' | 'souls';
+
+function emojiOf(stat: StatId): string {
+  return STATS.find((s) => s.id === stat)?.emoji ?? '';
 }
 
-/** The count of people the crowd branch is still waiting for, if it is. */
-function crowdGate(population: number, known: TechId[]): number | null {
-  let lowest: number | null = null;
-  for (const tech of TECHS) {
-    if (known.includes(tech.id)) continue;
-    if (tech.needsSouls === undefined || population >= tech.needsSouls) continue;
-    if (lowest === null || tech.needsSouls < lowest) lowest = tech.needsSouls;
-  }
-  return lowest;
+function fill(text: string, vars: Record<string, string | number>): string {
+  return Object.entries(vars).reduce((t, [k, v]) => t.split(`{${k}}`).join(String(v)), text);
 }
 
-const signed = movePoints;
-
-/** Two lines and no more, so a node never spills over its own box. */
+/** Two lines and no more, so a card never spills over its own box. */
 const CLAMP_2 = {
   display: '-webkit-box',
   WebkitLineClamp: 2,
@@ -63,88 +57,238 @@ const CLAMP_2 = {
   overflow: 'hidden',
 };
 
-function emojiOf(stat: StatId): string {
-  return STATS.find((s) => s.id === stat)?.emoji ?? '';
+/** The step before this one on the same path, or null for a first step. */
+function needOf(tech: TechDef): TechDef | null {
+  const chain = pathTechs(tech.path);
+  const at = chain.findIndex((t) => t.id === tech.id);
+  return at > 0 ? chain[at - 1] : null;
 }
 
-/**
- * Where each thing sits. A column is how many things had to come first; a lane
- * is which branch it grew along. Content is written parent before child, which
- * the validator insists on, so one pass down the list is enough.
- */
-function layout(): { col: Map<TechId, number>; lane: Map<TechId, number>; lanes: number } {
-  const col = new Map<TechId, number>();
-  const lane = new Map<TechId, number>();
-  const taken = new Set<string>();
-
-  for (const tech of TECHS) {
-    const depth = (tech.requires ?? []).reduce(
-      (deepest, need) => Math.max(deepest, (col.get(need) ?? 0) + 1),
-      0,
-    );
-    col.set(tech.id, depth);
-
-    // a child sits in line with its parent when the row is free, and steps down when it is not
-    const parent = (tech.requires ?? [])[0];
-    let row = parent !== undefined ? (lane.get(parent) ?? 0) : 0;
-    while (taken.has(`${depth}:${row}`)) row += 1;
-    taken.add(`${depth}:${row}`);
-    lane.set(tech.id, row);
-  }
-
-  const lanes = Math.max(...[...lane.values()]) + 1;
-  return { col, lane, lanes };
+function whenText(years: number): string {
+  return years <= 1 ? UI.techs.nextSpring : fill(UI.techs.inYears, { n: years });
 }
 
-export function TechTree({ state, onClose }: Props) {
-  const next = nextTech(state);
-  const open = new Set(openTechs(state).map((t) => t.id));
-  const { col, lane, lanes } = layout();
+function revealOf(state: GameState, tech: TechDef, focus: TechDef | null): Reveal {
+  if (state.techs.includes(tech.id)) return 'known';
+  if (focus && focus.id === tech.id) return 'focus';
+  const need = needOf(tech);
+  if (need && !state.techs.includes(need.id)) return 'after';
+  if (tech.needsSouls !== undefined && state.population < tech.needsSouls) return 'souls';
+  return 'open';
+}
 
-  const boardW = ROOT_W + GAP_X + (Math.max(...col.values()) + 1) * (NODE_W + GAP_X);
-  const boardH = lanes * NODE_H + (lanes - 1) * GAP_Y;
-  const colX = (c: number): number => ROOT_W + GAP_X + c * (NODE_W + GAP_X);
-  const laneY = (l: number): number => l * (NODE_H + GAP_Y);
+/** What a step does besides moving boards: the ceiling, the crowd, the winter. */
+function extraChips(tech: TechDef): string[] {
+  const out: string[] = [];
+  if (tech.room) out.push(fill(UI.techs.room, { n: tech.room }));
+  if (tech.answers) out.push(fill(UI.techs.answers, { n: tech.answers }));
+  if (tech.shelter) out.push(fill(UI.techs.winter, { n: tech.shelter }));
+  return out;
+}
 
-  const revealOf = (tech: TechDef): Reveal => {
-    if (state.techs.includes(tech.id)) return 'known';
-    if (next && next.tech.id === tech.id) return 'working';
-    if (open.has(tech.id)) return 'glimpsed';
-    // one step past the edge of what is possible is a rumour, not a secret
-    const parents = tech.requires ?? [];
-    if (parents.length > 0 && parents.every((p) => state.techs.includes(p) || open.has(p))) {
-      return 'glimpsed';
-    }
-    // A thing waiting on a crowd is not a secret at all. It is a queue, and a
-    // player is owed the number they are queueing for.
-    if (branchOf(tech) === UI.techs.branchCrowd) return 'souls';
-    return 'dark';
-  };
+function TechCard({
+  state,
+  tech,
+  focus,
+  onFocus,
+}: {
+  state: GameState;
+  tech: TechDef;
+  focus: TechDef | null;
+  onFocus: (id: TechId) => void;
+}) {
+  const reveal = revealOf(state, tech, focus);
+  const can = reveal === 'open';
+  const have = progressOn(state, tech.id) + (reveal === 'focus' ? state.research : 0);
+  const box =
+    reveal === 'known'
+      ? 'border-seal bg-seal/20 text-parchment'
+      : reveal === 'focus'
+        ? 'border-parchment bg-ink-soft text-parchment'
+        : can
+          ? 'answer border-ink-line bg-ink-soft/80 text-parchment'
+          : 'border-ink-line/50 bg-ink-soft/30 text-parchment-dim/80';
+  const need = needOf(tech);
 
-  const gate = crowdGate(state.population, state.techs);
+  return (
+    <button
+      type="button"
+      onClick={() => can && onFocus(tech.id)}
+      disabled={!can}
+      aria-pressed={reveal === 'focus'}
+      aria-label={can ? `${UI.techs.pick}: ${tech.name}` : tech.name}
+      title={tech.line}
+      className={`flex min-h-[128px] min-w-[96px] grow basis-0 flex-col rounded-lg border p-1.5 text-left disabled:cursor-default ${box}`}
+    >
+      <div className="flex items-baseline justify-between gap-1">
+        <span className="text-[12px] font-medium leading-tight">{tech.name}</span>
+        <span className="shrink-0 text-[10px] tabular-nums text-parchment-dim">
+          {fill(UI.techs.costPoints, { n: tech.cost })}
+        </span>
+      </div>
+      <p className="mt-1 text-[10px] leading-snug text-parchment/75" style={CLAMP_2}>
+        {tech.line}
+      </p>
 
-  // the pot is spent when a thing is worked out, so progress is simply the pot
-  const need = next ? next.need : 1;
-  const done = next ? Math.max(0, Math.min(need, state.research)) : need;
+      <div className="mt-auto pt-1">
+        <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+          {Object.entries(tech.trend).map(([stat, value]) => {
+            /* a hamlet has no watch and no songs: the trend is banked against
+               the charter, not thrown away, and a card that does not say so is
+               telling a small lie */
+            const felt = isActiveStat(state, stat as StatId);
+            return (
+              <span
+                key={stat}
+                className={`text-[10px] tabular-nums ${
+                  !felt
+                    ? 'text-parchment-dim'
+                    : (value as number) > 0
+                      ? 'text-good'
+                      : 'text-bad'
+                }`}
+                title={UI.stats[stat as StatId]}
+              >
+                <span aria-hidden>{emojiOf(stat as StatId)}</span>{' '}
+                {felt
+                  ? UI.techs.yearly.replace('{n}', movePoints(value as number))
+                  : UI.techs.banked}
+              </span>
+            );
+          })}
+          {extraChips(tech).map((chip) => (
+            <span key={chip} className="text-[10px] tabular-nums text-bench">
+              {chip}
+            </span>
+          ))}
+        </div>
 
-  // the wires follow what actually has to come first
-  const edges: { from: [number, number]; to: [number, number]; lit: boolean }[] = [];
-  for (const tech of TECHS) {
-    const y = laneY(lane.get(tech.id) ?? 0) + NODE_H / 2;
-    const known = state.techs.includes(tech.id);
-    const parents = tech.requires ?? [];
-    if (parents.length === 0) {
-      edges.push({ from: [ROOT_W, boardH / 2], to: [colX(col.get(tech.id) ?? 0), y], lit: known });
-      continue;
-    }
-    for (const parent of parents) {
-      edges.push({
-        from: [colX(col.get(parent) ?? 0) + NODE_W, laneY(lane.get(parent) ?? 0) + NODE_H / 2],
-        to: [colX(col.get(tech.id) ?? 0), y],
-        lit: known,
-      });
-    }
-  }
+        {reveal === 'known' && (
+          <div className="mt-1 text-[10px] text-parchment-dim">{UI.techs.knownIn}</div>
+        )}
+
+        {reveal === 'focus' && (
+          <>
+            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-sm bg-ink-line">
+              <div
+                className="h-full rounded-sm bg-seal transition-[width] duration-500"
+                style={{ width: `${Math.round((Math.min(have, tech.cost) / tech.cost) * 100)}%` }}
+              />
+            </div>
+            <div className="mt-1 flex flex-wrap justify-between gap-x-2 text-[10px] tabular-nums text-parchment-dim">
+              <span>
+                {UI.techs.progress
+                  .replace('{have}', String(Math.floor(have)))
+                  .replace('{need}', String(tech.cost))}
+              </span>
+              <span>{whenText(yearsToTech(state, tech))}</span>
+            </div>
+          </>
+        )}
+
+        {can && (
+          <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-2">
+            <span className="text-[10px] uppercase tracking-[0.14em] text-seal">
+              {UI.techs.pick}
+            </span>
+            <span className="text-[10px] tabular-nums text-parchment-dim">
+              {whenText(yearsToTech(state, tech))}
+            </span>
+          </div>
+        )}
+
+        {reveal === 'after' && need && (
+          <div className="mt-1 text-[10px] text-parchment-dim/70">
+            {fill(UI.techs.waitsFor, { name: need.name })}
+          </div>
+        )}
+
+        {reveal === 'souls' && tech.needsSouls !== undefined && (
+          <div className="mt-1 text-[10px] leading-snug text-seal/80">
+            {UI.techs.wantsSouls.replace('{n}', String(tech.needsSouls))}
+          </div>
+        )}
+      </div>
+    </button>
+  );
+}
+
+function PathRow({
+  state,
+  path,
+  focus,
+  onFocus,
+}: {
+  state: GameState;
+  path: PathDef;
+  focus: TechDef | null;
+  onFocus: (id: TechId) => void;
+}) {
+  const chain = pathTechs(path.id);
+  return (
+    <div className="mt-3">
+      <div className="mb-1 flex items-baseline gap-2">
+        <span className="shrink-0 text-[11px] uppercase tracking-[0.18em] text-parchment-dim">
+          {path.name}
+        </span>
+        <span className="truncate text-[11px] text-parchment-dim/70">{path.line}</span>
+      </div>
+      <div className="flex items-stretch gap-0.5 overflow-x-auto pb-1">
+        {chain.map((tech, i) => (
+          <div key={tech.id} className="flex min-w-0 grow basis-0 items-stretch">
+            {i > 0 && (
+              <span
+                aria-hidden
+                className={`flex shrink-0 items-center text-[13px] ${
+                  state.techs.includes(chain[i - 1].id) ? 'text-seal' : 'text-ink-line'
+                }`}
+              >
+                &rsaquo;
+              </span>
+            )}
+            <TechCard state={state} tech={tech} focus={focus} onFocus={onFocus} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Sphere({
+  state,
+  sphere,
+  focus,
+  onFocus,
+}: {
+  state: GameState;
+  sphere: SphereDef;
+  focus: TechDef | null;
+  onFocus: (id: TechId) => void;
+}) {
+  return (
+    <section className="rounded-xl border border-ink-line bg-ink-soft/50 p-2.5">
+      <header className="flex items-baseline gap-2">
+        <span aria-hidden className="text-lg leading-none">
+          {sphere.emoji}
+        </span>
+        <h3 className="text-[15px] tracking-wide text-parchment">{sphere.name}</h3>
+        <span className="truncate text-[11px] text-parchment-dim">{sphere.line}</span>
+      </header>
+      {PATHS.filter((p) => p.sphere === sphere.id).map((path) => (
+        <PathRow key={path.id} state={state} path={path} focus={focus} onFocus={onFocus} />
+      ))}
+    </section>
+  );
+}
+
+export function TechTree({ state, onFocus, onClose }: Props) {
+  const focus = focusOf(state);
+  const R = CONFIG.research;
+  const rate = researchGain(state);
+  const everything = TECHS.every((t) => state.techs.includes(t.id));
+  /* Nothing to point at is two different facts, and the difference is whether
+     the place could ever get there. */
+  const anyOpen = TECHS.some((t) => !state.techs.includes(t.id) && techReachable(state, t));
 
   return (
     <div
@@ -152,7 +296,7 @@ export function TechTree({ state, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="max-h-[88vh] w-full max-w-4xl overflow-y-auto rounded-t-xl border border-ink-line bg-ink p-4 sm:rounded-xl"
+        className="max-h-[88vh] w-full max-w-6xl overflow-y-auto rounded-t-xl border border-ink-line bg-ink p-4 sm:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="mb-3 flex items-start justify-between gap-3">
@@ -167,35 +311,42 @@ export function TechTree({ state, onClose }: Props) {
           </button>
         </header>
 
-        <div className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 rounded-md border border-ink-line bg-ink-soft px-3 py-2">
-          <span className="text-[13px] tabular-nums text-parchment">
-            {state.research} {UI.techs.points}
-          </span>
-          {next ? (
-            <>
-              <span className="text-[12px] text-parchment-dim">
-                {UI.techs.working}: <span className="text-parchment">{next.tech.name}</span>
-              </span>
-              <span className="text-[12px] tabular-nums text-parchment-dim">
-                {UI.techs.progress
-                  .replace('{have}', String(done))
-                  .replace('{need}', String(need))}
-              </span>
-            </>
-          ) : (
-            <span className="text-[12px] text-parchment-dim">
-              {/* nothing being worked out is two different facts, and the
-                  difference is whether the place could ever get there */}
-              {TECHS.every((t) => state.techs.includes(t.id))
-                ? UI.techs.done
-                : UI.techs.waitingForSouls}
+        <div className="mb-3 rounded-md border border-ink-line bg-ink-soft px-3 py-2">
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+            <span className="text-[13px] tabular-nums text-parchment">
+              {state.research} {UI.techs.points}
             </span>
-          )}
-          {gate !== null && (
-            <span className="text-[12px] tabular-nums text-seal">
-              {UI.techs.crowdGate.replace('{n}', String(gate))}
+            <span
+              className="text-[13px] tabular-nums text-parchment-dim"
+              title={fill(UI.techs.rateLine, {
+                base: R.base,
+                per: R.perSoul,
+                past: R.perSoulPast,
+                bend: R.bendsAt,
+                culture: R.perCulture,
+              })}
+            >
+              {fill(UI.techs.rate, { n: rate })}
             </span>
-          )}
+            {focus ? (
+              <>
+                <span className="text-[12px] text-parchment-dim">
+                  {UI.techs.working}: <span className="text-parchment">{focus.name}</span>
+                </span>
+                <span className="text-[12px] tabular-nums text-parchment-dim">
+                  {UI.techs.progress
+                    .replace('{have}', String(Math.floor(progressOn(state, focus.id) + state.research)))
+                    .replace('{need}', String(focus.cost))}
+                  , {whenText(yearsToTech(state, focus))}
+                </span>
+              </>
+            ) : (
+              <span className="text-[12px] text-seal">
+                {everything ? UI.techs.done : anyOpen ? UI.techs.nobodyPicked : UI.techs.waitingForSouls}
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-[11px] leading-snug text-parchment-dim">{UI.techs.pickHint}</p>
         </div>
 
         {/* The half of the screen nobody can spend on: what simply arrives
@@ -204,203 +355,22 @@ export function TechTree({ state, onClose }: Props) {
             the idea before a good year can pay for it. */}
         <GrowthLadder state={state} />
 
-        {/* the tree itself: the place on the left, the years going right */}
-        <div className="overflow-x-auto pb-2">
-          <div className="relative" style={{ width: boardW, height: boardH }}>
-            <svg
-              className="absolute inset-0"
-              width={boardW}
-              height={boardH}
-              viewBox={`0 0 ${boardW} ${boardH}`}
-              aria-hidden
-            >
-              {edges.map((e, i) => {
-                const [x1, y1] = e.from;
-                const [x2, y2] = e.to;
-                const mid = x1 + (x2 - x1) / 2;
-                return (
-                  <path
-                    key={i}
-                    d={`M${x1} ${y1} C${mid} ${y1} ${mid} ${y2} ${x2} ${y2}`}
-                    fill="none"
-                    stroke={e.lit ? 'var(--color-seal)' : 'var(--color-parchment-dim)'}
-                    strokeWidth={e.lit ? 2.2 : 1.4}
-                    strokeDasharray={e.lit ? undefined : '4 4'}
-                    opacity={e.lit ? 1 : 0.45}
-                  />
-                );
-              })}
-            </svg>
-
-            {/* the root: nobody asked it to work anything out */}
-            <div
-              className="absolute flex flex-col items-center justify-center rounded-lg border border-ink-line bg-ink-soft px-2 text-center"
-              style={{ left: 0, top: (boardH - NODE_H) / 2, width: ROOT_W, height: NODE_H }}
-              title={UI.techs.rootLine}
-            >
-              <span aria-hidden className="text-xl leading-none">
-                🏘️
-              </span>
-              <span className="mt-1 text-[11px] leading-tight text-parchment-dim">
-                {UI.techs.root}
-              </span>
-              <span className="mt-1 text-[12px] tabular-nums text-parchment">
-                {state.population}
-              </span>
-            </div>
-
-            {TECHS.map((tech, idx) => {
-              const reveal = revealOf(tech);
-              const named = reveal !== 'dark';
-              const box =
-                reveal === 'known'
-                  ? 'border-seal bg-seal/20 text-parchment'
-                  : reveal === 'working'
-                    ? 'border-parchment-dim bg-ink-soft text-parchment'
-                    : reveal === 'glimpsed'
-                      ? 'border-ink-line bg-ink-soft/70 text-parchment-dim'
-                      : reveal === 'souls'
-                        ? 'border-ink-line/70 bg-ink-soft/40 text-parchment-dim/80'
-                        : 'border-ink-line/50 bg-ink-soft/30 text-parchment-dim/50';
-              /* A card with nothing in it is a line, not a card.
-
-                 Two of the nine on this board say only "not thought of yet",
-                 at the full height of a card that carries a name, a sentence,
-                 a bar and three numbers, on what is already the densest screen
-                 in the game. A slim box, centred in its own lane so the
-                 dashed edges still land on it. */
-              const slim = reveal === 'dark';
-              return (
-                <div
-                  key={tech.id}
-                  className={`absolute flex overflow-hidden rounded-lg border p-2 ${
-                    slim ? 'items-center' : 'flex-col'
-                  } ${box}`}
-                  style={{
-                    left: colX(col.get(tech.id) ?? 0),
-                    top: laneY(lane.get(tech.id) ?? 0) + (slim ? (NODE_H - DARK_H) / 2 : 0),
-                    width: NODE_W,
-                    height: slim ? DARK_H : NODE_H,
-                  }}
-                  title={`${UI.techs.eraLabel.replace(
-                    '{n}',
-                    String(tech.era),
-                  )}. ${UI.techs.orderHint.replace('{n}', String(idx + 1))}`}
-                >
-                  {slim ? (
-                    <div className="flex w-full items-baseline justify-between gap-1">
-                      <span className="truncate text-[11px] leading-tight">{UI.techs.unknown}</span>
-                      <span className="text-[9px] tabular-nums text-parchment-dim">{idx + 1}</span>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-baseline justify-between gap-1">
-                        <span className="truncate text-[9px] uppercase tracking-[0.12em] text-parchment-dim">
-                          {branchOf(tech)}
-                        </span>
-                        <span className="text-[9px] tabular-nums text-parchment-dim">{idx + 1}</span>
-                      </div>
-
-                      <div className="mt-0.5 text-[12px] font-medium leading-tight">
-                        {named ? tech.name : UI.techs.unknown}
-                      </div>
-                    </>
-                  )}
-
-                  {reveal === 'known' && (
-                    <>
-                      <p className="mt-1 text-[10px] leading-snug text-parchment/80" style={CLAMP_2}>
-                        {tech.line}
-                      </p>
-                      <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
-                        {Object.entries(tech.trend).map(([stat, value]) => {
-                          // a hamlet has no watch and no songs: the trend is
-                          // banked against the charter, not thrown away, and a
-                          // node that does not say so is telling a small lie
-                          const felt = isActiveStat(state, stat as StatId);
-                          return (
-                            <span
-                              key={stat}
-                              className={`text-[10px] tabular-nums ${
-                                !felt
-                                  ? 'text-parchment-dim'
-                                  : (value as number) > 0
-                                    ? 'text-good'
-                                    : 'text-bad'
-                              }`}
-                              title={UI.stats[stat as StatId]}
-                            >
-                              <span aria-hidden>{emojiOf(stat as StatId)}</span>{' '}
-                              {felt
-                                ? UI.techs.yearly.replace('{n}', signed(value as number))
-                                : UI.techs.banked}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </>
-                  )}
-
-                  {reveal === 'working' && (
-                    <>
-                      <p className="mt-1 text-[10px] leading-snug text-parchment-dim" style={CLAMP_2}>
-                        {tech.line}
-                      </p>
-                      <div className="mt-auto pt-1">
-                        <div className="h-1.5 w-full overflow-hidden rounded-sm bg-ink-line">
-                          <div
-                            className="h-full rounded-sm bg-seal transition-[width] duration-500"
-                            style={{ width: `${Math.round((done / need) * 100)}%` }}
-                          />
-                        </div>
-                        <div className="mt-1 text-[10px] tabular-nums text-parchment-dim">
-                          {UI.techs.progress
-                            .replace('{have}', String(done))
-                            .replace('{need}', String(need))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {reveal === 'souls' && tech.needsSouls !== undefined && (
-                    <div className="mt-auto">
-                      <p className="text-[10px] leading-snug text-seal/80">
-                        {UI.techs.wantsSouls.replace('{n}', String(tech.needsSouls))}
-                      </p>
-                      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-sm bg-ink-line">
-                        <div
-                          className="h-full rounded-sm bg-parchment-dim/60"
-                          style={{
-                            width: `${Math.round(
-                              Math.min(100, (state.population / tech.needsSouls) * 100),
-                            )}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {reveal === 'glimpsed' && (
-                    <div className="mt-auto space-y-0.5">
-                      <p className="text-[10px] leading-snug text-parchment-dim/80">
-                        {UI.techs.glimpsed}
-                      </p>
-                      {tech.needsSouls !== undefined && state.population < tech.needsSouls && (
-                        <p className="text-[10px] leading-snug text-seal/80">
-                          {UI.techs.wantsSouls.replace('{n}', String(tech.needsSouls))}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+        <p className="mb-2 mt-3 text-[11px] leading-snug text-parchment-dim">
+          {UI.techs.sphereHint}
+        </p>
+        <div className="grid gap-3 lg:grid-cols-3">
+          {SPHERES.map((sphere) => (
+            <Sphere
+              key={sphere.id}
+              state={state}
+              sphere={sphere}
+              focus={focus}
+              onFocus={onFocus}
+            />
+          ))}
         </div>
 
-        <p className="mt-2 text-[11px] leading-relaxed text-parchment-dim">
-          {UI.techs.rootLine}
-        </p>
+        <p className="mt-3 text-[11px] leading-relaxed text-parchment-dim">{UI.techs.rootLine}</p>
       </div>
     </div>
   );

@@ -17,7 +17,7 @@ the next free number and goes at the end of its describe.
 
 | File | What it holds | Starts from |
 |---|---|---|
-| `content.test.ts` | the validator: 39 numbered checks (1 to 36, plus 4b, 17b, 25b) on the content tables; 7 on the people in the picture; 3 on seasons, ages and the reckoning | the content tables, no reign |
+| `content.test.ts` | the validator: 42 numbered checks (1 to 39, plus 4b, 17b, 25b) on the content tables; 7 on the people in the picture; 3 on seasons, ages and the reckoning | the content tables, no reign |
 | `smoke.test.ts` | config sanity, a new game, works offered by stage, the monarch off the seed, the bench parser | `newGame` |
 | `engine.test.ts` | the hamlet's boards, buildings, the ledger, trends, the long winter, the seasons, the charter, the year of work, the pot, reopening a law | `newGame` on a year |
 | `playthrough.test.ts` | golden runs: fixed pickers driven to the portrait; laws before cases, the closed hamlet, the long winter | `play(seed, pick)` |
@@ -34,6 +34,7 @@ the next free number and goes at the end of its describe.
 | `moments.test.ts` | the small things on the map; every case has a spot | `newGame` on a year |
 | `city-layers.test.ts` | rulings put layers on the town, and the layers are in the save | `newGame` plus laws |
 | `world.test.ts` | the kingdom: the world off the seed, the neighbours, a year abroad, the crown | `beginAt('kingdom')` |
+| `tech-bench.test.ts` | the tree as a choice, on the bench: a legal tree (spheres, paths, chains, no forbidden words), and the years (the count, the room, a focus landing, the pot, the long winter, forty years leaving something unlearned) | `newTechState` in `src/minigames/tech/model.ts`, no reign |
 | `hand.test.ts` | the minigame layer: an act for every answer, the gestures frame by frame | scene fixtures, no reign |
 | `journey.test.ts` | the walking ruler: callers, errands, the round of jobs, route geometry against the river | `newJourney`, `route` |
 | `town-life.test.ts` | which bank a thing is on, the way over the water, what the picture puts on the ground in each reign | `beginAt('town')` rendered |

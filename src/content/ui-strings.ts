@@ -249,6 +249,39 @@ export const UI = {
     growthTook: 'you took',
     growthTookFirst: 'first',
     growthTookLate: 'and late, the other one',
+
+    /**
+     * The half of the screen that became a decision.
+     *
+     * Everything above this line was written while the tree worked itself
+     * out in the corner of the reign and nobody could touch it. It can be
+     * pointed at now: one card at a time, and the whole pot goes there.
+     * Pointed at nothing, the place carries on buying the cheapest thing it
+     * can, which is the game exactly as it was.
+     */
+    pick: 'WORK ON THIS',
+    picked: 'THE PLACE IS ON IT',
+    pickHint: 'Point the place at one thing and every point in the pot goes there.',
+    nobodyPicked: 'Nobody has been asked to work on anything in particular, so the place is doing the nearest thing.',
+    /** What the year puts in the pot, and the one honest reason it is that. */
+    rate: '{n} a year',
+    rateLine: 'What a year of this many people works out between harvests: {base} for the year itself, one more for every {per} of you, one for every {past} past {bend}, and one for every {culture} of culture. A bigger place thinks faster. That is the whole rule.',
+    /** How long the thing being worked on has left, at this year rate. */
+    inYears: 'about {n} years',
+    nextSpring: 'next spring',
+    couldStart: 'could be started now',
+    waitsFor: 'after {name}',
+    /* Not the year: nothing in the reign records the year a thing was worked
+       out, and the number to hand is the order, which read as a year and was
+       a lie on every card. The colour of the card already says it is known. */
+    knownIn: 'worked out here',
+    costPoints: '{n} points',
+    /** What a step does besides its trend, in the three the engine already had. */
+    room: 'room for {n} more',
+    answers: 'answers for {n} of the crowd',
+    winter: '{n} off the long winter',
+    /** The three questions a place works things out about. */
+    sphereHint: 'Three spheres, and each of them answers a different question. Every path is a chain: the second step is not thinkable until the first is known. Nothing here closes anything else. The years do that.',
   },
 
   /**
