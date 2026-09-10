@@ -14,6 +14,9 @@ import {
   FAR_SITES,
   FISH_SPOTS,
   HUT_SITES,
+  MILL_WALLS,
+  MILL_WHEEL,
+  PLOT_SITES,
   ROAD_IN,
   ROAD_OVER,
   SQUARE,
@@ -252,6 +255,54 @@ describe('what the picture puts on the ground', () => {
     const roofed = drawn(beginAt('village', 7), 'summer', { population: 6, buildings: built({ house: 1 }) });
     expect(count(roofed, 'data-job="camp"')).toBe(0);
     expect(count(roofed, 'data-job="fetch"')).toBe(0);
+  });
+
+  /**
+   * The mill-wright's wheel, and the only building in the valley that is
+   * wrong unless it is wet.
+   *
+   * A house on the water is a house in the water, and a wheel on the bank is
+   * a wheel that does nothing, so both halves are checked against the river
+   * itself: the walls dry the whole way round, the foot of the wheel inside
+   * the water, and the ground a charter opens at the mill end still free.
+   */
+  it('puts the mill on dry bank with its wheel in the stream, and only when there is one', () => {
+    const village = beginAt('village', 7);
+    const without = drawn(village, 'summer', { population: 12 });
+    expect(count(without, 'city-millwheel')).toBe(0);
+
+    const with_ = drawn(village, 'summer', {
+      population: 12,
+      cityFlags: [...village.cityFlags, 'mill_on_the_water'],
+    });
+    expect(count(with_, 'city-millwheel')).toBe(1);
+
+    // all four corners of the walls stand well back from the water
+    const corners = [
+      { x: MILL_WALLS.x, y: MILL_WALLS.y },
+      { x: MILL_WALLS.x + MILL_WALLS.w, y: MILL_WALLS.y },
+      { x: MILL_WALLS.x, y: MILL_WALLS.y + MILL_WALLS.h },
+      { x: MILL_WALLS.x + MILL_WALLS.w, y: MILL_WALLS.y + MILL_WALLS.h },
+    ];
+    for (const c of corners) {
+      expect(bankOf(c), `${c.x},${c.y}`).toBe('near');
+      expect(waterDistance(c), `${c.x},${c.y}`).toBeGreaterThan(WATER_HALF + 20);
+    }
+
+    // and the wheel turns in it: the hub back from the middle, the foot inside
+    expect(waterDistance(MILL_WHEEL)).toBeGreaterThan(WATER_HALF);
+    expect(waterDistance({ x: MILL_WHEEL.x, y: MILL_WHEEL.y + MILL_WHEEL.r })).toBeLessThan(WATER_HALF);
+
+    // nobody is fishing inside the mill, and the mill end is still free ground
+    for (const f of FISH_SPOTS) {
+      const inside =
+        f.x >= MILL_WALLS.x &&
+        f.x <= MILL_WALLS.x + MILL_WALLS.w &&
+        f.y >= MILL_WALLS.y &&
+        f.y <= MILL_WALLS.y + MILL_WALLS.h;
+      expect(inside, `a rod at ${f.x},${f.y} is indoors`).toBe(false);
+    }
+    expect(PLOT_SITES.mill_end.x).toBeGreaterThan(MILL_WALLS.x + MILL_WALLS.w);
   });
 
   it('has children and hens once there are roofs enough, and none in a camp', () => {

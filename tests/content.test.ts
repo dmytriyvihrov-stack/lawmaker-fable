@@ -749,6 +749,59 @@ describe('content validator', () => {
     }
   });
 
+  /**
+   * And no law has one answer that is simply the best one.
+   *
+   * A player reads three predicates and a line of boards under each, and the
+   * whole of the decision is which cost they are willing to carry. Four of the
+   * nine laws had an answer with a gain on every line of that card and a loss
+   * on none of them, which is not a decision, and one of the nine had an
+   * answer that was better than its neighbour on every line at once. The
+   * reading below is the card itself, line by line: what it moves the day it
+   * is sealed, what it moves every year at each of the three scales the game
+   * has, and how many people come. Every answer has to be the best of the
+   * three at something and the worst of the three at something, and none of
+   * them may beat another everywhere.
+   */
+  it('26b. no law has a dominant answer: each one is best at something and worst at something', () => {
+    const scales = (o: LawOption) => {
+      const town = o.perTurnTown ?? o.perTurn;
+      return { year: o.perTurn, town, watch: o.perTurnWatch ?? town };
+    };
+    /** One option as one number per line of its card. */
+    const card = (o: LawOption): Record<string, number> => {
+      const out: Record<string, number> = { growth: o.growth ?? 1 };
+      const by = scales(o);
+      for (const stat of STAT_IDS) {
+        out[`once ${stat}`] = o.effects[stat] ?? 0;
+        for (const [when, trend] of Object.entries(by)) out[`${when} ${stat}`] = trend?.[stat] ?? 0;
+      }
+      return out;
+    };
+
+    for (const p of PROPOSALS) {
+      const cards = p.options.map(card);
+      const lines = Object.keys(cards[0]);
+      p.options.forEach((o, i) => {
+        const best = lines.filter((k) => cards.every((c, j) => j === i || c[k] < cards[i][k]));
+        const worst = lines.filter((k) => cards.every((c, j) => j === i || c[k] > cards[i][k]));
+        expect(best.length, `${p.id}/${o.action} is the best answer at nothing`).toBeGreaterThan(0);
+        expect(worst.length, `${p.id}/${o.action} costs nothing nobody else costs`).toBeGreaterThan(0);
+      });
+      for (let i = 0; i < cards.length; i++) {
+        for (let j = 0; j < cards.length; j++) {
+          if (i === j) continue;
+          const never = lines.every((k) => cards[i][k] >= cards[j][k]);
+          const somewhere = lines.some((k) => cards[i][k] > cards[j][k]);
+          expect(
+            never && somewhere,
+            `${p.id}: ${p.options[i].action} beats ${p.options[j].action} on every line`,
+          ).toBe(false);
+        }
+      }
+    }
+  });
+
   it('27. the tree is a tree: every branch grows from something that exists', () => {
     const ids = new Set(TECHS.map((t) => t.id));
     expect(ids.size, 'two things worked out under one name').toBe(TECHS.length);

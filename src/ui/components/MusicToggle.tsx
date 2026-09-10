@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
 import { UI } from '../../content/ui-strings';
 import type { Season } from '../../engine/types';
-import { isPlaying, musicWanted, setSeason, setSeed, toggle } from '../music';
+import { hush, isPlaying, musicWanted, setSeason, setSeed, toggle } from '../music';
 
 interface Props {
   seed: number;
   season: Season;
+  /**
+   * A grave scene is on the screen, so the music comes almost all the way
+   * down. Absent on the menu, where there is no scene to be grave.
+   */
+  hushed?: boolean;
 }
 
 /**
@@ -13,7 +18,7 @@ interface Props {
  * not make a sound before somebody asks, and neither should a game. Once it
  * has been asked once, it remembers, and the next reign starts already playing.
  */
-export function MusicToggle({ seed, season }: Props) {
+export function MusicToggle({ seed, season, hushed = false }: Props) {
   const [on, setOn] = useState(false);
 
   useEffect(() => {
@@ -23,6 +28,10 @@ export function MusicToggle({ seed, season }: Props) {
   useEffect(() => {
     setSeason(season);
   }, [season]);
+
+  useEffect(() => {
+    hush(hushed);
+  }, [hushed]);
 
   // it was on last time, so it is on this time, at the first thing they click
   useEffect(() => {

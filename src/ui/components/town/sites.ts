@@ -382,6 +382,28 @@ export const CAMP_RING = [
 export const CAMP_DOOR = { x: CAMP_FIRE.x - 22, y: CAMP_FIRE.y + 4 };
 export const CAMP_WATER = { x: 892, y: 522 };
 
+/**
+ * The mill, and the piece of bank it had to be found on.
+ *
+ * A mill is the one building in this valley that cannot stand anywhere: the
+ * house has to be dry the whole way under it and the wheel has to be in the
+ * water, and the near bank falls away to the south east, so there is exactly
+ * one shoulder where both are true and nothing else is standing. Searched
+ * against `waterDistance()` rather than placed off a screenshot, and the
+ * three constants below are what `town-life.test.ts` reads: the walls sit 58
+ * to 114 units out from the middle of the water and the foot of the wheel
+ * sits 15, which is inside it. Clear of the rods, of the ground a charter
+ * opens at the mill end (x 1046 and east of it), of the granary above and of
+ * the bridge below.
+ *
+ * `MILL_SITE` is where `Mill` in `parts.tsx` is drawn from; the other two
+ * are that drawing's own numbers in map units, so a change to either has to
+ * move both and the test says so.
+ */
+export const MILL_SITE = { x: 968, y: 392 };
+export const MILL_WALLS = { x: 968, y: 414, w: 64, h: 32 };
+export const MILL_WHEEL = { x: 1048, y: 468, r: 19 };
+
 export const WINTER_FIRE = { x: 716, y: 408 };
 export const FIRE_RING = [
   { x: -34, y: 8 },

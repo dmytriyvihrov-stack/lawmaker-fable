@@ -44,23 +44,21 @@ const HEAVY = { kind: 'heavy' } as const;
 export const ACTS: Record<string, ActDef> = {
   /* his own loaf is in his own hand in every one of these */
   'v1_idle_hand:feed_him': { kind: 'carry', tool: 'hand', steps: [{ item: 'loafCart', to: 'tam' }] },
-  'v1_idle_hand:half_share': {
-    kind: 'stroke',
-    tool: 'knife',
-    target: 'loaf',
-    axis: 'y',
-    // he agreed to half, so the half comes away without a fight
-    then: { kind: 'carry', tool: 'hand', steps: [{ item: 'half', to: 'cart' }] },
-  },
   'v1_idle_hand:no_work_no_bread': {
     kind: 'carry',
     tool: 'hand',
     steps: [{ item: 'loaf', to: 'cart', resist: HELD }],
   },
+  /* The knife, because the two answers that both meant less bread for Tam are
+     one answer now and this is the gesture that says which one it is: nobody
+     wrestles him for the loaf, it is cut where the four can see it and the
+     half goes back on the cart. */
   'v1_idle_hand:cut_his_share': {
-    kind: 'carry',
-    tool: 'hand',
-    steps: [{ item: 'loaf', to: 'cart', resist: HELD }],
+    kind: 'stroke',
+    tool: 'knife',
+    target: 'loaf',
+    axis: 'y',
+    then: { kind: 'carry', tool: 'hand', steps: [{ item: 'half', to: 'cart' }] },
   },
   'v1_idle_hand:headman_decides': { kind: 'carry', tool: 'hand', steps: [{ item: 'handles', to: 'tam' }] },
   'v1_idle_hand:his_own_field': { kind: 'turn_away', tool: null, target: 'tam' },

@@ -482,8 +482,14 @@ export const UI = {
     /* And the shape of a year, because the first screen a player meets is a
        shelf of eight buildings with nothing on it to say why there is only
        room for one of them. */
-    yearHeading: 'And a year is one decision',
-    year: 'A law, a building, or somebody at your door who wants an answer. Never two, and nothing is ever taken back.',
+    yearHeading: 'And a year is one year',
+    /* It said "a year is one decision" and "never two", and a year has held
+       two people in it for a long time: somebody at the door, and something
+       coming back off an answer you already gave. Now that a year can also
+       seal a law and hear the one person it lands on, the line was simply
+       untrue. What is still true, and what this screen exists to say, is that
+       the shelf of buildings underneath it has room for one. */
+    year: 'A law when one is due, somebody at your door, and one thing the whole year is spent on. One building a year, and nothing is ever taken back.',
     go: 'BEGIN THE REIGN',
   },
 

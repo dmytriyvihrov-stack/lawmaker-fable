@@ -1223,6 +1223,89 @@ export function Hut({ paint, kind = 0 }: { paint: TownPaint; kind?: 0 | 1 }) {
   );
 }
 
+/**
+ * The mill, and the one building in this valley that has to stand on water.
+ *
+ * Drawn from its own top left corner, and put on the map at 968, 392 by
+ * `CityScape`, which is the piece of the near bank that is dry the whole way
+ * under the house and steep enough that the wheel reaches the stream: the four
+ * corners of the walls sit 58 to 114 units out from the middle of the water,
+ * and the foot of the wheel sits 15, which is inside it. Those numbers came out
+ * of `waterDistance()` and not out of a screenshot, which is the rule for
+ * anything placed near the river.
+ *
+ * A launder carries the water out of the house and drops it on the wheel from
+ * above, so the thing turns the way an overshot wheel does. The turning is on
+ * an inner group, because a CSS animation would otherwise eat the transform
+ * that puts the wheel where it is.
+ */
+export function Mill({ paint }: { paint: TownPaint }) {
+  const blade = (i: number) => {
+    const a = (i * Math.PI) / 6;
+    const x = Math.cos(a);
+    const y = Math.sin(a);
+    return `M${x * 8.5} ${y * 8.5} L${x * 18.5} ${y * 18.5}`;
+  };
+  return (
+    <g>
+      <Shade paint={paint} cx={32} cy={56} rx={46} ry={8} />
+
+      {/* the wheel, in the water, behind the house it belongs to */}
+      <g transform="translate(80 76)">
+        <ellipse cx="0" cy="14" rx="23" ry="5" fill={paint.waterDeep} opacity=".55" />
+        <g className="city-millwheel">
+          <circle r="19" fill="none" stroke="#6f5641" strokeWidth="2.6" />
+          <circle r="13.5" fill="none" stroke="#7d6249" strokeWidth="1.6" />
+          <g stroke="#6f5641" strokeWidth="2.2" strokeLinecap="round">
+            {Array.from({ length: 12 }, (_, i) => (
+              <path key={i} d={blade(i)} />
+            ))}
+          </g>
+          <g stroke="#8a6c4e" strokeWidth="1.1" opacity=".8">
+            {Array.from({ length: 6 }, (_, i) => (
+              <path key={i} d={`M0 0 L${Math.cos((i * Math.PI) / 3) * 13} ${Math.sin((i * Math.PI) / 3) * 13}`} />
+            ))}
+          </g>
+          <circle r="3.4" fill={TIMBER_DARK} stroke={OUTLINE} strokeWidth="1" />
+        </g>
+        {/* the water it has just let go of */}
+        <g className="city-water-glint" fill="#dfeaea" opacity=".5">
+          <ellipse cx="-16" cy="12" rx="7" ry="2.2" />
+          <ellipse cx="4" cy="16" rx="9" ry="2.6" />
+          <ellipse cx="20" cy="11" rx="6" ry="2" />
+        </g>
+      </g>
+
+      {/* the launder, out of the wall and over the top of the wheel */}
+      <path d="M56 44 L74 56 L79 52 L61 40Z" fill={TIMBER_DARK} stroke={OUTLINE} strokeWidth="1" />
+      <path d="M58 42 L76 54" stroke="#9fc0bd" strokeWidth="1.6" opacity=".7" />
+
+      {/* the house: stone to the knee, timber over it, and the loft door the
+          sacks go in and out of */}
+      <rect x="0" y="22" width="64" height="32" rx="2" fill={TIMBER} stroke={OUTLINE} strokeWidth="1.2" />
+      <path d="M0 44 H64 V54 H0Z" fill={paint.rock} stroke={OUTLINE} strokeWidth="1" />
+      <path d="M2 28 H62 M8 24 V44 M32 24 V44 M56 24 V44" stroke={OUTLINE} strokeWidth="1.2" opacity=".45" />
+      <rect x="12" y="32" width="14" height="22" rx="2" fill={DOOR} />
+      <rect x="38" y="30" width="13" height="12" rx="2" fill={DOOR} />
+      <rect x="39.5" y="31.5" width="10" height="9" rx="1" fill={paint.roofSnow ? '#efd290' : '#cfba81'} />
+      <path d="M6 -6 h52 l6 28 h-64 z" fill="#8a6c50" stroke={OUTLINE} strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M7 2 H57 M4 9 H60 M2 16 H62" stroke="#a98d68" strokeWidth="1.1" opacity=".5" />
+      <line x1="6" y1="-6" x2="58" y2="-6" stroke="#a98d68" strokeWidth="1.6" />
+      {/* and what comes out of the door: three sacks against the wall */}
+      <g stroke="#b09b5f" strokeWidth="1" fill="#dfc47e">
+        {[
+          [31, 54],
+          [42, 56],
+          [37, 47],
+        ].map(([x, y]) => (
+          <path key={x} d={`M${x - 5} ${y - 5} Q${x - 9} ${y + 7} ${x} ${y + 8} Q${x + 9} ${y + 7} ${x + 5} ${y - 5} L${x + 3} ${y - 9} H${x - 3}Z`} />
+        ))}
+      </g>
+      {paint.roofSnow && <path d={roofCap(0, 32, 64, 22, -6)} fill={SNOW} opacity=".9" />}
+    </g>
+  );
+}
+
 /** The biggest roof, in the colour of the seal, with the bell and the steps. */
 export function Hall({ paint, level }: { paint: TownPaint; level: number }) {
   return (

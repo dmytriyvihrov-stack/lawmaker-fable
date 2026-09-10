@@ -405,20 +405,6 @@ function tamScene(): Scene {
           diggers('dig');
         },
       },
-      half_share: {
-        step(i) {
-          if (i === 0) {
-            // the cut: the loaf becomes two halves, and one of them is his
-            P.loaf.show(false);
-            P.half.set(610, 269).show(true);
-            P.halfKept.set(613, 269).show(true);
-            return;
-          }
-          P.half.show(false);
-          F.tam.setPose('mgDig').set(566, 296);
-          diggers('dig');
-        },
-      },
       /* His bread is in his hand and he does not open it. Every yank that
          comes back empty is the answer being spent rather than chosen. */
       no_work_no_bread: {
@@ -430,15 +416,23 @@ function tamScene(): Scene {
           diggers('dig');
         },
       },
+      /* The four come up to watch the law being read, and then the loaf is
+         cut: two halves on the ground, one of them still his, and the other
+         one goes back on the cart. */
       cut_his_share: {
         arm() {
           diggers('come');
         },
-        pull: jerk,
-        freed: stands,
-        step() {
-          P.loaf.show(false);
-          F.tam.setPose('mgDig').set(574, 300).setFlip(true);
+        step(i) {
+          if (i === 0) {
+            P.loaf.show(false);
+            P.half.set(610, 269).show(true);
+            P.halfKept.set(613, 269).show(true);
+            return;
+          }
+          P.half.show(false);
+          F.tam.setPose('mgDig').set(566, 296);
+          diggers('dig');
         },
       },
       headman_decides: {

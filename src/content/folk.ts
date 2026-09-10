@@ -318,7 +318,6 @@ export const CHOICE_DOING: Record<string, Doing> = {
   // argument. He was drawn over a spade for four versions, which said the
   // back had been a lie, which is a thing the scene never says.
   'v1_idle_hand:feed_him': 'mending',
-  'v1_idle_hand:half_share': 'limping',
   'v1_idle_hand:no_work_no_bread': 'limping',
   'v1_idle_hand:cut_his_share': 'limping',
   'v1_idle_hand:his_own_field': 'limping',

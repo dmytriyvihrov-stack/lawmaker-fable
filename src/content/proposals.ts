@@ -68,7 +68,14 @@ export const PROPOSALS: Proposal[] = [
         tags: ['libertarian'],
         effects: {},
         perTurn: { economy: 2, health: -1 },
-        perTurnTown: { economy: 2, mood: -2 },
+        /* Three at a town, and not two. Ordered work and owned work both paid
+           the town two and cost it two of the square's temper, and ordering it
+           also raised a watch, so there was nothing on the card that owning it
+           was the best answer for and no reason a player would ever write it.
+           A market is what a place of five hundred does with owned work, and a
+           market outproduces an administration: that is the one number that
+           says so. */
+        perTurnTown: { economy: 3, mood: -2 },
         // and what is each one's own gets a line drawn round it
         cityFlagsOn: ['meadow_fenced'],
         cityFlagsOff: ['goat_parade'],
@@ -105,8 +112,20 @@ export const PROPOSALS: Proposal[] = [
         label: 'A STRANGER AT THE FENCE IS GIVEN A ROOF AND A SHARE',
         tags: ['communitarian'],
         effects: {},
-        // more hands than the store was built for, and more coughs than the well was
-        perTurn: { economy: 2, health: -2 },
+        /**
+         * The open door pays in people and in nothing else.
+         *
+         * It used to pay the store two a year as well, on top of the fastest
+         * growth in the game and the only law that raises the square's temper
+         * and its songs at once, against one cost: the well and the roof. Read
+         * down the card there was nothing to weigh, which is the one thing a
+         * law in this game may not be. A stranger given a roof and a share
+         * eats a share, so the store is where it does not show, and what the
+         * place gets for it is the twenty two percent and the two boards a
+         * town feels. More hands than the store was built for, and more coughs
+         * than the well was.
+         */
+        perTurn: { health: -2 },
         // and a town that lets people in hears more songs than one that does not
         perTurnTown: { mood: 2, culture: 1, health: -1 },
         growth: 1.22,
@@ -200,8 +219,15 @@ export const PROPOSALS: Proposal[] = [
         label: 'A DEATH IN THIS PLACE IS CARRIED BY THE HOUSE IT HAPPENED IN',
         tags: ['libertarian'],
         effects: { mood: -6 },
-        perTurn: { economy: 1, mood: -1 },
-        perTurnTown: { economy: 2, mood: -2 },
+        /* The crown, because this is the only one of the three that never
+           reaches the seal: a house buries its own and nobody asks the room
+           upstairs what a death is worth. It was the invisible middle of this
+           law, best at nothing and worst at nothing, and a player reading the
+           card had no reason to pick it over either neighbour. */
+        perTurn: { crownSanity: 1, economy: 1, mood: -1 },
+        /* And at a town it is also how a place stops noticing: the ones with
+           nobody to carry them are carried by nobody. */
+        perTurnTown: { crownSanity: 1, economy: 2, mood: -2, health: -1 },
         aftermathId: 'am_dead_by_the_house',
       },
       {
@@ -240,8 +266,13 @@ export const PROPOSALS: Proposal[] = [
         label: 'WHAT GROWS IN THE WOOD BELONGS TO WHOEVER IS UP EARLY ENOUGH TO FIND IT',
         tags: ['libertarian'],
         effects: { mood: -4 },
-        perTurn: { economy: 2, mood: -1 },
-        perTurnTown: { economy: 2, health: -1 },
+        /* The crown, on the same argument as the law about the dead: a wood
+           that belongs to whoever is up early is a wood nobody brings to the
+           seal, and this was the answer with nothing on the card of its own.
+           The cart pays better and the weighing feeds better; what this one
+           does is leave the room upstairs alone. */
+        perTurn: { crownSanity: 1, economy: 2, mood: -1 },
+        perTurnTown: { crownSanity: 1, economy: 2, health: -1 },
         aftermathId: 'am_mushrooms_finders',
       },
       {
@@ -291,7 +322,19 @@ export const PROPOSALS: Proposal[] = [
         label: 'ALL TRADE IN THIS PLACE IS FREE, AND PAYS NOTHING',
         tags: ['libertarian'],
         effects: { mood: 16 },
-        perTurn: { economy: 2, army: -1 },
+        /**
+         * Free trade fills somebody's pocket, and the store is not it.
+         *
+         * The three answers here had the money on the wrong one: trade that
+         * paid nothing paid the crown two a year and lifted the square sixteen
+         * points on the day, and the tenth to the crown paid the crown no
+         * money at all. So the best answer was the free one on every line of
+         * the card except a single point of watch, which is the treasurer
+         * being ignored by arithmetic. The tenth is the money now, and what
+         * free trade gives is what it actually gives: a square that likes you
+         * and a market nobody is counting.
+         */
+        perTurn: { mood: 2, economy: -1, army: -1 },
         cityFlagsOn: ['tavern_rowdy'],
         cityFlagsOff: ['tavern_shuttered'],
         aftermathId: 'am_trade_free',
@@ -302,7 +345,10 @@ export const PROPOSALS: Proposal[] = [
         label: 'ALL TRADE IN THIS PLACE PAYS THE CROWN A TENTH',
         tags: ['utilitarian'],
         effects: { mood: -8 },
-        perTurn: { army: 1, mood: -1 },
+        /* A tenth of everything, which is the only line in this law that puts
+           anything in the store, and a year of arguing about what a tenth of a
+           cartload is, which is what it costs the room upstairs. */
+        perTurn: { economy: 2, army: 1, crownSanity: -1 },
         cityFlagsOn: ['exam_desk'],
         cityFlagsOff: ['tavern_shuttered'],
         aftermathId: 'am_trade_taxed',
@@ -313,7 +359,11 @@ export const PROPOSALS: Proposal[] = [
         label: 'ALL TRADE IN THIS PLACE BELONGS TO THE GUILD ALONE',
         tags: ['communitarian', 'meritocratic'],
         effects: { mood: -16 },
-        perTurn: { economy: 1, mood: -2 },
+        /* And the Guild's one gift, which is the reason anybody ever signs it:
+           one body to deal with, one letter a year, and the seal never hears
+           about a barrow of turnips again. It is a bad idea that has to look
+           like a rest. */
+        perTurn: { economy: 1, mood: -2, crownSanity: 1 },
         isBadIdea: true,
         /* A house that sells drink without the Guild's leave is a house
            selling without leave, so it boards up, and the lanterns move into
@@ -450,7 +500,11 @@ export const PROPOSALS: Proposal[] = [
         label: 'A HAND THAT TAKES WHAT IS NOT ITS OWN PAYS BACK TWICE, AND IS DONE WITH IT',
         tags: ['egalitarian', 'utilitarian'],
         effects: { mood: -4 },
-        perTurn: { economy: 2, mood: -1 },
+        /* Twice of what, and says who. This was the answer with a gain on
+           every line and a cost on none, and what it actually costs is the
+           room upstairs: every theft in the place becomes a valuation, and
+           the valuation comes to you. */
+        perTurn: { crownSanity: -1, economy: 2, mood: -1 },
         perTurnWatch: { economy: 2, mood: -2 },
         aftermathId: 'am_crime_repaid',
       },
@@ -500,8 +554,11 @@ export const PROPOSALS: Proposal[] = [
         label: 'A SONG SUNG IN THIS TOWN IS PAID FOR BY THE SIZE OF ITS CROWD',
         tags: ['utilitarian'],
         effects: { mood: 12 },
-        // the square gets what it will stand in the rain for, and pays for it
-        perTurn: { mood: 2, culture: -1, economy: -1 },
+        /* The square gets what it will stand in the rain for, and pays for it,
+           and it is dearer than the hall is: what draws a crowd needs a stage,
+           a barrel and somebody to sweep up after it. It was the answer with
+           twelve points of temper on the day and no line of its own to lose. */
+        perTurn: { mood: 2, culture: -1, economy: -2 },
         aftermathId: 'am_song_by_crowd',
       },
       {

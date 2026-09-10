@@ -699,13 +699,29 @@ export function continueYear(s: GameState): GameState {
      reign has already decided about, and nothing else: a year never produces
      two fresh dilemmas, and a consequence never has to queue behind one. */
   const slots = CONFIG.year.dilemmasPerYear + CONFIG.year.consequencesPerYear;
+  /**
+   * A decree took one of the two slots and one of the dilemmas, and it should
+   * only ever have taken the slot.
+   *
+   * The drafting table is not somebody at the door. A year that opened with a
+   * seal spent its one dilemma on the seal, so the second half of that year
+   * could only ever be a consequence, and the first case of every chain waits
+   * on the law it belongs to: the law was sealed in the second spring and Tam
+   * came in the third, every reign, and everything behind him moved a year
+   * out with him. A decree fills a slot now and leaves the dilemma open, so a
+   * year can hold a law and the first person it lands on. It is still two
+   * things a year and still one hard thing a year, because the count of
+   * slots and `heavyPerYear` are both unchanged.
+   */
+  const decreed = draft.lastLawTurn === draft.turn ? 1 : 0;
+  const heard = draft.eventsThisYear - decreed;
   if (draft.eventsThisYear < slots) {
-    const consequencesOnly = draft.eventsThisYear >= CONFIG.year.dilemmasPerYear;
+    const consequencesOnly = heard >= CONFIG.year.dilemmasPerYear;
     const next = pickEvent(draft, {
       lawAllowed: false,
       /* One hard thing a year. Whoever comes after it comes to talk, and a
          consequence you wrote yourself is allowed to be the exception. */
-      heavyAllowed: consequencesOnly || draft.eventsThisYear < CONFIG.year.heavyPerYear,
+      heavyAllowed: consequencesOnly || heard < CONFIG.year.heavyPerYear,
       consequencesOnly,
     });
     if (next) {

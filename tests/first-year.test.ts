@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { WORKS } from '../src/content/works';
 import { CONFIG } from '../src/engine/config';
-import { chooseDeclared, chooseWork, newGame, openProposals } from '../src/engine/reducer';
+import { chooseCase, chooseDeclared, chooseLaw, chooseWork, continueYear, newGame, openProposals } from '../src/engine/reducer';
+import { getProposal } from '../src/engine/registry';
 import { worksFor } from '../src/engine/simulation';
 import { pickEvent } from '../src/engine/scheduler';
 import type { GameState } from '../src/engine/types';
@@ -24,6 +25,36 @@ describe('the first year', () => {
     const s = opened();
     s.turn = 2;
     expect(openProposals(s)).toContain('pv1_work');
+  });
+
+  /**
+   * And the second year holds both halves of the same argument.
+   *
+   * A decree used to spend the year's one dilemma as well as its slot, so the
+   * first person the first law lands on could not be heard until the third
+   * spring, and the whole written arc sat a year behind the reign that was
+   * paying for it. The drafting table is not somebody at the door: a year that
+   * seals a law can still hear the one person it lands on, and then it is
+   * full, because the count of slots has not changed.
+   */
+  it('seals the first law and hears the first person it lands on in the same year', () => {
+    let s = chooseWork(opened(), 'house');
+    expect(s.turn, 'the second spring').toBe(2);
+    expect(s.current, 'the seal opens the year').toEqual({ kind: 'proposal', id: 'pv1_work' });
+
+    const p = getProposal('pv1_work')!;
+    s = chooseLaw(s, 'pv1_work', 0, p.options[0].label);
+    s = continueYear(s);
+    expect(s.turn, 'still the same year').toBe(2);
+    expect(s.current, 'and the man the law is about is at the door').toEqual({
+      kind: 'case',
+      id: 'v1_idle_hand',
+    });
+
+    // and that is the year full: two things, and the rest belongs to the place
+    s = continueYear(chooseCase(s, 'v1_idle_hand', 'feed_him'));
+    expect(s.phase).toBe('works');
+    expect(s.turn).toBe(2);
   });
 
   it('offers a roof or somewhere to work, and only those two to start with', () => {

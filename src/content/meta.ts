@@ -368,6 +368,7 @@ export const CITY_LABELS: Record<CityFlag, { on: string; off: string; emoji: str
   wolf_at_the_edge: { on: 'Something grey keeps to the edge of the light', off: 'The edge of the light is empty again', emoji: '🐺' },
   dogs_about: { on: 'There are dogs underfoot everywhere', off: 'The dogs are gone from the yards', emoji: '🐕' },
   easel_in_the_square: { on: 'Somebody is painting the place, in the middle of it', off: 'The board on three legs is gone from the square', emoji: '🖼️' },
+  mill_on_the_water: { on: 'A mill goes up on the water', off: 'The wheel on the water is gone', emoji: '⚙️' },
   graves_at_the_edge: { on: 'Stones go up on the strip at the edge', off: 'The strip at the edge is bare ground again', emoji: '🪦' },
   graves_in_the_yards: { on: 'A stone stands in three of the yards', off: 'The stones are gone from the yards', emoji: '🪦' },
 };

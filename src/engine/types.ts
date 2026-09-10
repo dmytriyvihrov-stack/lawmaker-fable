@@ -242,6 +242,17 @@ export type CityFlag =
   /** Somebody stands in the square all day painting it, and is not stopped. */
   | 'easel_in_the_square'
   /**
+   * The mill-wright got his wheel, and it is in the picture.
+   *
+   * Every answer to `v3_millwright` but one ends with a wheel turning
+   * somewhere, and for four versions the only thing that happened on the map
+   * was that Marta stopped standing in her field. A mill is the largest thing
+   * a hamlet of nine can build and it is the one building in the valley that
+   * has to stand on the water, so it stands on the water: the house on the dry
+   * shoulder of the bank and the wheel in the stream below it.
+   */
+  | 'mill_on_the_water'
+  /**
    * Where you said to put them. A ruling on the dead is the only one that
    * leaves a mark on the place that cannot be spent, repealed or built over,
    * so the stones stand in the picture from the year they go in.

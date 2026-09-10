@@ -59,17 +59,17 @@ describe('a plain word under a law that came after it', () => {
   });
 
   it('is a grey answer under a law it goes round: half the bill, nothing written', () => {
-    // shared alike, and Tam gets half a share
-    const s = under(reign(), 'pv1_work', 0);
-    expect(breachFor('v1_idle_hand', 'half_share', s)?.how).toBe('bends');
+    // ordered by one who does not dig, and you feed the one who will not
+    const s = under(reign(), 'pv1_work', 1);
+    expect(breachFor('v1_idle_hand', 'feed_him', s)?.how).toBe('bends');
 
     const before = s.stats.crownSanity;
-    const half = chooseCase(s, 'v1_idle_hand', 'half_share');
-    expect(half.exceptions).toHaveLength(0);
+    const grey = chooseCase(s, 'v1_idle_hand', 'feed_him');
+    expect(grey.exceptions).toHaveLength(0);
     // the answer itself moves no crown, so the whole move is the grey bill
-    expect(before - half.stats.crownSanity).toBeCloseTo(Math.round(cost(s) * CONFIG.bendShare), 5);
-    expect(half.ledger.some((e) => e.source.includes('gone round'))).toBe(true);
-    expect(half.lastAftermath?.paragraphs).toHaveLength(2);
+    expect(before - grey.stats.crownSanity).toBeCloseTo(Math.round(cost(s) * CONFIG.bendShare), 5);
+    expect(grey.ledger.some((e) => e.source.includes('gone round'))).toBe(true);
+    expect(grey.lastAftermath?.paragraphs).toHaveLength(2);
   });
 
   it('is read the same way by the bench and by the bill', () => {
@@ -78,8 +78,6 @@ describe('a plain word under a law that came after it', () => {
     const eatsWhenHeDigs = verbs.find((v) => v.id === 'eats_when_he_digs');
     expect(eatsWhenHeDigs?.against?.how).toBe('breaks');
     expect(eatsWhenHeDigs?.against?.index).toBe(1);
-    const half = verbs.find((v) => v.id === 'gets_half');
-    expect(half?.against?.how).toBe('bends');
     const eats = verbs.find((v) => v.id === 'eats');
     expect(eats?.against).toBeUndefined();
 

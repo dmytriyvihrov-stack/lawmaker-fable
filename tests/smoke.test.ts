@@ -72,7 +72,6 @@ describe('the bench', () => {
   it('parses one word into an outcome', () => {
     const s = withLaw('shared');
     expect(parseVerdict('v1_idle_hand', 'eats', null, s)?.choiceId).toBe('feed_him');
-    expect(parseVerdict('v1_idle_hand', 'gets_half', null, s)?.choiceId).toBe('half_share');
     expect(parseVerdict('v1_idle_hand', 'share_is_cut', null, s)?.sentence).toBe(
       'TAM HAS HIS SHARE CUT, AND THE LAW READ OUT',
     );
@@ -85,7 +84,10 @@ describe('the bench', () => {
     expect(ids(withLaw('shared'))).not.toContain('mends_tools');
     expect(ids(withLaw('ruled'))).toContain('mends_tools');
     expect(ids(withLaw('owned'))).toContain('his_own_field');
-    expect(ids(newGame(5))).toHaveLength(3);
+    /* Two with no law standing, and not three: 'gets half a share' and 'has
+       his share cut' were the same ruling written twice and are one word now,
+       and the one that is left is the one a law puts on the bench. */
+    expect(ids(newGame(5))).toHaveLength(2);
   });
 
   it('badges the law given word with the number of the law', () => {

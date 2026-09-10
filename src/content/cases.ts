@@ -32,13 +32,6 @@ export const CASES: CaseEvent[] = [
         setFlags: ['tam_fed'],
       },
       {
-        id: 'half_share',
-        text: 'Half a share for half a day, if he can.',
-        result: 'Tam does half a day, most days. Nobody measures it, which is the point.',
-        tags: ['utilitarian'],
-        effects: { health: 2, economy: -2 },
-      },
-      {
         id: 'no_work_no_bread',
         text: 'No work, no bread. He eats when he digs.',
         result: 'Tam digs. He digs badly and slowly and does not speak to you until the frost.',
@@ -47,8 +40,15 @@ export const CASES: CaseEvent[] = [
         setFlags: ['tam_cut'],
       },
       {
+        /* This was two answers for a while, and both of them read as less
+           bread for Tam: "half a share for half a day" and this. A player
+           picking between them was picking between two wordings, which is the
+           one thing an answer on a bench may not be. They are one answer now,
+           and it is this one, because this is the one that has the law said
+           out loud over it and the four fences in the spring. The knife and
+           the half loaf that belonged to the other one came with it. */
         id: 'cut_his_share',
-        text: 'Cut his share, under a law that shares alike.',
+        text: 'Cut his share, with the law read out over it.',
         result:
           'The share is cut in front of four people who have all heard the law. They do not argue. They remember, and by spring each of the four has a fence round their own rows, which is not a thing a law about sharing alike ever asked anybody for.',
         tags: ['utilitarian'],
@@ -215,6 +215,7 @@ export const CASES: CaseEvent[] = [
         tags: ['communitarian'],
         effects: { economy: -6, health: 2, mood: 4 },
         setFlags: ['marta_kept'],
+        cityFlagsOn: ['mill_on_the_water'],
       },
       {
         id: 'plot_to_the_mill',
@@ -224,6 +225,9 @@ export const CASES: CaseEvent[] = [
         // done in the open, under the law, and it still takes a field off a woman
         effects: { economy: 14, crownSanity: -4, health: 2 },
         setFlags: ['marta_moved'],
+        /* Her plot was the best ground on the stream, so the wheel goes exactly
+           where she was standing, and it is the biggest thing in the valley. */
+        cityFlagsOn: ['mill_on_the_water'],
       },
       {
         id: 'a_year_first',
@@ -233,6 +237,7 @@ export const CASES: CaseEvent[] = [
         tags: ['meritocratic'],
         effects: { economy: -4, mood: 8, crownSanity: 8 },
         setFlags: ['marta_kept'],
+        cityFlagsOn: ['mill_on_the_water'],
       },
       {
         /* The same mill as `plot_to_the_mill`, with the gate shut behind it.
@@ -249,6 +254,7 @@ export const CASES: CaseEvent[] = [
         exceptionToLaw: 'strangers_turned_away',
         beneficiary: 'the mill-wright',
         setFlags: ['marta_kept'],
+        cityFlagsOn: ['mill_on_the_water'],
       },
     ],
   },

@@ -12,9 +12,8 @@
 export const HAND_INSTRUCTIONS: Record<string, string> = {
   /* the fence, and a man who says his back */
   'v1_idle_hand:feed_him': 'Take a loaf from the cart to him.',
-  'v1_idle_hand:half_share': 'Cut the loaf. Take half back.',
   'v1_idle_hand:no_work_no_bread': 'Take his loaf back to the cart.',
-  'v1_idle_hand:cut_his_share': 'Take it. They are watching.',
+  'v1_idle_hand:cut_his_share': 'Cut the loaf. They are watching.',
   'v1_idle_hand:headman_decides': 'Give him the broken handles.',
   'v1_idle_hand:his_own_field': 'Leave him to his field.',
 

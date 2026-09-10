@@ -36,6 +36,7 @@ import {
   Hut,
   Woodcutter,
   LongRoom,
+  Mill,
   MineMouth,
   MineWorks,
   Peg,
@@ -70,6 +71,7 @@ import {
   WOOD_TRUNKS,
   WORK_SITES,
   GATE_POSTS,
+  MILL_SITE,
   WINTER_FIRE,
   FIRE_RING,
   CAMP_DOOR,
@@ -1568,6 +1570,22 @@ export function CityScape({
               <Goat paint={paint} grazing delay={`-${k * 1.7}s`} />
             </g>
           ))}
+        </g>
+      </Layer>
+
+      {/* The mill-wright's wheel, wherever it was he got to build it.
+
+          Placed at the one piece of the near bank whose whole footprint is dry
+          and whose fall is steep enough to put the foot of the wheel in the
+          stream: the walls stand 58 to 114 units out from the middle of the
+          water and the bottom of the wheel stands 15, which is inside it. The
+          numbers are `waterDistance()` in `town/paths.ts`, not a screenshot,
+          and `tests/town-life.test.ts` holds them. Clear of the ground a
+          charter opens at the mill end, of the granary above it and of the
+          bridge below. */}
+      <Layer on={on('mill_on_the_water')}>
+        <g transform={`translate(${MILL_SITE.x} ${MILL_SITE.y})`}>
+          <Mill paint={paint} />
         </g>
       </Layer>
 

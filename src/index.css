@@ -451,6 +451,15 @@ button:disabled {
   transform-origin: center;
 }
 
+/* And a mill wheel, which is the same turn taken four times as long: a wheel
+   this size in a stream this size comes round about once every nine seconds,
+   and anything quicker reads as a machine rather than as water. */
+.city-millwheel {
+  animation: wheel-turn 9s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 /* a goat's head going down to the grass and coming up again, on its own
    clock, so a meadow of them is never nodding in time */
 @keyframes graze {
@@ -836,6 +845,7 @@ button:disabled {
   .city-commute-via,
   .city-trip,
   .city-wheel,
+  .city-millwheel,
   .city-graze,
   .city-peck,
   .city-jig,

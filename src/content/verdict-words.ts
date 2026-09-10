@@ -74,14 +74,13 @@ export const VERDICT_VERBS: WordTile[] = [
   { id: 'is_kept_in_sight', text: 'IS KEPT IN SIGHT' },
   // the hamlet
   { id: 'eats', text: 'EATS' },
-  { id: 'gets_half', text: 'GETS HALF A SHARE' },
   { id: 'eats_when_he_digs', text: 'EATS WHEN HE DIGS' },
-  /* Not 'HAS HIS SHARE CUT'. Beside 'GETS HALF A SHARE', which is the plain
-     word on the same bench, that was one ruling written twice: both of them
-     read as less bread for Tam, and a player picking between them was picking
-     between two wordings. What this one actually is, and what the law is for,
-     is the cut being made in the open with the law said out loud over it,
-     which is what the four who dig then go home and build fences about. */
+  /* There was a 'GETS HALF A SHARE' on this bench as well, and rewording this
+     one round it did not help: both of them read as less bread for Tam, and a
+     player picking between them was picking between two wordings. So there is
+     one, and it is this one. What it is, and what the law is for, is the cut
+     being made in the open with the law said out loud over it, which is what
+     the four who dig then go home and build fences about. */
   { id: 'share_is_cut', text: 'HAS HIS SHARE CUT, AND THE LAW READ OUT' },
   { id: 'mends_tools', text: 'MENDS TOOLS, THE HEADMAN SAYS' },
   { id: 'his_own_field', text: 'EATS WHAT HIS OWN FIELD GIVES' },
@@ -334,7 +333,7 @@ export const VERDICT_OBJECTS: WordTile[] = [];
 export const CASE_VERDICTS: Record<string, CaseVerdict> = {
   v1_idle_hand: {
     subject: 'TAM',
-    verbs: ['eats', 'gets_half', 'eats_when_he_digs'],
+    verbs: ['eats', 'eats_when_he_digs'],
     objects: [],
     rulings: [
       {
@@ -353,24 +352,6 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
             beneficiary: 'Tam',
             result:
               "He eats out of four other harvests under a law that says each one's own. The four say nothing, and the law says less than it did.",
-          },
-        ],
-      },
-      {
-        verb: 'gets_half',
-        choiceId: 'half_share',
-        against: [
-          {
-            law: 'work_shared',
-            how: 'bends',
-            result:
-              'Half a share is not a share alike, and everybody can do that sum. Nobody says so. Nobody forgets it either.',
-          },
-          {
-            law: 'work_owned',
-            how: 'bends',
-            result:
-              'Half a share off four other fields is a kindness the law has no word for, and the field with the best yield notices first.',
           },
         ],
       },

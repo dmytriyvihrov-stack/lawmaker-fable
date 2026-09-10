@@ -93,6 +93,21 @@ const MODES: Record<Season, Mode> = {
 
 /** How loud the whole thing ever gets. Quiet enough to think over. */
 const MASTER = 0.16;
+/**
+ * And how loud it is while somebody is dying in front of you.
+ *
+ * The sound effects have hushed themselves round death, punishment and
+ * collapse since V50 (`HUSHED_CASES`), and the music went on being weather
+ * over the top of it, at the one moment in the game where the room should go
+ * quiet. This is that share of the master gain: not nothing, because a cut to
+ * silence is its own noise and the scene would announce itself, but far enough
+ * down that what is left is the wind. It rides on the master gain, so it works
+ * the same behind a recorded track as behind the pad.
+ */
+const HUSHED = 0.08;
+/** How long the room takes to go quiet, and how long it takes to come back. */
+const DUCK = 2.2;
+const LIFT = 5;
 /** How far ahead the sound card is written into, in seconds. */
 const LOOKAHEAD = 2.5;
 /** How long a chord takes to become the next one. Slow enough to be weather. */
@@ -144,6 +159,8 @@ let bar = 0;
 let seed = 1;
 let season: Season = 'spring';
 let playing = false;
+/** True while a grave scene is on the screen. See `hush()`. */
+let hushed = false;
 
 /** Which chord is under the bells right now, so a bell is never a wrong note. */
 let chordNow: Chord = OPEN[0];
@@ -405,6 +422,29 @@ export function isPlaying(): boolean {
   return playing;
 }
 
+/** What the master gain should be sitting at right now. */
+function level(): number {
+  return hushed ? MASTER * HUSHED : MASTER;
+}
+
+/**
+ * Down for a grave scene, back up when it is over.
+ *
+ * Called with what is on the screen and nothing else, every render, so it
+ * checks before it touches the sound card: a ramp rescheduled sixty times a
+ * second never arrives. Remembered whether or not anything is playing, so a
+ * toggle pressed in the middle of a hard scene comes up quiet rather than
+ * coming up loud and then ducking.
+ */
+export function hush(on: boolean): void {
+  if (on === hushed) return;
+  hushed = on;
+  if (!ctx || !master || !playing) return;
+  master.gain.cancelScheduledValues(ctx.currentTime);
+  master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+  master.gain.linearRampToValueAtTime(level(), ctx.currentTime + (on ? DUCK : LIFT));
+}
+
 /**
  * Start. Must be called from a real click: every browser refuses to make a
  * sound until somebody has asked for one, which is the correct policy.
@@ -428,7 +468,7 @@ export function start(): void {
     }
     void ctx.resume();
     master?.gain.cancelScheduledValues(ctx.currentTime);
-    master?.gain.linearRampToValueAtTime(MASTER, ctx.currentTime + 4);
+    master?.gain.linearRampToValueAtTime(level(), ctx.currentTime + 4);
     // a recorded track loops on its own; only the pad needs its scheduler rearmed
     if (!usingRecorded) startPad();
     playing = true;

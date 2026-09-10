@@ -38,6 +38,7 @@ import type {
 import { CityScape } from './components/CityScape';
 import { DEFAULT_MONARCH_ID, MONARCHS } from '../content/monarchs';
 import { CASE_SPOTS, LAW_SPOT, STATS, WORKS_SPOT } from '../content/meta';
+import { HUSHED_CASES } from '../content/sound';
 import { TECHS } from '../content/techs';
 import { isWinter, seasonOf, techOpening, yearsToWinter } from '../engine/simulation';
 import { getCase } from '../engine/registry';
@@ -743,6 +744,18 @@ export function App() {
             dispatch({ type: 'begin', chapter, seed: freshSeed() });
           }}
         />
+        {/* The music starts here and not at the first spring.
+
+            It was a switch in the corner of the town, which meant the menu,
+            the founding and the whole of the first year were played in
+            silence, and a player who had asked for music last time got it at
+            whatever they clicked next. The reign the pad draws its notes from
+            is whichever one the slot is holding, if it is holding one; a fresh
+            reign keeps whatever is already playing, which is the same rule the
+            toggle has always had. */}
+        <div className="fixed bottom-2 right-9 z-30 flex items-center gap-2">
+          <MusicToggle seed={saved?.seed ?? 1} season="spring" />
+        </div>
         <BuildBadge />
         <DevToggle on={dev} onToggle={() => setDev((v) => !v)} />
       </main>
@@ -769,6 +782,11 @@ export function App() {
   // a sealed decree is a sentence, not a scene: it is held, read, and done with
   const lastLog = game.log[game.log.length - 1];
   const sealing = game.phase === 'aftermath' && lastLog?.kind === 'law';
+
+  /* Death, punishment and collapse. The effects have hushed themselves round
+     these since V50; the music does now as well, and it stays down through the
+     aftermath, because a scene is current until the aftermath is read. */
+  const graveScene = game.current?.kind === 'case' && HUSHED_CASES.has(game.current.id);
 
   const decides =
     game.phase === 'composer' ||
@@ -1420,7 +1438,7 @@ export function App() {
         }`}
       >
         <Soundscape game={game} season={season} ready={handReady} zoomed={hand.zoomed} mapRef={mapRef} />
-        <MusicToggle seed={game.seed} season={season} />
+        <MusicToggle seed={game.seed} season={season} hushed={graveScene} />
       </div>
       </div>
 

@@ -195,6 +195,52 @@ describe('the minigame layer', () => {
     });
   });
 
+  /**
+   * And the same loaf under the answer that used to be two answers.
+   *
+   * "Gets half a share" and "has his share cut" were one ruling written twice
+   * and are one now, and the knife came across with the name: the loaf is cut
+   * where the four can see it and the half goes back on the cart, rather than
+   * being wrestled out of his hand, which is what the hardest answer already
+   * did. Two steps in order, and no yanking in either of them.
+   */
+  describe('a loaf cut in the open', () => {
+    const act: ActDef = ACTS['v1_idle_hand:cut_his_share'];
+
+    it('cuts on one stroke down the loaf, then carries the half away', () => {
+      const loaf = fig(611.5, 269, 7);
+      const half = fig(610, 269, 5);
+      const cart = zone(470, 268, 16);
+      const sc = scene({ loaf, half, cart });
+      const steps: number[] = [];
+      let done = false;
+      const hooks: ActHooks = { step: (i) => steps.push(i) };
+      // the chain is the caller's job: the cut hands the scene to the carry,
+      // and the carry counts from where the cut left off
+      let carry: ReturnType<typeof makeGesture> | null = null;
+      const cut = makeGesture(act, sc, hooks, ctxWith({ v: 0 }), () => {
+        carry = makeGesture(act.then!, sc, hooks, ctxWith({ v: 0 }), () => {
+          done = true;
+        }, 1);
+      });
+
+      // a stroke across the loaf, not along it: nothing happens
+      drag(cut, { x: 605, y: 269 }, { x: 640, y: 269 }, 6, 16);
+      expect(steps, 'cut the wrong way and it is still a whole loaf').toEqual([]);
+
+      // and down it, which is the cut
+      cut.down({ x: 611.5, y: 265 }, ev(0));
+      cut.move({ x: 611.5, y: 285 }, ev(16));
+      expect(steps, 'the loaf is two halves').toEqual([0]);
+      expect(carry, 'and the half is there to be carried').not.toBeNull();
+
+      // then it is only a carry, with nobody holding on
+      drag(carry!, { x: 610, y: 269 }, { x: 470, y: 268 }, 8, 16);
+      expect(steps).toEqual([0, 1]);
+      expect(done).toBe(true);
+    });
+  });
+
   describe('a body', () => {
     const act: ActDef = ACTS['v6_road_dead:ours_now'];
     const from = { x: 872, y: 380 };

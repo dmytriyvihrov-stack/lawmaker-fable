@@ -32,6 +32,59 @@ function audioMock() {
 
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 
+/**
+ * The music, which is a different sound card from the effects above: one
+ * master gain with either a recorded track or the pad under it. What is
+ * checked here is the one thing a player asked for and cannot see in a test
+ * of content: that a grave scene takes it almost all the way down and that
+ * the end of the scene brings it back.
+ */
+describe('the music behind a grave scene', () => {
+  it('ducks the master gain to a fraction and lifts it again', async () => {
+    const { ctx, context } = audioMock();
+    const gains: { gain: ReturnType<typeof Object> }[] = [];
+    const createGain = () => {
+      const g = context.createGain();
+      gains.push(g as never);
+      return g;
+    };
+    vi.stubGlobal('window', {
+      AudioContext: function () {
+        return { ...context, createGain } as unknown as AudioContext;
+      },
+      localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+      setInterval: () => 1,
+      clearInterval: () => {},
+      atob: (s: string) => s,
+    });
+    void ctx;
+
+    const music = await import('../src/ui/music');
+    music.start();
+    expect(music.isPlaying(), 'the toggle is on').toBe(true);
+
+    // whatever it was ramped to when it started is the loud one
+    const master = gains[0] as unknown as { gain: { linearRampToValueAtTime: { mock: { calls: number[][] } } } };
+    const ramps = () => master.gain.linearRampToValueAtTime.mock.calls.map((c) => c[0]);
+    const loud = ramps()[0];
+    expect(loud).toBeGreaterThan(0);
+
+    music.hush(true);
+    const ducked = ramps()[ramps().length - 1];
+    expect(ducked, 'a grave scene is nearly silent').toBeLessThan(loud / 5);
+    expect(ducked, 'and not a hard cut to nothing').toBeGreaterThan(0);
+
+    // asked for twice over, it does not reschedule the same ramp
+    const before = ramps().length;
+    music.hush(true);
+    expect(ramps().length).toBe(before);
+
+    music.hush(false);
+    expect(ramps()[ramps().length - 1], 'and the room comes back').toBe(loud);
+    music.stop();
+  });
+});
+
 describe('settlement audio', () => {
   /**
    * Two voices, and every caller reads down to one of them. The Monarch is
