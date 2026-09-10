@@ -705,8 +705,10 @@ export function CityScape({
     /* A sower is somebody walking a furrow with a hand out, and the seed goes
        where the feet go: standing still in the corn scattering it on one spot
        is a man feeding hens. So the spring's sowers walk the strip, and the
-       digger next to them stays over the spade. */
-    const travels = TRAVELS.includes(job) || pose === 'sow';
+       digger next to them stays over the spade. The autumn's carrier is the
+       same case the other way round: a sack on a back is going somewhere, or
+       it is a man standing in the stubble with a sack on. */
+    const travels = TRAVELS.includes(job) || pose === 'sow' || (job === 'field' && pose === 'carry');
     const commutes = COMMUTES.includes(job);
     const here = { x: Math.round(x), y: Math.round(y) };
     /* The door this one leaves by. Their number picks the hut, so the same
@@ -732,7 +734,7 @@ export function CityScape({
       pose,
       travels,
       /* A furrow is walked further than a lane is loitered in. */
-      span: pose === 'sow' ? 30 : travels ? 18 : 0,
+      span: pose === 'sow' || pose === 'carry' ? 30 : travels ? 18 : 0,
       /* A load off the wood is a walk of its own length and takes as long as
          it takes; a day that starts at a door is a long loop of out, work and
          home; a road is as long as the road; everything else is a stroll or
