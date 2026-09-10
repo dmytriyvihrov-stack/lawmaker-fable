@@ -72,8 +72,10 @@ import {
   GATE_POSTS,
   WINTER_FIRE,
   FIRE_RING,
+  CAMP_DOOR,
   CAMP_FIRE,
   CAMP_RING,
+  CAMP_WATER,
   homeDoor,
   hutSites,
   siteOf,
@@ -446,8 +448,15 @@ export function CityScape({
      open grass, and a soul posted to either stood in a field bowing at nothing
      and strolling eighteen pixels back and forth while doing it. Two of them
      were on screen in the first spring of every reign. Until there is a roof
-     the whole settlement is the two tents and the fire. */
-  const indoors: CrowdJob = camping ? 'camp' : 'yard';
+     the whole settlement is the two tents and the fire.
+
+     And then two of them stood at the fire instead, all day, in every season,
+     which was the same two people going nowhere with their hands out. A camp
+     has one person at the fire and everybody else out doing the things a camp
+     has to do: the one that can be seen from up here is the water, which is a
+     bucket walked down to the bank and back up the slope full, because there
+     is no well until somebody spends a year on one. */
+  const indoors: CrowdJob = camping ? 'fetch' : 'yard';
   const together: CrowdJob = camping ? 'camp' : 'square';
   if (working) {
     // and the corner that was already broken when they arrived has somebody in it
@@ -479,7 +488,9 @@ export function CityScape({
        basket in a hamlet, three in a town, and the beeches are the point. */
     if (bridged) post('far', town ? 3 : 2);
   } else {
-    post(indoors, 4);
+    /* The river is a lid in the frost, so a camp's water is snow melted at
+       the fire, and the bucket stays there with everybody else. */
+    post(camping && paint.ice ? 'camp' : indoors, 4);
     post(together, 2);
     post('wood', 2);
     post('haul', 1);
@@ -523,7 +534,7 @@ export function CityScape({
    * and a building site with nobody arriving at it is a building putting
    * itself up.
    */
-  const COMMUTES: CrowdJob[] = ['fish', 'wood', 'site', 'mine', 'orchard', 'far'];
+  const COMMUTES: CrowdJob[] = ['fish', 'wood', 'site', 'mine', 'orchard', 'far', 'fetch'];
 
   /**
    * Taking them in flat passes gave every job the same first man, so a place
@@ -564,6 +575,7 @@ export function CityScape({
     water: 'draw',
     site: 'build',
     camp: 'warm',
+    fetch: 'draw',
     mine: 'mine',
     orchard: 'pick',
     music: 'play',
@@ -575,7 +587,7 @@ export function CityScape({
   /* The road is not a stroll any more: it is walked end to end, below. */
   const TRAVELS: CrowdJob[] = ['square', 'yard'];
   /* A pike and a fiddle both face the same way all day, like a rod does. */
-  const FACES_FIXED: CrowdJob[] = ['fish', 'wood', 'guard', 'music', 'paint', 'mine', 'warm', 'camp'];
+  const FACES_FIXED: CrowdJob[] = ['fish', 'wood', 'guard', 'music', 'paint', 'mine', 'warm', 'camp', 'fetch'];
 
   const siteAnchor = raisingOf ? siteOf(raisingOf, placements) : undefined;
 
@@ -652,6 +664,17 @@ export function CityScape({
         x = back.x + ((nth * 53) % back.w);
         y = back.y + ((nth * 71) % back.h);
       }
+    } else if (job === 'fetch') {
+      /* At the water, on the one dry piece of bank nearest the tents. A
+         second bucket stands a little way along the same bank. */
+      if (nth === 0) {
+        x = CAMP_WATER.x;
+        y = CAMP_WATER.y;
+      } else {
+        const bank = CROWD_SPOTS.fetch;
+        x = bank.x + ((nth * 53) % bank.w);
+        y = bank.y + ((nth * 71) % bank.h);
+      }
     } else if (job === 'warm') {
       /* Round the fire, at arm's length from it, in the order the ring was
          written. Past the ring they stand back in the box behind. */
@@ -678,13 +701,20 @@ export function CityScape({
       y = box.y + ((nth * 71 + (i % 5) * 11) % h);
     }
 
-    const travels = TRAVELS.includes(job);
+    const pose: Pose = job === 'field' ? fieldPose(nth) : POSE[job];
+    /* A sower is somebody walking a furrow with a hand out, and the seed goes
+       where the feet go: standing still in the corn scattering it on one spot
+       is a man feeding hens. So the spring's sowers walk the strip, and the
+       digger next to them stays over the spade. The autumn's carrier is the
+       same case the other way round: a sack on a back is going somewhere, or
+       it is a man standing in the stubble with a sack on. */
+    const travels = TRAVELS.includes(job) || pose === 'sow' || (job === 'field' && pose === 'carry');
     const commutes = COMMUTES.includes(job);
     const here = { x: Math.round(x), y: Math.round(y) };
     /* The door this one leaves by. Their number picks the hut, so the same
        soul comes out of the same house every year, and a hamlet of one roof
        sends everybody out of it. */
-    const door = commutes ? homeDoor(i, homes.slice(0, huts)) : null;
+    const door = job === 'fetch' ? CAMP_DOOR : commutes ? homeDoor(i, homes.slice(0, huts)) : null;
     /* The way from that door to the work. On one bank it is the straight
        line it always was. Across the water it is the bridge, stop by stop,
        and the day is drawn with the corners in it: out of a door on the far
@@ -701,9 +731,10 @@ export function CityScape({
       y: here.y,
       cloth,
       job,
-      pose: job === 'field' ? fieldPose(nth) : POSE[job],
+      pose,
       travels,
-      span: travels ? 18 : 0,
+      /* A furrow is walked further than a lane is loitered in. */
+      span: pose === 'sow' || pose === 'carry' ? 30 : travels ? 18 : 0,
       /* A load off the wood is a walk of its own length and takes as long as
          it takes; a day that starts at a door is a long loop of out, work and
          home; a road is as long as the road; everything else is a stroll or
@@ -750,7 +781,7 @@ export function CityScape({
          it; nothing out to the far bank and a full basket home, which is the
          whole of what the far bank is for. */
       walkOut: (job === 'site' ? 'carry' : 'stand') as Pose,
-      walkHome: (job === 'far' ? 'carry' : 'stand') as Pose,
+      walkHome: (job === 'far' || job === 'fetch' ? 'carry' : 'stand') as Pose,
     };
   });
   /**

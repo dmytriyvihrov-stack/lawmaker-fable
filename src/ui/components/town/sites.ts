@@ -251,6 +251,18 @@ export type CrowdJob =
    */
   | 'camp'
   /**
+   * The camp's chores, which is where the rest of the camp actually is.
+   *
+   * Two tents and a fire is where five people sleep, not where they spend the
+   * day: for as long as the settlement was the camp, two of them stood at the
+   * fire from the first spring to the first roof, warming their hands in June
+   * and going nowhere. One keeps the fire. The others go down to the water
+   * with a bucket, because there is no well yet and somebody has to, and come
+   * back up the slope with it full. It is the one walk a camp has, and it is
+   * walked from the tents rather than from a door, because there is no door.
+   */
+  | 'fetch'
+  /**
    * And the six a place has to earn. Each of them is posted only while the
    * thing that makes it exist stands: a hole in the crag, three apple trees,
    * a board that has songs on it, a watch, and the cold.
@@ -294,6 +306,9 @@ export const CROWD_SPOTS: Record<CrowdJob, { x: number; y: number; w: number; h:
   /* The fallback for a camp with more people round it than the ring holds.
      The tents themselves are at 810 and 844, so this is the ground below. */
   camp: { x: 800, y: 432, w: 76, h: 26 },
+  /* Not a patch: the water is fetched from `CAMP_WATER` below. This is only
+     the fallback for a second bucket, a little way along the same bank. */
+  fetch: { x: 872, y: 518, w: 40, h: 10 },
   /* At the mouth of the cut, which is where the spoil comes out. The crag
      itself is at x 114 and nobody stands inside it. */
   mine: { x: 148, y: 366, w: 76, h: 34 },
@@ -352,6 +367,20 @@ export const CAMP_RING = [
   { x: 34, y: -6 },
   { x: -34, y: -8 },
 ];
+
+/**
+ * Where the camp's day starts and where its water is.
+ *
+ * The door is the mouth of the nearer tent, a step to the left of the fire,
+ * so somebody setting out with a bucket comes out from between the tents and
+ * not out of the flames. The water is the nearest piece of the near bank to
+ * the camp that is actually dry to stand on: forty-four units from the middle
+ * of the river, clear of every rod on `FISH_SPOTS`, and reached by a straight
+ * walk down the slope that never touches the water. Found by searching the
+ * bank rather than by eye, and checked in `town-life.test.ts`.
+ */
+export const CAMP_DOOR = { x: CAMP_FIRE.x - 22, y: CAMP_FIRE.y + 4 };
+export const CAMP_WATER = { x: 892, y: 522 };
 
 export const WINTER_FIRE = { x: 716, y: 408 };
 export const FIRE_RING = [

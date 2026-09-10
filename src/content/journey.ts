@@ -7,6 +7,7 @@ export const JOURNEY = {
   jobs: {
     lanes: 'Walking the lanes',
     fields: 'Tending the field',
+    water: 'Down at the water',
     wood: 'Helping with the timber',
   },
   /** The one line in the game that is a button and moves no board. */

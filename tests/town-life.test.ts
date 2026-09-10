@@ -9,6 +9,8 @@ import { CASE_SPOTS } from '../src/content/meta';
 import { atCrossing } from '../src/ui/journey/routes';
 import { DECK, WATER_HALF, bankOf, lengthOf, resample, stopsFrom, walkOver, waterDistance } from '../src/ui/components/town/paths';
 import {
+  CAMP_DOOR,
+  CAMP_WATER,
   FAR_SITES,
   FISH_SPOTS,
   HUT_SITES,
@@ -228,6 +230,28 @@ describe('what the picture puts on the ground', () => {
     expect(count(unbridged, 'data-bank="far"')).toBe(0);
     const small = drawn(town, 'summer', { population: 40, buildings: built({ house: 1, bridge: 1, road: 2 }) });
     expect(count(small, 'data-bank="far"')).toBe(0);
+  });
+
+  it('keeps one at the camp fire and sends the water down to the bank', () => {
+    const camp = drawn(beginAt('village', 7), 'summer', { population: 6, buildings: built({ house: 0 }) });
+    // one at the fire, not two: the second of them has a bucket and a walk
+    expect(count(camp, 'data-job="camp"')).toBe(1);
+    expect(count(camp, 'data-job="fetch"')).toBe(1);
+    expect(camp).toContain('data-job="fetch" data-activity="draw"');
+    // and the walk is a commute from the tents, on one bank, so it is straight
+    expect(camp).toContain('city-commute');
+    // the bank they fetch from is dry ground on the town side, clear of the rods
+    expect(bankOf(CAMP_WATER)).toBe('near');
+    expect(waterDistance(CAMP_WATER)).toBeGreaterThan(WATER_HALF);
+    for (const f of FISH_SPOTS) expect(Math.hypot(f.x - CAMP_WATER.x, f.y - CAMP_WATER.y)).toBeGreaterThan(40);
+    dryStops([CAMP_DOOR, CAMP_WATER]);
+    // a lid on the river keeps the bucket at the fire
+    const frost = drawn(beginAt('village', 7), 'winter', { population: 6, buildings: built({ house: 0 }) });
+    expect(count(frost, 'data-job="fetch"')).toBe(0);
+    // and a roof ends the camp, chores and all
+    const roofed = drawn(beginAt('village', 7), 'summer', { population: 6, buildings: built({ house: 1 }) });
+    expect(count(roofed, 'data-job="camp"')).toBe(0);
+    expect(count(roofed, 'data-job="fetch"')).toBe(0);
   });
 
   it('has children and hens once there are roofs enough, and none in a camp', () => {
