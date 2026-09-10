@@ -26,6 +26,8 @@ export function RulerFigure({ moving = false, working = false, job = 'lanes', ac
           {working && !action && job === 'fields' && <path d="M13 -20 v24 m-3 -2 h7" stroke="#775d3d" strokeWidth="2" />}
           {working && !action && job === 'wood' && <path d="M12 -9 l3 -15 m-3 2 l7 -1 l-1 5 l-5 -1" stroke="#a0aaa1" strokeWidth="2.5" />}
           {working && !action && job === 'lanes' && <path d="M10 -14 l8 1 v7 l-8 -1Z" fill="#e9d7a9" stroke="#a38961" strokeWidth="1" />}
+          {/* the bucket, on its handle, which is what anybody at a river is holding */}
+          {working && !action && job === 'water' && <g strokeWidth="1.1" stroke="#7a6142"><path d="M11 -9 h9 l-1.4 8 h-6.2Z" fill="#b69051" /><path d="M12 -9 q3.5 -6 7 0" fill="none" /></g>}
           {action === 'pet' && <path d="M12 -10 q7 8 12 6" fill="none" />}
           {action === 'lift' && <g strokeWidth="1.2" stroke="#8d7049"><path d="M8 -5 h17 l-2 9 H10Z" fill="#b69051" /><path d="M11 -5 q5 -11 11 0" fill="none" /><circle cx="15" cy="-5" r="2.5" fill="#b34e37" /><circle cx="20" cy="-4" r="2.3" fill="#d0a949" /></g>}
           {action === 'pull' && <path d="M10 -9 Q24 -38 38 -30 q8 15 5 25" fill="none" stroke="#bea779" strokeWidth="1.6" />}

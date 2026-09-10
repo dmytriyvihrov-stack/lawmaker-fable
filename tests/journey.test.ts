@@ -6,6 +6,7 @@ import { newGame, takeMoment } from '../src/engine/reducer';
 import { ACTION_SECONDS, canAnswer, chooseJob, followVisitor, newJourney, queueErrand, openJobs, requestVisit, setOpenJobs, skipJourney, tickJourney } from '../src/ui/journey/model';
 import { along, atCrossing, distance, HOME, inWater, onFoot, pathLength, route } from '../src/ui/journey/routes';
 import type { Journey } from '../src/ui/journey/model';
+import { FISH_SPOTS } from '../src/ui/components/town/sites';
 
 const errand = (id: string) => ({ key: `11:4:${id}`, turn: 4, moment: MOMENTS.find((m) => m.id === id)! });
 const visit = { key: '11:4:d1_pies', id: 'd1_pies', character: 'iva', at: CASE_SPOTS.d1_pies };
@@ -105,10 +106,11 @@ describe('the golden things wait for a promised walk', () => {
    */
   it('reads the round off what the reign has built', () => {
     const bare = newGame(11).buildings;
-    expect(openJobs(bare)).toEqual(['lanes', 'wood']);
-    expect(openJobs({ ...bare, fields: 1 })).toEqual(['lanes', 'fields', 'wood']);
+    // the river was there before anybody was: the bank needs no year of work
+    expect(openJobs(bare)).toEqual(['lanes', 'water', 'wood']);
+    expect(openJobs({ ...bare, fields: 1 })).toEqual(['lanes', 'fields', 'water', 'wood']);
     // and a place with nothing at all still has lanes to walk
-    expect(openJobs(undefined)).toEqual(['lanes', 'wood']);
+    expect(openJobs(undefined)).toEqual(['lanes', 'water', 'wood']);
   });
 
   it('leaves out a job the place has not built, and takes it up when it has', () => {
@@ -121,7 +123,7 @@ describe('the golden things wait for a promised walk', () => {
     expect([...seen].sort()).toEqual(['lanes', 'wood']);
 
     // the year the ground is broken, the field joins the round
-    s = setOpenJobs(s, ['lanes', 'fields', 'wood']);
+    s = setOpenJobs(s, ['lanes', 'fields', 'water', 'wood']);
     const after = new Set<string>();
     for (let i = 0; i < 40; i++) {
       s = finishLeg(tickJourney(s, 8));
@@ -141,6 +143,27 @@ describe('the golden things wait for a promised walk', () => {
 });
 
 describe('walkable map geometry', () => {
+  it('reaches both stops at the water dry-shod, and stands back from the rods', () => {
+    let s = chooseJob(newJourney(), 'water');
+    const stops: { x: number; y: number }[] = [];
+    for (let i = 0; i < 2; i++) {
+      // the walk out, then the stand at the water
+      for (let step = 0; step <= pathLength(s.path); step += 3) expect(inWater(along(s.path, step)), `${s.path.map((p) => `${p.x},${p.y}`).join(' > ')} at ${step}`).toBe(false);
+      s = finishLeg(s);
+      expect(s.mode).toBe('working');
+      expect(s.job).toBe('water');
+      stops.push(s.at);
+      s = tickJourney(s, 8);
+    }
+    expect(stops).toHaveLength(2);
+    expect(stops[0]).not.toEqual(stops[1]);
+    for (const at of stops) {
+      expect(inWater(at)).toBe(false);
+      for (const seat of FISH_SPOTS) expect(distance(at, seat)).toBeGreaterThan(14);
+    }
+  });
+
+
   it('gets to all four small things without stepping in the river', () => {
     for (const m of MOMENTS) {
       const walk = route(HOME, m);

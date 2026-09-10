@@ -2,7 +2,7 @@ import type { Moment } from '../../content/moments';
 import { along, HOME, pathLength, route } from './routes';
 import type { Point } from './routes';
 
-export type Job = 'lanes' | 'fields' | 'wood';
+export type Job = 'lanes' | 'fields' | 'water' | 'wood';
 export type Mode = 'working' | 'work-walk' | 'collect-walk' | 'collect-work' | 'caller' | 'briefing' | 'event-walk' | 'arrived';
 export interface Visit { key: string; id: string; character?: string; at: Point }
 export interface Errand { key: string; turn: number; moment: Moment }
@@ -29,6 +29,12 @@ export interface Journey {
 const JOBS: Record<Job, Point[]> = {
   lanes: [HOME, { x: 600, y: 400 }, { x: 756, y: 300 }],
   fields: [{ x: 440, y: 398 }, { x: 365, y: 445 }],
+  /* The near bank, in two places the water is worth standing at: the bend
+     below the square, and the stretch upstream of it where the rods are. A
+     body's width back from every seat on `FISH_SPOTS`, so the ruler stands
+     beside whoever is fishing and not on them, and both are dry ground
+     sixty units from the middle of the river. */
+  water: [{ x: 960, y: 470 }, { x: 1092, y: 414 }],
   wood: [{ x: 1240, y: 334 }, { x: 1280, y: 358 }],
 };
 /**
@@ -43,7 +49,13 @@ const JOBS: Record<Job, Point[]> = {
  * is still possible - `chooseJob` is what the tests and the dev switch use -
  * it is simply not something the game asks a player to do.
  */
-export const JOB_ORDER: Job[] = ['lanes', 'fields', 'wood'];
+/* Round the valley the way the ground lies: the lanes north, the field west,
+   the water south-east and the wood east, and home again. The water was not
+   in the round for a long time, which left the ruler's day the same three
+   walks from the first spring to the last, and the one thing in the valley
+   the place was founded for never visited. The bank is there before anything
+   is built, so it needs no year of work to open it. */
+export const JOB_ORDER: Job[] = ['lanes', 'fields', 'water', 'wood'];
 /** The one job that is not there until a year of work has cleared the ground. */
 const JOB_NEEDS_WORK: Partial<Record<Job, string>> = { fields: 'fields' };
 
