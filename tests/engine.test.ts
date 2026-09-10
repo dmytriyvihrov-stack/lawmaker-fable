@@ -11,6 +11,7 @@ import {
   reopenLaw,
 } from '../src/engine/reducer';
 import { traitOf } from '../src/engine/monarch';
+import { getProposal } from '../src/engine/registry';
 import {
   focusOf,
   isWinter,
@@ -119,11 +120,16 @@ describe('the ledger', () => {
 
 describe('the years', () => {
   it('a law sets a trend, and a building adds to it', () => {
-    // perTurn economy +2, at a hamlet's weight of one. A standing law is the
-    // one thing that never stops working, so a year of it carries its own
-    // scale on top of the weight; a building is just the building.
-    const law = 2 * CONFIG.law.trendScale;
-    let s = seal(at(5), 'pv1_work', 0);
+    /* The store trend the first law's third answer actually writes, at a
+       hamlet's weight of one. A standing law is the one thing that never stops
+       working, so a year of it carries its own scale on top of the weight; a
+       building is just the building.
+
+       The number is read off the content and not typed in here, because a
+       balance pass moves it and this test is about the arithmetic around it. */
+    const owned = getProposal('pv1_work')!.options[2];
+    const law = owned.perTurn!.economy! * CONFIG.law.trendScale;
+    let s = seal(at(5), 'pv1_work', 2);
     expect(trendOf(s, 'economy')).toBe(law);
     s.buildings.fields = 2; // +2 each, and not scaled
     expect(trendOf(s, 'economy')).toBe(law + 4);
