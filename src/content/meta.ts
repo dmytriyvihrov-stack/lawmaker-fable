@@ -294,7 +294,7 @@ export const WORK_ICONS: Record<WorkId, string> = {
 export const PLOT_NAMES: Record<PlotId, { label: string; line: string }> = {
   north_gate: {
     label: 'By the gate',
-    line: 'Where the road comes in. Whatever stands here is the first thing a stranger sees.',
+    line: 'The mouth of the valley, where the road comes in. Whatever stands here is the first thing a stranger sees.',
   },
   east_rise: {
     label: 'The east rise',
@@ -309,7 +309,7 @@ export const PLOT_NAMES: Record<PlotId, { label: string; line: string }> = {
     line: 'In the middle of it all. Anything here is somewhere people already are.',
   },
   well_side: {
-    label: 'By the well',
+    label: 'By the water',
     line: 'The busiest ground in the place, and the wettest. People queue here anyway.',
   },
   west_strip: {
@@ -318,7 +318,7 @@ export const PLOT_NAMES: Record<PlotId, { label: string; line: string }> = {
   },
   north_field: {
     label: 'The north field',
-    line: 'The shoulder above the gate. Everything below it is in sight from up there, and so is whatever is coming.',
+    line: 'The shoulder above the road. Everything below it is in sight from up there, and so is whatever is coming.',
   },
   mill_end: {
     label: 'The mill end',
@@ -356,7 +356,7 @@ export const CITY_LABELS: Record<CityFlag, { on: string; off: string; emoji: str
   share_stalls: { on: 'Licence stalls open on the market row', off: 'The licence stalls close', emoji: '📋' },
   gates_closed: { on: 'The gates close', off: 'The gates open', emoji: '🚪' },
   camp_outside: { on: 'A camp grows outside the wall', off: 'The camp outside breaks up', emoji: '⛺' },
-  exam_desk: { on: 'A desk appears at the gate', off: 'The desk at the gate is gone', emoji: '📝' },
+  exam_desk: { on: 'A desk appears in the row', off: 'The desk in the row is gone', emoji: '📝' },
   meadow_fenced: { on: 'A fence goes up on the meadow', off: 'The fence comes down', emoji: '🚧' },
   goat_parade: { on: 'Goats spread over the common', off: 'The goats are moved off', emoji: '🐐' },
   dragon_roost: { on: 'Something large settles on the roof', off: 'The roof is empty again', emoji: '🐉' },

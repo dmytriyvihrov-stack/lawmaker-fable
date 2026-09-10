@@ -9,7 +9,7 @@ export const AFTERMATHS: AftermathScene[] = [
   {
     id: 'am_work_shared',
     paragraphs: [
-      '{{law:work_shared}} is said out loud at the well, and five people nod, and the nodding is the whole of the ceremony.',
+      '{{law:work_shared}} is said out loud at the woodpile, and five people nod, and the nodding is the whole of the ceremony.',
     ],
   },
   {
@@ -22,7 +22,7 @@ export const AFTERMATHS: AftermathScene[] = [
   {
     id: 'am_work_owned',
     paragraphs: [
-      'Under {{law:work_owned}} the field gets four fences by Sunday and the well gets none, and everybody drinks from it anyway.',
+      'Under {{law:work_owned}} the field gets four fences by Sunday and the water gets none, and everybody drinks from it anyway.',
     ],
   },
   {
@@ -40,7 +40,7 @@ export const AFTERMATHS: AftermathScene[] = [
   {
     id: 'am_strangers_turned_away',
     paragraphs: [
-      '{{law:strangers_turned_away}} is painted on the gate by someone who can paint. It is the nicest thing in the hamlet.',
+      '{{law:strangers_turned_away}} is painted on a board at the top of the lane by someone who can paint. It is the nicest thing in the hamlet.',
       'The road learns. Fewer people stop. The five of you get very good at the five of you.',
     ],
   },
@@ -93,13 +93,13 @@ export const AFTERMATHS: AftermathScene[] = [
   {
     id: 'am_trade_free',
     paragraphs: [
-      '{{law:trade_free}} is read out at the gate on Monday, and by the afternoon there are nine baskets where there was one. The Treasurer takes the news standing up, with his hands behind his back.',
+      '{{law:trade_free}} is read out in the market on Monday, and by the afternoon there are nine baskets where there was one. The Treasurer takes the news standing up, with his hands behind his back.',
     ],
   },
   {
     id: 'am_trade_taxed',
     paragraphs: [
-      'A desk appears at the gate under {{law:trade_taxed}}, with a man behind it who has waited his whole life for a desk at a gate. By Friday there is a road that goes around the gate.',
+      'A desk appears in the row under {{law:trade_taxed}}, with a man behind it who has waited his whole life for a desk. By Friday there is a path worn round the desk.',
     ],
   },
   {

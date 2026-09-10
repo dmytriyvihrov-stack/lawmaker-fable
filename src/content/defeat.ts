@@ -22,7 +22,7 @@ export const DEFEATS: Record<'health' | 'economy' | 'crownSanity', Defeat> = {
   health: {
     icon: '🤒',
     headline: 'The sickness got ahead of you.',
-    desc: 'It went through the houses twice while the well stayed exactly as it was. By spring there were not enough standing hands to carry the ones that had stopped.',
+    desc: 'It went through the houses twice while the water stayed exactly as it was. By spring there were not enough standing hands to carry the ones that had stopped.',
   },
   economy: {
     icon: '🥣',

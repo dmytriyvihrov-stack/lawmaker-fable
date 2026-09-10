@@ -13,6 +13,11 @@ export const SOURCES = {
   proposals: { path: 'src/content/proposals.ts', roots: ['PROPOSALS'] },
   cases: { path: 'src/content/cases.ts', roots: ['CASES', 'IVA_MET'] },
   aftermaths: { path: 'src/content/aftermaths.ts', roots: ['AFTERMATHS'] },
+  /* The years of work. A scene that waits on a building cannot be read
+     without them: the console drew "built: well" as raw JSON for as long as
+     it had never heard of a well. */
+  works: { path: 'src/content/works.ts', roots: ['WORKS'] },
+  techs: { path: 'src/content/techs.ts', roots: ['TECHS', 'PATHS', 'SPHERES'] },
   /* The delayed consequences used to live in their own file. They are written
      into the cases themselves now, so the file is gone and this entry stays
      optional: the console draws no loops and everything else still opens. */
@@ -64,6 +69,8 @@ export function loadContent(root) {
     proposals: valueOf(parsed, 'proposals', 'PROPOSALS', env, missing),
     cases: valueOf(parsed, 'cases', 'CASES', localEnv(parsed, 'cases', env), missing),
     aftermaths: valueOf(parsed, 'aftermaths', 'AFTERMATHS', env, missing),
+    works: valueOf(parsed, 'works', 'WORKS', env, missing),
+    techs: valueOf(parsed, 'techs', 'TECHS', env, missing),
     loops: valueOf(parsed, 'loops', 'LOOPS', env, missing),
     monarchs: valueOf(parsed, 'monarchs', 'MONARCHS', env, missing),
     readings: valueOf(parsed, 'readings', 'READINGS', env, missing),

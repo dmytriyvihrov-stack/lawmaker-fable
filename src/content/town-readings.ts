@@ -25,7 +25,7 @@ const READINGS: Record<StatId, Band[]> = {
     { upTo: 10, line: 'Somebody is burning something in the square tonight.', urgent: true },
     { upTo: 30, line: 'The square goes quiet when the guard walks through it.', urgent: true },
     { upTo: 60, line: 'The town grumbles at the usual volume.' },
-    { upTo: 80, line: 'People are singing at the gate again, badly.' },
+    { upTo: 80, line: 'People are singing on the lane again, badly.' },
     { upTo: 100, line: 'Strangers are being given directions and also soup.' },
   ],
   health: [
@@ -40,7 +40,7 @@ const READINGS: Record<StatId, Band[]> = {
     { upTo: 30, line: 'The Treasurer has started counting twice.', urgent: true },
     { upTo: 60, line: 'The market holds, more or less.' },
     { upTo: 80, line: 'There is building work on the east side again.' },
-    { upTo: 100, line: 'Carts queue at the gate to get IN.' },
+    { upTo: 100, line: 'Carts queue on the road to get IN.' },
   ],
   army: [
     { upTo: 10, line: 'The wall is guarded by a rota of volunteers and one dog.', urgent: true },

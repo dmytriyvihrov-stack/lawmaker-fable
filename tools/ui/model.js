@@ -27,6 +27,16 @@ export function condText(c) {
       return 'flag ' + c.flag;
     case 'caseShown':
       return 'case ' + c.caseId + ' was shown';
+    /* The four the console used to print as raw JSON, which is why nothing on
+       this page could say that a scene waits on a building. */
+    case 'built':
+      return (c.level && c.level > 1 ? c.work + ' built to level ' + c.level : c.work + ' is built');
+    case 'souls':
+      return 'souls ' + (c.op === 'lte' ? '<=' : '>=') + ' ' + c.value;
+    case 'stage':
+      return 'the place is a ' + c.stage;
+    case 'since':
+      return c.years + ' years since ' + c.caseId;
     case 'turn':
       return 'turn ' + (c.op === 'lte' ? '<=' : '>=') + ' ' + c.value;
     case 'not':
@@ -48,7 +58,8 @@ function lawPattern(c) {
 
 /** Walks a condition and reports everything it reads. */
 export function condRefs(cond, out, negated) {
-  const acc = out || { stats: [], laws: [], flags: [], cases: [], turns: [] };
+  const acc =
+    out || { stats: [], laws: [], flags: [], cases: [], turns: [], works: [], souls: [], stages: [], sinces: [] };
   const neg = negated === true;
   if (!cond) return acc;
   switch (cond.kind) {
@@ -69,6 +80,18 @@ export function condRefs(cond, out, negated) {
       break;
     case 'caseShown':
       acc.cases.push({ caseId: cond.caseId, negated: neg });
+      break;
+    case 'built':
+      acc.works.push({ work: cond.work, level: cond.level || 1, negated: neg });
+      break;
+    case 'souls':
+      acc.souls.push({ op: cond.op, value: cond.value, negated: neg });
+      break;
+    case 'stage':
+      acc.stages.push({ stage: cond.stage, negated: neg });
+      break;
+    case 'since':
+      acc.sinces.push({ caseId: cond.caseId, years: cond.years, negated: neg });
       break;
     case 'turn':
       acc.turns.push({ op: cond.op, value: cond.value, negated: neg });
@@ -396,6 +419,18 @@ export function buildTree(model, opts) {
       ref: { kind: 'case', id: c.id },
     });
   }
+  /* A year of work is a box like any other: the fence is what a scene at a
+     gate is waiting for, and the tree said nothing about it until now. */
+  if (options.showWorks !== false) {
+    for (const w of model.works || []) {
+      add('w:' + w.id, {
+        type: 'work',
+        label: w.name,
+        sub: w.id + ' / ' + w.stage + ' / ' + w.cost + ' points',
+        ref: { kind: 'work', id: w.id },
+      });
+    }
+  }
   if (options.showFlags !== false) {
     const flags = new Set();
     for (const c of model.cases) {
@@ -433,6 +468,17 @@ export function buildTree(model, opts) {
     }
     for (const f of refs.flags) link('f:' + f.flag, 'c:' + c.id, f.negated ? 'blocks' : 'unlocks');
     for (const s of refs.cases) link('c:' + s.caseId, 'c:' + c.id, s.negated ? 'blocks' : 'unlocks');
+    for (const w of refs.works) {
+      link('w:' + w.work, 'c:' + c.id, w.negated ? 'blocks' : 'needs', 'built');
+    }
+    for (const s of refs.sinces) {
+      link('c:' + s.caseId, 'c:' + c.id, 'unlocks', s.years + ' years later');
+    }
+  }
+  /* And the one chain the works have between themselves: nothing is bridged
+     until there is a road running at it. */
+  for (const w of model.works || []) {
+    if (w.needsWork) link('w:' + w.needsWork.id, 'w:' + w.id, 'needs', 'first');
   }
 
   // unlocks of proposals

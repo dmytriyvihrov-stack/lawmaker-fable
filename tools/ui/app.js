@@ -18,7 +18,7 @@ let model = null;
 let tab = 'rates';
 const sel = { proposal: null, case: null, cell: null, node: null };
 const filter = { text: '', stat: 'all', kind: 'all', when: 'all', caseText: '', character: 'all' };
-const treeOpts = { showFlags: true, showCases: true, focus: null };
+const treeOpts = { showFlags: true, showCases: true, showWorks: true, focus: null };
 
 const view = document.getElementById('view');
 const dirtyPill = document.getElementById('dirty');
@@ -817,32 +817,68 @@ function casePanel(c) {
   const src = { source: 'cases', root: 'CASES' };
   const grammar = model.verdicts.cases[c.id];
 
-  const reached = [];
+  /* What has to have happened first, and what this one puts on the table
+     afterwards, kept apart. One list mixed the two together and read as a pile
+     of facts; the question anybody actually has here is what comes after
+     what. */
+  const before = [];
+  const after = [];
+  const refs = condRefs(c.trigger);
+  const caseLink = (id) => h('a', { href: '#', onclick: (e) => { e.preventDefault(); jumpTo('case', id); } }, id);
+  const workOf = (id) => (model.works || []).find((w) => w.id === id);
+
   for (const l of lawOptions(model)) {
-    for (const r of condRefs(c.trigger).laws) {
+    for (const r of refs.laws) {
       const match = (r.subject === undefined || r.subject === l.option.subject) && (r.action === undefined || r.action === l.option.action);
-      if (match) reached.push(h('div', { class: 'row' }, chip(r.negated ? 'blocked by' : 'opened by'), h('span', {}, l.option.label), h('span', { class: 'muted mono' }, l.id)));
+      if (match) before.push(h('div', { class: 'row' }, chip(r.negated ? 'blocked by law' : 'opened by law'), h('span', {}, l.option.label), h('span', { class: 'muted mono' }, l.id)));
     }
   }
-  for (const r of condRefs(c.trigger).flags) reached.push(h('div', { class: 'row' }, chip(r.negated ? 'blocked by flag' : 'needs flag'), chip(r.flag, 'flag')));
-  for (const r of condRefs(c.trigger).stats) reached.push(h('div', { class: 'row' }, chip('gate'), h('span', { class: 'mono' }, r.stat + ' ' + (r.op === 'lte' ? '<=' : '>=') + ' ' + r.value)));
-  for (const r of condRefs(c.trigger).turns) reached.push(h('div', { class: 'row' }, chip('timing'), h('span', { class: 'mono' }, 'turn ' + (r.op === 'lte' ? '<=' : '>=') + ' ' + r.value)));
+  /* A law is a thing the place believes and a work is a thing it has. A scene
+     about a building waits on the building, and this row is where that shows. */
+  for (const r of refs.works) {
+    const w = workOf(r.work);
+    before.push(
+      h(
+        'div',
+        { class: 'row' },
+        chip(r.negated ? 'only without' : 'needs built', r.negated ? 'bad' : 'good'),
+        h('span', {}, w ? w.name : r.work),
+        h('span', { class: 'muted mono' }, r.work + (r.level > 1 ? ' level ' + r.level : '') + (w ? ' / ' + w.cost + ' points' : '')),
+      ),
+    );
+  }
+  for (const r of refs.flags) before.push(h('div', { class: 'row' }, chip(r.negated ? 'blocked by flag' : 'needs flag'), chip(r.flag, 'flag')));
+  for (const r of refs.cases) before.push(h('div', { class: 'row' }, chip(r.negated ? 'blocked by scene' : 'after scene'), caseLink(r.caseId)));
+  for (const r of refs.sinces) before.push(h('div', { class: 'row' }, chip('years after'), caseLink(r.caseId), h('span', { class: 'muted mono' }, '+' + r.years + ' years')));
+  for (const r of refs.souls) before.push(h('div', { class: 'row' }, chip('the count'), h('span', { class: 'mono' }, 'souls ' + (r.op === 'lte' ? '<=' : '>=') + ' ' + r.value)));
+  for (const r of refs.stages) before.push(h('div', { class: 'row' }, chip('the stage'), h('span', { class: 'mono' }, r.negated ? 'not a ' + r.stage : 'a ' + r.stage)));
+  for (const r of refs.stats) before.push(h('div', { class: 'row' }, chip('board gate'), h('span', { class: 'mono' }, r.stat + ' ' + (r.op === 'lte' ? '<=' : '>=') + ' ' + r.value)));
+  for (const r of refs.turns) before.push(h('div', { class: 'row' }, chip('timing'), h('span', { class: 'mono' }, 'turn ' + (r.op === 'lte' ? '<=' : '>=') + ' ' + r.value)));
+
   for (const other of model.cases) {
     for (const ch of other.choices) {
       if (ch.schedule && ch.schedule.caseId === c.id) {
-        reached.push(
-          h('div', { class: 'row' }, chip('scheduled by'), h('a', { href: '#', onclick: (e) => { e.preventDefault(); jumpTo('case', other.id); } }, other.id), h('span', { class: 'muted' }, '+' + ch.schedule.inTurns + ' turns after "' + ch.text + '"')),
+        before.push(
+          h('div', { class: 'row' }, chip('put here by'), caseLink(other.id), h('span', { class: 'muted' }, '+' + ch.schedule.inTurns + ' turns after "' + ch.text + '"')),
         );
       }
     }
+    if (other.id === c.id) continue;
     for (const r of condRefs(other.trigger).cases) {
-      if (r.caseId === c.id) reached.push(h('div', { class: 'row' }, chip(r.negated ? 'then blocks' : 'then opens'), h('a', { href: '#', onclick: (e) => { e.preventDefault(); jumpTo('case', other.id); } }, other.id)));
+      if (r.caseId === c.id) after.push(h('div', { class: 'row' }, chip(r.negated ? 'then blocks' : 'then opens'), caseLink(other.id)));
     }
+    for (const r of condRefs(other.trigger).sinces) {
+      if (r.caseId === c.id) after.push(h('div', { class: 'row' }, chip('then opens'), caseLink(other.id), h('span', { class: 'muted mono' }, '+' + r.years + ' years')));
+    }
+  }
+  for (const ch of c.choices) {
+    if (ch.schedule) after.push(h('div', { class: 'row' }, chip('schedules'), caseLink(ch.schedule.caseId), h('span', { class: 'muted' }, '+' + ch.schedule.inTurns + ' turns after "' + ch.text + '"')));
+    for (const f of ch.setFlags || []) after.push(h('div', { class: 'row' }, chip('sets flag', 'flag'), chip(f, 'flag'), h('span', { class: 'muted' }, 'on "' + ch.text + '"')));
   }
   for (const loop of model.loops) {
     if (loop.caseId === c.id) {
       const li = model.loops.indexOf(loop);
-      reached.push(
+      before.push(
         h(
           'div',
           { class: 'row' },
@@ -880,8 +916,11 @@ function casePanel(c) {
     h(
       'div',
       { class: 'panel' },
-      h('h2', { text: 'Where it sits in the chain (' + reached.length + ')' }),
-      reached.length ? reached : h('p', { class: 'hint', text: 'nothing points at this case' }),
+      h('h2', { text: 'Before it can happen (' + before.length + ')' }),
+      h('p', { class: 'hint', text: 'Every one of these has to be true in the same year, unless the trigger says OR.' }),
+      before.length ? before : h('p', { class: 'hint', text: 'nothing: this one can arrive in the first spring' }),
+      h('h2', { text: 'And after it (' + after.length + ')', style: 'margin-top:12px' }),
+      after.length ? after : h('p', { class: 'hint', text: 'nothing waits on this one' }),
     ),
     h(
       'div',
@@ -961,7 +1000,7 @@ function choiceCard(c, ci, ch, chi, grammar) {
 /* -------------------------------------------------------------- tree tab */
 
 function treeTab() {
-  const tree = buildTree(model, { showFlags: treeOpts.showFlags });
+  const tree = buildTree(model, { showFlags: treeOpts.showFlags, showWorks: treeOpts.showWorks });
   const filtered = {
     nodes: tree.nodes.filter((n) => (treeOpts.showCases ? true : n.type !== 'case')),
     edges: tree.edges,
@@ -984,7 +1023,7 @@ function treeTab() {
       'div',
       { class: 'graphlegend' },
       h('div', {}, h('b', {}, 'left to right: '), 'what puts what on the table'),
-      [['proposal', 'proposal'], ['law', 'law option'], ['decree', 'decree from a case'], ['case', 'case'], ['flag', 'story flag'], ['loop', 'loop']].map(([cls, label]) =>
+      [['proposal', 'proposal'], ['law', 'law option'], ['decree', 'decree from a case'], ['case', 'case'], ['work', 'year of work'], ['flag', 'story flag'], ['loop', 'loop']].map(([cls, label]) =>
         h('div', {}, h('span', { class: 'chip', style: 'border-color:var(--' + cls + ')' }, label)),
       ),
     ),
@@ -997,12 +1036,13 @@ function treeTab() {
       'div',
       { class: 'panel' },
       h('h2', { text: 'The tree: what unlocks what' }),
-      h('p', { class: 'hint', text: 'Acts run left to right. A law opens cases, a case sets flags and schedules other cases, a flag opens the next law. Drag to pan, wheel to zoom.' }),
+      h('p', { class: 'hint', text: 'Acts run left to right. A law opens cases, a year of work opens the scenes that are about the thing it built, a case sets flags and schedules other cases, a flag opens the next law. Drag to pan, wheel to zoom.' }),
       h(
         'div',
         { class: 'row' },
         h('label', {}, h('input', { type: 'checkbox', checked: treeOpts.showFlags ? true : undefined, onchange: (e) => { treeOpts.showFlags = e.target.checked; render(); } }), ' story flags'),
         h('label', {}, h('input', { type: 'checkbox', checked: treeOpts.showCases ? true : undefined, onchange: (e) => { treeOpts.showCases = e.target.checked; render(); } }), ' cases'),
+        h('label', {}, h('input', { type: 'checkbox', checked: treeOpts.showWorks ? true : undefined, onchange: (e) => { treeOpts.showWorks = e.target.checked; render(); } }), ' years of work'),
         h('button', { class: 'btn ghost', onclick: () => zoom.fit() }, 'fit'),
         h('button', { class: 'btn ghost', onclick: () => zoom.reset() }, '100%'),
         h('span', { class: 'muted', text: laid.nodes.length + ' boxes, ' + laid.edges.length + ' links' }),
@@ -1124,6 +1164,41 @@ function nodeDetail(node) {
     if (!l) return h('div', { class: 'panel' }, 'gone');
     if (l.origin === 'proposal') return proposalPanel(l.proposal);
     return casePanel(l.caseEvent);
+  }
+  /* A year of work, and the two questions anybody has about one: what has to
+     stand before it can be spent, and which scenes it is what unlocks. */
+  if (ref.kind === 'work') {
+    const w = (model.works || []).find((x) => x.id === ref.id);
+    if (!w) return h('div', { class: 'panel' }, 'gone');
+    const opens = model.cases.filter((c) => condRefs(c.trigger).works.some((r) => r.work === w.id && !r.negated));
+    const shuts = model.cases.filter((c) => condRefs(c.trigger).works.some((r) => r.work === w.id && r.negated));
+    const chain = (model.works || []).filter((x) => x.needsWork && x.needsWork.id === w.id);
+    const caseLink = (id) => h('a', { href: '#', onclick: (e) => { e.preventDefault(); jumpTo('case', id); } }, id);
+    return h(
+      'div',
+      { class: 'panel' },
+      h('h2', { text: 'a year of work' }),
+      h('h4', { text: w.name }),
+      h('p', { class: 'hint', text: w.line }),
+      kv(
+        'id',
+        h('span', { class: 'mono' }, w.id),
+        'stage',
+        h('span', { class: 'mono' }, w.stage),
+        'cost',
+        h('span', { class: 'mono' }, w.cost + (w.townCost ? ' / ' + w.townCost + ' as a town' : '') + ' points'),
+        'levels',
+        h('span', { class: 'mono' }, String(w.maxLevel)),
+        'waits on',
+        h('span', { class: 'mono' }, w.needsWork ? w.needsWork.id + ' level ' + w.needsWork.level : (w.needsBoard ? 'the ' + w.needsBoard + ' board' : (w.needsLaw ? 'a law on ' + w.needsLaw : 'nothing'))),
+        'opens the scenes',
+        h('span', {}, opens.length ? opens.map((c) => h('span', { class: 'row' }, caseLink(c.id), h('span', { class: 'muted' }, c.title))) : h('span', { class: 'muted' }, 'none')),
+        'keeps out',
+        h('span', {}, shuts.length ? shuts.map((c) => caseLink(c.id)) : h('span', { class: 'muted' }, 'none')),
+        'and then',
+        h('span', {}, chain.length ? chain.map((x) => chip(x.name)) : h('span', { class: 'muted' }, 'nothing waits on it')),
+      ),
+    );
   }
   if (ref.kind === 'flag') {
     const setters = [];

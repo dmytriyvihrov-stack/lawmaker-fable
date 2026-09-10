@@ -1356,3 +1356,115 @@ describe('the seasons, the ages and the reckoning', () => {
     }
   });
 });
+
+describe('what has to be standing before a scene can happen', () => {
+  /**
+   * A scene cannot name a thing the place has not built.
+   *
+   * The hole in the fence comes after the fence, and a law about strangers is
+   * not a fence. Every word below is a year of work somebody has to have
+   * spent, so a scene that says one waits on the work in its own trigger, or
+   * on the trigger of whatever puts it on the calendar. The list is short on
+   * purpose: it holds the words that mean the built thing and nothing else.
+   */
+  const NEEDS_A_WORK: { work: WorkId; words: string[] }[] = [
+    { work: 'well', words: ['the well'] },
+    { work: 'fence', words: ['the gate', 'the gatepost', 'the fence line', 'the wall'] },
+    { work: 'granary', words: ['the granary'] },
+    { work: 'mine', words: ['the mine'] },
+    { work: 'bridge', words: ['the bridge'] },
+    { work: 'long_room', words: ['the long room'] },
+    { work: 'watch_house', words: ['the watch house'] },
+  ];
+
+  /**
+   * The three scenes that say one of those words about something else. A new
+   * one needs a line here saying which other thing it means, which is the
+   * whole point: it is cheaper to rewrite the sentence than to earn a row.
+   */
+  const MEANS_SOMETHING_ELSE: Record<string, string> = {
+    t_town: 'the wall is what the charter asks for and what the place has not got round to',
+    w_wolf_back: 'the gate is the one on the top pen, shut behind whatever came through it',
+    w_brother_fire: 'the wall is the store\'s own, and it is still warm at dawn',
+    /* Iva's gate is the mouth of the valley, which this place has called the
+       gate since before anything hung there, and it is where the road comes
+       in and where a girl of nine can sell a pie to somebody arriving. The
+       fence's gate is a thing you shut; hers is a place you stand. She was
+       moved to a market row once and put back, at the user's word. */
+    d1_pies: 'the gate is the mouth of the road, and she sells pies at it',
+    r3_iva_stall: 'the same gate, and the stall she was given at it',
+    r3_iva_basket: 'the same gate, and the basket she is not selling at it',
+  };
+
+  /** Whether a trigger cannot be true unless this work stands. */
+  const implies = (cond: Condition | null, work: WorkId): boolean => {
+    if (cond === null) return false;
+    if (cond.kind === 'built') return cond.work === work;
+    if (cond.kind === 'all') return cond.conds.some((c) => implies(c, work));
+    if (cond.kind === 'any') return cond.conds.every((c) => implies(c, work));
+    return false;
+  };
+
+  /** Who puts a scene on the calendar, for the ones with no trigger of their own. */
+  const parents = new Map<string, string[]>();
+  for (const c of CASES) {
+    for (const choice of c.choices) {
+      if (!choice.schedule) continue;
+      const list = parents.get(choice.schedule.caseId) ?? [];
+      list.push(c.id);
+      parents.set(choice.schedule.caseId, list);
+    }
+  }
+
+  const waitsOn = (id: string, work: WorkId, seen = new Set<string>()): boolean => {
+    if (seen.has(id)) return false;
+    seen.add(id);
+    const c = CASES.find((x) => x.id === id);
+    if (!c) return false;
+    if (implies(c.trigger, work)) return true;
+    const up = parents.get(id) ?? [];
+    return up.length > 0 && up.every((parent) => waitsOn(parent, work, seen));
+  };
+
+  it('never says a thing the place could not have built yet', () => {
+    for (const c of CASES) {
+      if (MEANS_SOMETHING_ELSE[c.id] !== undefined) continue;
+      const said = [
+        c.title,
+        c.question ?? '',
+        ...c.scene,
+        ...c.choices.flatMap((choice) => [choice.text, choice.result]),
+      ]
+        .join(' ')
+        .toLowerCase();
+      for (const { work, words } of NEEDS_A_WORK) {
+        const named = words.filter((w) => said.includes(w));
+        if (named.length === 0) continue;
+        expect(
+          waitsOn(c.id, work),
+          `${c.id} says "${named[0]}" without waiting on ${work}`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it('keeps the four scenes that are about a building on that building', () => {
+    const about: [string, WorkId][] = [
+      ['v2_well', 'well'],
+      ['rr_gate', 'fence'],
+      ['d3_cart', 'mine'],
+      ['d4_bridge', 'bridge'],
+    ];
+    for (const [id, work] of about) {
+      const c = CASES.find((x) => x.id === id);
+      expect(c, `${id} is gone`).toBeDefined();
+      expect(implies(c!.trigger, work), `${id} stopped waiting on ${work}`).toBe(true);
+    }
+  });
+
+  it('names an exception only for a scene that is still there', () => {
+    for (const id of Object.keys(MEANS_SOMETHING_ELSE)) {
+      expect(CASES.some((c) => c.id === id), `${id} is excused and does not exist`).toBe(true);
+    }
+  });
+});

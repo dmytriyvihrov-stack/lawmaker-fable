@@ -38,6 +38,6 @@ export const EPITHETS: EpithetDef[] = [
     id: 'builder',
     name: 'the Builder',
     line: 'Two of your years went into things that are still standing when you walk past them.',
-    aside: 'They point at the well when strangers ask who is in charge here.',
+    aside: 'They point at the store when strangers ask who is in charge here.',
   },
 ];

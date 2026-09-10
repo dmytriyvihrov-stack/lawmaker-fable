@@ -13,6 +13,7 @@
   --flag: #6b3f8a;
   --loop: #2f7a6a;
   --proposal: #a33c2b;
+  --work: #7a6a2f;
   color-scheme: light;
 }
 
@@ -199,6 +200,7 @@ svg .node.decree rect { stroke: var(--law); stroke-dasharray: 3 2; }
 svg .node.case rect { stroke: var(--case); }
 svg .node.flag rect { stroke: var(--flag); }
 svg .node.loop rect { stroke: var(--loop); }
+svg .node.work rect { stroke: var(--work); }
 svg .node.sel rect { stroke-width: 2.5; fill: #fdf3dd; }
 svg .node.dim { opacity: 0.18; }
 svg .node text { font-size: 11px; }
@@ -207,6 +209,7 @@ svg .edge { fill: none; stroke: #b9ab8e; stroke-width: 1.2; }
 svg .edge.blocks { stroke: var(--bad); stroke-dasharray: 4 3; }
 svg .edge.sets { stroke: var(--flag); }
 svg .edge.schedules { stroke: var(--loop); stroke-dasharray: 5 3; }
+svg .edge.needs { stroke: var(--work); }
 svg .edge.hot { stroke: var(--accent); stroke-width: 2.2; }
 svg .edge.dim { opacity: 0.1; }
 

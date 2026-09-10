@@ -847,7 +847,7 @@ export const UI = {
     peoples: {
       heading: 'Who lives here',
       founders: 'The old families',
-      comers: 'The ones who came through the gate',
+      comers: 'The ones who came up the road',
       trades: 'The trades',
       river: 'The quarter by the river',
     },

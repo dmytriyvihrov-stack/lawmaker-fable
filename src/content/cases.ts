@@ -81,15 +81,19 @@ export const CASES: CaseEvent[] = [
 
   {
     id: 'v2_well',
-    /* The place was stopped at for the water, and the hole is in the ground
-       from the second spring. The year of work *lines* it, and an unlined well
-       is exactly the one that gives four buckets and then mud, so waiting on
-       the work put the dry week in year fifteen or in no year at all (24
-       reigns of 36). It waits on the law and on a summer having been lived. */
+    /* The well runs dry only where there is a well to run dry.
+       This used to wait on the law and a summer, on the reading that the hole
+       was in the ground from the start and the year of work only lined it. The
+       picture never agreed: the well is not drawn until that year is spent, on
+       the grounds that an unpaid-for well in the ground reads as a well nobody
+       asked for. So four buckets and then mud arrived in eight reigns of ten
+       before anybody had dug anywhere, which is the words calling the picture
+       a liar. It waits on the well now, and on the law, and on a summer. */
     trigger: {
       kind: 'all',
       conds: [
         { kind: 'lawActive', subject: 'work' },
+        { kind: 'built', work: 'well' },
         { kind: 'turn', op: 'gte', value: 3 },
       ],
     },
@@ -247,7 +251,7 @@ export const CASES: CaseEvent[] = [
         id: 'stays_anyway',
         text: 'He stays, mill and all, under a law that turns strangers away.',
         result:
-          'The gate says one thing and the mill says another, and the mill is louder. Three more strangers try the fence that year.',
+          'The law says one thing and the mill says another, and the mill is louder. Three more strangers try the same road that year.',
         tags: ['utilitarian'],
         effects: { economy: 8, crownSanity: -4, health: -4 },
         souls: 6,
@@ -342,7 +346,7 @@ export const CASES: CaseEvent[] = [
         id: 'wall_first',
         text: 'Wall first. Square later.',
         result:
-          'The wall goes up in a year and the square in three. People wave at each other over the wall until then.',
+          'A watch is set inside the year and the square waits three. People wave at each other across a ditch until then.',
         tags: ['kantian'],
         effects: { army: 12, mood: -6, economy: -4 },
       },
@@ -801,7 +805,7 @@ export const CASES: CaseEvent[] = [
     season: 'autumn',
     character: 'treasurer',
     title: 'The Long Winter: Grain',
-    question: 'The frost came early and plans came late. The granary will not reach spring.',
+    question: 'The frost came early and plans came late. What is in the store will not reach spring.',
     scene: [
       'The count is short. On what is left, the town reaches the thaw hungry, or reaches it smaller.',
       'The Treasurer has three plans and no opinion he is willing to say out loud.',
@@ -954,9 +958,9 @@ export const CASES: CaseEvent[] = [
     character: 'chaplain',
     title: 'The One from the Road',
     question:
-      'A man nobody here has met died at your fence in the night, and the ground behind it is yours.',
+      'A man nobody here has met died at the edge of the place in the night, and the ground behind him is yours.',
     scene: [
-      'He got as far as the gatepost and no further. He has a name sewn into the coat and a place name nobody recognises, and the road he came off runs to three valleys.',
+      'He got as far as the first roof and no further. He has a name sewn into the coat and a place name nobody recognises, and the road he came off runs to three valleys.',
       'Somebody has to decide whether the ground of this place is for people who were not of this place. Nobody has ever asked that here before, because until this year there was nothing here worth walking to.',
     ],
     choices: [
@@ -1263,7 +1267,7 @@ export const CASES: CaseEvent[] = [
     question:
       'The thing at the woodpile went off into the trees in the autumn, came back in the spring, and did not come back alone.',
     scene: [
-      'He answered to a name by the second winter, and walked the fence line at night on his own account, and the fence line was quieter than it used to be.',
+      'He answered to a name by the second winter, and walked the edge of the place at night on his own account, and the edge was quieter than it used to be.',
       'Then one morning in the autumn he was not there, and he was not there for two months. He came back in the spring, thin, went straight under the long house steps, and would not come out. There are five of them under there now.',
       'He was a she. This happens with anything that furry and nobody is embarrassed about it for long. The pups have never once been afraid of a person, which is a different animal to the one at the woodpile, and the place has started needing a word for it. The rest of the argument is what six of them eat.',
     ],
@@ -1280,9 +1284,9 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'to_the_flock',
-        text: 'Put them on the flock and the gate.',
+        text: 'Put them on the flock and the yards.',
         result:
-          'They work. Nothing has taken a lamb since autumn, and nobody comes up to the fence at night any more without being announced first, loudly, from a distance. The word the place settled on for them is dogs, and inside a year nobody can remember not having it.',
+          'They work. Nothing has taken a lamb since autumn, and nobody comes up to the houses at night any more without being announced first, loudly, from a distance. The word the place settled on for them is dogs, and inside a year nobody can remember not having it.',
         tags: ['meritocratic'],
         effects: { army: 10, economy: 6, mood: 4 },
         setFlags: ['dogs_kept'],
@@ -1292,7 +1296,7 @@ export const CASES: CaseEvent[] = [
         id: 'back_to_the_trees',
         text: 'The litter goes back to the trees.',
         result:
-          'The litter is carried out past the far field in a basket and left where the trees start. Their mother stays, because this is where the bowls are, and walks the fence line that night as usual. Nobody here ever needs the new word, and in a few years nobody remembers there nearly was one.',
+          'The litter is carried out past the far field in a basket and left where the trees start. Their mother stays, because this is where the bowls are, and walks the edge that night as usual. Nobody here ever needs the new word, and in a few years nobody remembers there nearly was one.',
         tags: ['utilitarian'],
         effects: { mood: -10, economy: 4 },
       },
@@ -1363,7 +1367,7 @@ export const CASES: CaseEvent[] = [
     title: 'The Watch Did Not Come',
     question: 'There is no one left to send. The square worked that out before you did.',
     scene: [
-      'The gate stood open all night because nobody was paid to close it. By morning the counting house is on fire and the Guild hall has been opened with an axe.',
+      'Nothing was shut all night, because shutting it was somebody’s wage and the wage stopped. By morning the counting house is on fire and the Guild hall has been opened with an axe.',
       'The Captain is here with four men and a list of eleven who did not report. He is not asking for orders. He is asking what to do with four men.',
     ],
     choices: [
@@ -1414,7 +1418,7 @@ export const CASES: CaseEvent[] = [
     priority: 0,
     character: 'healer',
     title: 'The Sick Have Run Out of Floor',
-    question: 'The sick have run out of floor, and the well is downhill of the graves.',
+    question: 'The sick have run out of floor, and the water is downhill of the graves.',
     scene: [
       'The Healer has stopped writing names. She says the cough moves faster than the cart, and asks for the one thing she has never asked for: authority.',
       'She wants the east lane closed with people still inside it.',
@@ -1434,7 +1438,7 @@ export const CASES: CaseEvent[] = [
         id: 'open_the_vault',
         text: 'Buy every physician the roads can reach.',
         result:
-          'Nine physicians arrive over two weeks and four of them are worth the coin. The vault is thin, and the long room empties by spring.',
+          'Nine physicians arrive over two weeks and four of them are worth the coin. The vault is thin, and the long house empties by spring.',
         tags: ['egalitarian'],
         effects: { health: 20, economy: -24, mood: 8 },
         souls: -8,
@@ -1518,7 +1522,7 @@ export const CASES: CaseEvent[] = [
         id: 'borrow',
         text: 'Borrow from the Guild, at their rate.',
         result:
-          'Wages are paid on Monday. The Guild now holds paper on the mill, the north gate and one of your laws, and mentions it rarely and precisely.',
+          'Wages are paid on Monday. The Guild now holds paper on the mill, the north field and one of your laws, and mentions it rarely and precisely.',
         tags: ['utilitarian'],
         effects: { economy: 24, mood: 4, army: -8 },
         cityFlagsOn: ['baron_banner'],
@@ -1647,9 +1651,9 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'close_the_gate',
-        text: 'Close the gate. Nobody leaves owing tax.',
+        text: 'Shut the road. Nobody leaves owing tax.',
         result:
-          'The gate holds the town in for a season. The carts go over the north field instead, at night, and the road they wear there is still called the tax path.',
+          'The road holds the town in for a season. The carts go over the north field instead, at night, and the track they wear there is still called the tax path.',
         tags: ['kantian'],
         effects: { army: 8, mood: -12, economy: 8 },
         souls: -20,
@@ -1888,7 +1892,7 @@ export const CASES: CaseEvent[] = [
     title: 'The Ballad About You',
     question: 'Somebody has set your worst year to a tune, and the tune is very good.',
     scene: [
-      'It is about the winter and the well, and it names you in the second verse and again in the fifth. Children sing it on the way to the field. The Captain has asked, in writing, whether he is meant to do something about it.',
+      'It is about the winter, the one everybody here means when they say it, and it names you in the second verse and again in the fifth. Children sing it on the way to the field. The Captain has asked, in writing, whether he is meant to do something about it.',
       'The singer is at the door with his hat. He would like to know whether he is being paid or arrested, and says that either would be fine.',
     ],
     choices: [
@@ -1910,9 +1914,9 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'silence',
-        text: 'It is not sung inside the wall.',
+        text: 'It is not sung where the place can hear it.',
         result:
-          'It is sung outside the wall instead, every evening, by more people than sang it inside, and the Captain stands at the gate and does not hum.',
+          'It is sung up on the common instead, every evening, by more people than ever sang it below, and the Captain stands at the bottom of the path and does not hum.',
         tags: ['kantian'],
         effects: { crownSanity: 6, mood: -8, culture: -6 },
         setFlags: ['ballad_silenced'],
@@ -1921,7 +1925,7 @@ export const CASES: CaseEvent[] = [
         id: 'judged_worthy',
         text: 'It goes to a hearing, it is judged worthy, and your worst year goes into the book.',
         result:
-          'The hall enters the ballad in the book of worthy things, with your name in it twice, and the clerk asks how to spell the well. Nobody is paid a copper. The square works out inside a week that the book is now the place its own bad winter is kept, and reads it.',
+          'The hall enters the ballad in the book of worthy things, with your name in it twice, and the clerk asks how to spell the singer. Nobody is paid a copper. The square works out inside a week that the book is now the place its own bad winter is kept, and reads it.',
         tags: ['meritocratic'],
         effects: { culture: 10, crownSanity: -8, mood: -8 },
       },
@@ -2045,7 +2049,7 @@ export const CASES: CaseEvent[] = [
         id: 'sell',
         text: 'Sell the swarm to the next valley, box and all.',
         result:
-          'A man from the next valley boxes them in an afternoon and pays in coin, and the following summer sells honey at your gate, at a price.',
+          'A man from the next valley boxes them in an afternoon and pays in coin, and the following summer sells honey at your door, at a price.',
         tags: ['libertarian'],
         effects: { economy: 6, mood: -2 },
         cityFlagsOff: ['dragon_roost'],
@@ -2063,7 +2067,7 @@ export const CASES: CaseEvent[] = [
       'The roof full of bees has paid its rent in wax and honey, and the next valley has heard.',
     scene: [
       'Two summers of stings, and this one the eaves are dripping. The Treasurer has weighed it, twice, and has stopped saying the number out loud in case it changes.',
-      'There is more than the place can eat, which is a new kind of problem, and three people at the gate with jars and coin who have not been asked in yet.',
+      'There is more than the place can eat, which is a new kind of problem, and three people at the door with jars and coin who have not been asked in yet.',
     ],
     choices: [
       {
@@ -2076,7 +2080,7 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'sell',
-        text: 'Sell it at the gate. Let the price find itself.',
+        text: 'Sell it at the door. Let the price find itself.',
         result:
           'The price finds itself by noon and it is a good price, and the place eats the same porridge it always did, with coin in the jar instead.',
         tags: ['libertarian'],
@@ -2142,7 +2146,7 @@ export const CASES: CaseEvent[] = [
         id: 'his_herd',
         text: 'They are his. He found them, he fed them, they follow him.',
         result:
-          'He is told in front of everybody that they are his, goes red, says nothing, and is out on the common before light. There is cheese at the gate by autumn, at a price, and it is a fair price.',
+          'He is told in front of everybody that they are his, goes red, says nothing, and is out on the common before light. There is cheese at the door by autumn, at a price, and it is a fair price.',
         tags: ['libertarian'],
         effects: { economy: 3, mood: 2 },
       },
@@ -2262,7 +2266,7 @@ export const CASES: CaseEvent[] = [
     question:
       'Your brother has walked here from the old place with one bag, and he has been drinking the whole way.',
     scene: [
-      'He is at the fence being extremely pleasant to people who have known him for one minute. He is steady this morning. He was not steady last night, and both of those have been true every day for years.',
+      'He is at the top of the lane being extremely pleasant to people who have known him for one minute. He is steady this morning. He was not steady last night, and both of those have been true every day for years.',
       'The Treasurer has said his piece twice: a hamlet this size feeds who it can carry, and family is not an argument about grain. He is right, and he is talking about a man who cannot stop on his own and knows it.',
     ],
     choices: [
@@ -2288,9 +2292,9 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'turn_him_back',
-        text: 'He does not come in. Say it at the fence, where they can hear.',
+        text: 'He does not come in. Say it at the lane end, where they can hear.',
         result:
-          'You say it at the fence with four people watching, and he takes it well, which is worse. He is on the road before dark and you can see him from the yard for a long time.',
+          'You say it at the lane end with four people watching, and he takes it well, which is worse. He is on the road before dark and you can see him from the yard for a long time.',
         tags: ['kantian'],
         effects: { mood: 10, crownSanity: -24 },
         setFlags: ['brother_driven'],
@@ -2414,7 +2418,7 @@ export const CASES: CaseEvent[] = [
     question: 'Every fence in the valley is down but the stretch Tam mended. The stock is in the corn.',
     scene: [
       'A night of wind in October, the kind that takes a roof off, took every fence post in the valley that nobody had looked at since it went in. Nobody had looked at most of them. By first light the goats are in the corn and the corn is in the goats.',
-      'One run of it is standing: the stretch by the gate. You fed Tam {{ago:v1_idle_hand}}, when he said his back, and he has been at that fence with a stool and a hammer ever since, and it did not move an inch.',
+      'One run of it is standing: the stretch below the long house. You fed Tam {{ago:v1_idle_hand}}, when he said his back, and he has been at that fence with a stool and a hammer ever since, and it did not move an inch.',
     ],
     choices: [
       {
@@ -2859,7 +2863,7 @@ export const CASES: CaseEvent[] = [
         id: 'convict',
         text: 'He did it. Say so, and let your own law do what it says.',
         result:
-          'The law does what it says, in front of everybody, and it is over faster than the argument was. The path past the granary is quiet after that, and people say so out loud, often.',
+          'The law does what it says, in front of everybody, and it is over faster than the argument was. The path past the store is quiet after that, and people say so out loud, often.',
         tags: ['utilitarian'],
         verdict: 'guilty',
         effects: { mood: 8, army: 4 },
@@ -3061,7 +3065,16 @@ export const CASES: CaseEvent[] = [
 
   {
     id: 'rr_gate',
-    trigger: { kind: 'souls', op: 'gte', value: 20 },
+    /* Nobody stands at a gate the place has not raised. The fence is the work
+       that puts one up and it is on the shelf from the first spring, so this
+       is a scene a place can decide to have rather than one it is owed. */
+    trigger: {
+      kind: 'all',
+      conds: [
+        { kind: 'souls', op: 'gte', value: 20 },
+        { kind: 'built', work: 'fence' },
+      ],
+    },
     priority: 14,
     character: 'chaplain',
     title: 'At the Gate in November',
@@ -3122,7 +3135,7 @@ export const CASES: CaseEvent[] = [
         id: 'the_list',
         text: 'The list. Every small broken thing on it, this month.',
         result:
-          'A gate, two roofs, the path over the marsh and the pump, in three weeks, by people who have been walking past all of them since April. Nothing about the place is different and everything about it works.',
+          'A byre door, two roofs, the path over the marsh and the pump, in three weeks, by people who have been walking past all of them since April. Nothing about the place is different and everything about it works.',
         tags: ['meritocratic'],
         effects: { economy: -3, health: 3, mood: 1 },
       },

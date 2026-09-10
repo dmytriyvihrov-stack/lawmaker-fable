@@ -36,15 +36,31 @@ bench, the exceptions that can be made to it.
 **Cases.** Every case: the trigger in plain words and as raw data, the priority
 (and whether it jumps the queue), the scene, every answer with its effects,
 flags, exceptions, decrees, repeals and delayed consequences, plus the ruling
-grammar of the bench and where the case sits in the chain.
+grammar of the bench.
+
+Under each one, the chain in two halves rather than one pile. **Before it can
+happen** is everything the trigger waits on, said in words: the laws that open
+it, **the year of work that has to have been spent**, the flags, the scenes that
+have to have happened, the count, the stage, the board gates and the timing.
+**And after it** is what waits on this one: the scenes it opens, the ones it
+schedules and how many years later, and the flags its answers set.
+
+The row that took the longest to arrive is the work one. A law is a thing the
+place believes; a work is a thing it has, and a scene about a building waits on
+the building. The console could not draw that for a long time, because
+`condText` had never heard of `built`, `souls`, `stage` or `since` and printed
+them as raw JSON. All four read as English now.
 
 **Reign.** Whole reigns played through the real engine, with seven kinds of
 player, a table over the seeds and a year by year timeline for each run. Its own
 section below. Nothing on this tab writes anything.
 
 **Tree.** The whole dependency graph, left to right: proposals, law options,
-cases, story flags and loops, with the edges that connect them (opens, blocks,
-sets, schedules, decrees, repeals, arms, fires). Drag to pan, wheel to zoom,
+cases, **years of work**, story flags and loops, with the edges that connect
+them (opens, blocks, needs, sets, schedules, decrees, repeals, arms, fires). A
+work box says what it costs, what has to stand before it can be spent, and which
+scenes are waiting on it; the fence is where the scene at the gate comes from,
+and the road is what the bridge waits for. Drag to pan, wheel to zoom,
 `fit` and `100%` to reset. Clicking a box dims everything it is not connected to
 and opens the full editor for it on the right.
 
@@ -122,6 +138,17 @@ a reign, which is a different question from whether the tests still pass.
 It runs on `vite-node`, which vitest already brings, so nothing is installed.
 The console spawns it as a child process and draws the JSON it prints
 (`--json`), so a simulator that hangs cannot take the console with it.
+
+## The order dump
+
+```bash
+npx vite-node tools/audit-order.ts > order.json
+```
+
+The same reading the Cases tab draws, as JSON: every scene with what has to be
+true before it can happen and what waits on it afterwards, every year of work
+with the scenes it opens, every proposal with what unlocks it. It writes
+nothing and is what a shareable page of the order is built out of.
 
 ## When the console opens empty
 
