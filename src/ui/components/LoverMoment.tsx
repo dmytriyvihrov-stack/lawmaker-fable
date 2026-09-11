@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { BOND_UI } from '../../content/bonds';
-import { characterMeta } from '../../content/meta';
+import { characterTitle } from '../../content/meta';
 import { monarchOf } from '../../engine/monarch';
 import type { GameState } from '../../engine/types';
 import { MonarchPortrait } from './MonarchPortrait';
@@ -33,7 +33,7 @@ export function LoverMoment({ state, character, onDone }: Props) {
   }, [onDone]);
 
   const monarch = monarchOf(state.seed);
-  const them = characterMeta(character);
+  const them = characterTitle(character);
 
   return (
     <button
@@ -66,7 +66,7 @@ export function LoverMoment({ state, character, onDone }: Props) {
           </div>
         </div>
 
-        <p className="mt-4 text-[14px] leading-relaxed text-parchment/90">{them.label}</p>
+        <p className="mt-4 text-[14px] leading-relaxed text-parchment/90">{them}</p>
         <p className="mt-2 text-[13px] leading-relaxed text-parchment-dim">{BOND_UI.kissAside}</p>
       </div>
     </button>

@@ -3,7 +3,7 @@ import {
   KIT_DOING, LEAVING_KIT, STATIONS, WINTER_DOING, folkLook,
 } from '../content/folk';
 import type { Doing, FolkLook } from '../content/folk';
-import { ALSO_IN_SCENE, characterMeta } from '../content/meta';
+import { ALSO_IN_SCENE, characterTitle } from '../content/meta';
 import { getCase } from './registry';
 import { rand01 } from './rng';
 import type { GameState, Season } from './types';
@@ -165,7 +165,7 @@ export function townFolk(s: GameState, season?: Season): FolkPin[] {
 
     pins.push({
       character,
-      label: characterMeta(character).label,
+      label: characterTitle(character),
       doing,
       x: station.x + step * spread,
       y: station.y + ((i * 5) % 7),

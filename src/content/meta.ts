@@ -57,35 +57,55 @@ export const ADVISORS: Record<AdvisorId, { label: string; emoji: string }> = {
   fool: { label: 'The Fool', emoji: '🃏' },
 };
 
-export const CHARACTERS: Record<string, { label: string; emoji: string }> = {
+/**
+ * Everybody who comes to the door: what they are called, and what they are.
+ *
+ * A name and a trade, and the two are separate fields because they are read
+ * in two different places. "Garry" is what a sentence about him says; "Garry,
+ * the digger" is how he is introduced, which is what the bench and the
+ * register put over his face. Half of them used to be a trade with no name at
+ * all, so a reign met The Digger, The Widow and The Cooper and had nothing to
+ * hold on to but the job; the other half were a name with nothing round it.
+ * Asked for by the user: a name plus something describing them, so it is
+ * easier to build a connection.
+ *
+ * Three of them keep a trade for a name, because they are not one person: the
+ * riders, the players and the square. The wolf keeps its own, for obvious
+ * reasons, and the monarch is drawn from the seed and named in
+ * `content/monarchs.ts`.
+ *
+ * Two names were already in the prose and are not invented here: Bregg, the
+ * lever man from the ore road, and Wat, who runs.
+ */
+export const CHARACTERS: Record<string, { label: string; emoji: string; role?: string }> = {
   monarch: { label: 'The Monarch', emoji: '👑' },
-  iva: { label: 'Iva', emoji: '🧺' },
-  widow: { label: 'The Widow', emoji: '🕯️' },
-  miller: { label: 'The Miller', emoji: '🌾' },
-  lever: { label: 'The Lever Man', emoji: '🕹️' },
-  pusher: { label: 'The Cooper', emoji: '🛢️' },
-  chaplain: { label: 'The Chaplain', emoji: '⛪' },
-  clerk: { label: 'The Clerk', emoji: '🖋️' },
-  tam: { label: 'Tam', emoji: '🧓' },
-  marta: { label: 'Marta', emoji: '🌱' },
-  millwright: { label: 'The Mill-Wright', emoji: '⚙️' },
+  iva: { label: 'Iva', emoji: '🧺', role: 'the girl at the gate' },
+  widow: { label: 'Bess', emoji: '🕯️', role: 'the widow' },
+  miller: { label: 'Orrin', emoji: '🌾', role: 'the miller' },
+  lever: { label: 'Bregg', emoji: '🕹️', role: 'the lever man' },
+  pusher: { label: 'Harl', emoji: '🛢️', role: 'the cooper' },
+  chaplain: { label: 'Elber', emoji: '⛪', role: 'the chaplain' },
+  clerk: { label: 'Pell', emoji: '🖋️', role: 'the clerk' },
+  tam: { label: 'Tam', emoji: '🧓', role: 'the elder' },
+  marta: { label: 'Marta', emoji: '🌱', role: 'who works the strip' },
+  millwright: { label: 'Sten', emoji: '⚙️', role: 'the mill-wright' },
   riders: { label: 'The Riders', emoji: '🐎' },
-  charter: { label: 'The Crown Clerk', emoji: '📜' },
-  treasurer: { label: 'The Treasurer', emoji: '🧮' },
-  healer: { label: 'The Healer', emoji: '🌡️' },
-  captain: { label: 'The Captain', emoji: '🛡️' },
-  fool: { label: 'The Fool', emoji: '🃏' },
+  charter: { label: 'Ardin', emoji: '📜', role: "the crown's clerk" },
+  treasurer: { label: 'Mott', emoji: '🧮', role: 'the treasurer' },
+  healer: { label: 'Sabel', emoji: '🌡️', role: 'the healer' },
+  captain: { label: 'Dray', emoji: '🛡️', role: 'the captain' },
+  fool: { label: 'Pip', emoji: '🃏', role: 'the fool' },
   crowd: { label: 'The Square', emoji: '🔥' },
-  lark: { label: 'Lark', emoji: '🧥' },
-  ferrier: { label: 'The Ferryman', emoji: '🛶' },
+  lark: { label: 'Lark', emoji: '🧥', role: 'the boy at the peg' },
+  ferrier: { label: 'Wend', emoji: '🛶', role: 'the ferryman' },
   wolf: { label: 'The Wolf', emoji: '🐺' },
   players: { label: 'The Players', emoji: '🎭' },
-  singer: { label: 'The Singer', emoji: '🪕' },
-  runner: { label: 'Wat', emoji: '🏇' },
-  brother: { label: 'Your Brother', emoji: '🍶' },
-  aunt: { label: 'Nell', emoji: '🛏️' },
-  digger: { label: 'The Digger', emoji: '⛏️' },
-  odo: { label: 'Odo', emoji: '🐐' },
+  singer: { label: 'Ness', emoji: '🪕', role: 'the singer' },
+  runner: { label: 'Wat', emoji: '🏇', role: 'the runner' },
+  brother: { label: 'Coll', emoji: '🍶', role: 'your brother' },
+  aunt: { label: 'Nell', emoji: '🛏️', role: 'your aunt' },
+  digger: { label: 'Garry', emoji: '⛏️', role: 'the digger' },
+  odo: { label: 'Odo', emoji: '🐐', role: 'the goatherd' },
 };
 
 /**
@@ -158,6 +178,18 @@ export function actionMeta(id: ActionId) {
 export function characterMeta(id: string | undefined) {
   if (!id) return CHARACTERS.monarch;
   return CHARACTERS[id] ?? CHARACTERS.monarch;
+}
+
+/**
+ * How somebody is introduced: the name, and what they are, once.
+ *
+ * Over a face on the bench and at the head of a register entry. Anywhere a
+ * sentence is being written about them ("Tam loves you") the name alone is
+ * what is wanted, which is what `characterMeta().label` is still for.
+ */
+export function characterTitle(id: string | undefined): string {
+  const meta = characterMeta(id);
+  return meta.role ? `${meta.label}, ${meta.role}` : meta.label;
 }
 
 /**

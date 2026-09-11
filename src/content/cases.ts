@@ -25,10 +25,19 @@ export const CASES: CaseEvent[] = [
       {
         id: 'feed_him',
         text: 'He eats. A place that counts backs is not a place.',
+        /* The kind answer, and the square is in the room when it is given.
+           It used to cost the store and nothing else, so the four who were
+           digging that morning watched a man eat their bread and had no
+           opinion about it at all. They have one now, and they still have it
+           in the spring. Asked for by the user. */
         result:
-          'Tam eats, and mends the fence sitting down, and the fence is the best it has ever been.',
+          'Tam eats, and mends the fence sitting down, and the fence is the best it has ever been. The four who dug that morning watch him eat, and are still watching you about it in the spring.',
         tags: ['communitarian'],
-        effects: { health: 6, economy: -8 },
+        effects: { health: 6, economy: -8, mood: -6 },
+        /* The square is what the mood is, and the square is not Tam. Said
+           here rather than read off the numbers, because the numbers now say
+           the opposite of what the man at the door thinks: he was fed. */
+        bond: 1,
         setFlags: ['tam_fed'],
       },
       {
@@ -618,7 +627,7 @@ export const CASES: CaseEvent[] = [
         id: 'should_have_drawn',
         text: 'He should have drawn a lot.',
         result:
-          'The ruling says the cup should have come out on the hillside. Drawing takes a minute. The cart took four seconds.',
+          'The ruling says the cup should have come out on the hillside. Drawing takes a minute. The cart took four seconds, and every lever man on that road takes the minute from now on.',
         tags: ['egalitarian'],
         // the law's own word, and the eleven carry cups up the hill from then on
         effects: { crownSanity: 6, mood: 2, health: -8 },
@@ -726,7 +735,7 @@ export const CASES: CaseEvent[] = [
         id: 'clerk',
         text: 'From now on the dying hear it from a clerk.',
         result:
-          'The clerk has a form, and the form has a line for the estate. The town learns to dread a bag at the door.',
+          'The clerk has a form, the form has a line for the estate and a line above it for what the physician actually said, and the ones who hear that early do something about it. The town learns to dread a bag at the door.',
         tags: ['utilitarian'],
         effects: { health: 6, mood: -8, economy: 4, crownSanity: -4 },
       },
@@ -734,7 +743,7 @@ export const CASES: CaseEvent[] = [
         id: 'within_the_law',
         text: 'That is exactly what your law allows. Nobody is thanked and nobody pays.',
         result:
-          'She goes back to her old voice, the one people believed. The children are told to ask a clerk about wills.',
+          'She goes back to her old voice, the one people believed, and the ones who believe it this year find out in time to do nothing about it. The children are told to ask a clerk about wills.',
         tags: ['communitarian'],
         effects: { crownSanity: 8, mood: 4, health: -6 },
       },
@@ -980,7 +989,7 @@ export const CASES: CaseEvent[] = [
         id: 'send_word',
         text: 'Send the name down the road and hold him until somebody answers.',
         result:
-          'Two riders and eleven days, and on the twelfth a brother arrives from the third valley and takes him home, and shakes the hand of everybody here.',
+          'Two riders and eleven days, and on the twelfth a brother arrives from the third valley and takes him home, and shakes the hand of everybody here, and tells his own valley what kind of place this is, which is heard upstairs before the spring.',
         tags: ['communitarian'],
         effects: { mood: 6, economy: -8, health: -2, crownSanity: 6 },
         setFlags: ['road_buried'],
@@ -2141,7 +2150,7 @@ export const CASES: CaseEvent[] = [
         id: 'split_them',
         text: 'Split the herd. A goat to every house that will keep one.',
         result:
-          'Every yard has a goat in it by Sunday and every house is pleased with you for two weeks. Four of them are back on the common by Friday, standing where Odo usually stands, and he has taken a basket to the beeches instead.',
+          'Every yard has a goat in it by Sunday and every house is pleased with you for two weeks. The milk that used to come in one pail comes in eleven now, and there is less of it. Four of them are back on the common by Friday, standing where Odo usually stands, and he has taken a basket to the beeches instead.',
         tags: ['egalitarian'],
         effects: { mood: 6, economy: -3 },
       },
@@ -2407,10 +2416,18 @@ export const CASES: CaseEvent[] = [
    */
   {
     id: 'r1_tam_fed',
+    /* And it waits for a fence, because it is about one. The whole scene is
+       a night of wind taking every post in the valley except the run Tam has
+       been mending, which is a sentence about a thing the picture only draws
+       once a year has been spent on it: before that there is no fence down
+       there to stand or to fall. It used to wait on the flag and a year, and
+       arrived in valleys with nothing to blow over. Asked for by the user;
+       the same reading as T-ORDER-1 and check 36. */
     trigger: {
       kind: 'all',
       conds: [
         { kind: 'flag', flag: 'tam_fed' },
+        { kind: 'built', work: 'fence' },
         { kind: 'turn', op: 'gte', value: 5 },
       ],
     },
@@ -2454,10 +2471,12 @@ export const CASES: CaseEvent[] = [
 
   {
     id: 'r1_tam_cut',
+    /* The other half of the same night, and it waits on the same fence. */
     trigger: {
       kind: 'all',
       conds: [
         { kind: 'flag', flag: 'tam_cut' },
+        { kind: 'built', work: 'fence' },
         { kind: 'turn', op: 'gte', value: 5 },
       ],
     },
@@ -2483,7 +2502,7 @@ export const CASES: CaseEvent[] = [
         id: 'pay_him_like_a_stranger',
         text: 'Pay him for it, out of the store, the way you would pay a stranger.',
         result:
-          'He takes the coin, does the work in a week, and on the last day hands every coin back to the store in front of the same people, which makes it the dearest fence anybody here has ever bought.',
+          'He takes the coin, does the work in a week, and does not spend a copper of it anywhere anybody can see, which makes it the dearest fence anybody here has ever bought.',
         tags: ['utilitarian'],
         effects: { economy: -8, mood: -2, health: 2 },
       },
@@ -2584,7 +2603,7 @@ export const CASES: CaseEvent[] = [
         id: 'the_mill_pays',
         text: 'The mill took her plot. The mill pays her for this one.',
         result:
-          'The mill-wright pays, out of the flour her old plot has ground since, and is not pleased about it, and Marta buys a cow with it and names the cow after nobody in particular, loudly, in the lane.',
+          'The mill-wright pays, and is not pleased about it, out of a year of the flour her old plot has ground since, which is a year of flour the store never sees. Marta buys a cow with it and names the cow after nobody in particular, loudly, in the lane.',
         tags: ['communitarian'],
         effects: { economy: -4, mood: 8, crownSanity: 2 },
       },

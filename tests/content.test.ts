@@ -597,16 +597,28 @@ describe('content validator', () => {
       if (village) {
         /* A hamlet law waits for nothing a hamlet will not reach: a year of
            the place existing, or something that has actually happened in it,
-           or either of those. It may never wait for a crowd or a charter it
-           will not see. `pv3_dead` is the reason this is not simply "turn":
-           the law about burying people arrives the year somebody is buried,
-           with a year as the long stop behind it. */
+           or a law the hamlet writes earlier in the order, or any combination
+           of those. It may never wait for a crowd or a charter it will not
+           see, or for a law of a later act. `pv3_dead` is the reason this is
+           not simply "turn": the law about burying people arrives the year
+           somebody is buried, with a year as the long stop behind it.
+           `pv2_strangers` is the reason a standing law counts: the fence
+           waits on the work, which is act 1 and comes to every reign. */
+        const earlier = new Set(
+          PROPOSALS.filter(
+            (q) => q.act < p.act && VILLAGE_SUBJECTS.includes(q.options[0].subject),
+          ).flatMap((q) => q.options.map((o) => o.subject)),
+        );
         const gate = p.unlockedBy;
         const reachable = (c: typeof gate): boolean =>
           c === undefined ||
           c.kind === 'turn' ||
           c.kind === 'flag' ||
-          (c.kind === 'any' && c.conds.every((inner) => reachable(inner)));
+          ((c.kind === 'lawActive' || c.kind === 'lawEver') &&
+            c.subject !== undefined &&
+            earlier.has(c.subject)) ||
+          ((c.kind === 'any' || c.kind === 'all') &&
+            c.conds.every((inner) => reachable(inner)));
         expect(reachable(gate), `${p.id} waits on more than a hamlet can reach`).toBe(true);
         continue;
       }
@@ -1086,12 +1098,20 @@ describe('content validator', () => {
    */
   it('36. no scene names a building the place may not have built', () => {
     const NAMED: [WorkId, RegExp][] = [
-      ['granary', /the granary/i],
-      ['long_room', /long room/i],
-      ['hall', /the hall/i],
-      ['mine', /the (mine|adit|shaft)/i],
-      ['bridge', /the bridge/i],
-      ['watch_house', /the watch[ -]house/i],
+      ['granary', /\bthe granary\b/i],
+      ['long_room', /\blong room\b/i],
+      ['hall', /\bthe hall\b/i],
+      ['mine', /\bthe (mine|adit|shaft)\b/i],
+      ['bridge', /\bthe bridge\b/i],
+      ['watch_house', /\bthe watch[ -]house\b/i],
+      /* The fence is the seventh, and it was left out of this list on the
+         grounds that a valley has a fence round a yard whether or not
+         anybody has spent a year on one. That is true of "a fence" and not
+         of "the fence", which is the run along the lane the picture only
+         draws once the year is spent: two scenes opened on a night of wind
+         taking every post in the valley, in valleys that had never raised
+         one. Asked for by the user. */
+      ['fence', /\b(the|every) fence\b/i],
     ];
     /** Somebody else's hall, three valleys away, which this place never built. */
     const ELSEWHERE: Record<string, RegExp> = { wv_hearth: /hall of the lord/i };

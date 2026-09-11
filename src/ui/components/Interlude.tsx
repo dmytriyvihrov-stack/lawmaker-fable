@@ -1,7 +1,7 @@
 import type { Ref } from 'react';
 import { UI } from '../../content/ui-strings';
 import { TYPE } from '../type';
-import { characterMeta } from '../../content/meta';
+import { characterTitle } from '../../content/meta';
 import { seasonLine } from '../../content/season-lines';
 import { getCase } from '../../engine/registry';
 import type { CurrentEvent, GameState, Season } from '../../engine/types';
@@ -32,7 +32,7 @@ interface Props {
  */
 export function Interlude({ state, season, waiting, next, onOpen, cardRef }: Props) {
   const event = next?.kind === 'case' ? getCase(next.id) : undefined;
-  const who = event ? characterMeta(event.character) : null;
+  const who = event ? characterTitle(event.character) : null;
 
   if (!waiting) {
     return (
@@ -89,7 +89,7 @@ export function Interlude({ state, season, waiting, next, onOpen, cardRef }: Pro
           {event ? event.title : UI.composer.heading}
         </div>
         <div className={`truncate ${TYPE.note} text-parchment-dim`}>
-          {who ? who.label : UI.idle.waitingLaw}
+          {who ?? UI.idle.waitingLaw}
         </div>
       </div>
       <span className="shrink-0 rounded-md bg-seal px-5 py-2.5 text-[15px] tracking-[0.2em] text-parchment">

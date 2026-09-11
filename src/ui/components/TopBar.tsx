@@ -12,6 +12,7 @@ import {
   trendSourcesOf,
   yearsToWinter,
 } from '../../engine/simulation';
+import { newFaces } from '../../engine/story';
 import type { GameState, Season, StatId } from '../../engine/types';
 import { Feeling, feelingArrows, isFeeling } from './Feeling';
 import { GrowthNote } from './GrowthNote';
@@ -266,6 +267,13 @@ export function TopBar({
     activeStats(state).includes(id),
   );
 
+  /** Who has come to the door since the book was last opened. */
+  const faces = newFaces(state);
+  const faceNews =
+    faces.length === 1
+      ? `${UI.register.openLabel}: ${UI.register.newsOne}`
+      : `${UI.register.openLabel}: ${UI.register.news.replace('{n}', String(faces.length))}`;
+
   /* h-7 and not h-8: this strip is the one piece of furniture on screen the
      whole time, and every pixel of it is a pixel of valley. Nothing in it
      got smaller except the air round it. */
@@ -273,7 +281,9 @@ export function TopBar({
     'flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-ink-line px-2 text-[14px] leading-none text-parchment-dim hover:border-parchment-dim/60 disabled:cursor-default';
 
   return (
-    <header className="pointer-events-auto border-b border-ink-line bg-ink-soft">
+    /* `relative`, because the year hangs off the middle of this bar rather
+       than standing in the row: see the clock below. */
+    <header className="pointer-events-auto relative border-b border-ink-line bg-ink-soft">
       <div className="ruler-topbar-row flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-1.5 sm:px-6 sm:py-2">
         {/* what the place is, and what it is called */}
         <span
@@ -296,10 +306,14 @@ export function TopBar({
         </div>
 
         <span className="ruler-topbar-actions flex shrink-0 items-center gap-2.5">
-          {/* The shelf. On a wide window it sits in the column under the
-              crown, beside the laws; here only where that column is not
-              drawn, so it is on every window exactly once. */}
-          {onWorks && <WorksButton state={state} onOpen={onWorks} className={`${box} lg:hidden`} />}
+          {/* The shelf, in the row with the other doors.
+
+              It used to sit in the column under the crown on a wide window
+              and only come up here when that column was not drawn. That put
+              the one mark that carries a count out on the meadow on its own,
+              a long way from everything else you can open, and the first
+              thing a player asked was what it was. Asked for by the user. */}
+          {onWorks && <WorksButton state={state} onOpen={onWorks} className={box} />}
           {opening > 0 && (
             <button
               type="button"
@@ -348,29 +362,57 @@ export function TopBar({
             <span aria-hidden>{UI.court.codexIcon}</span>
             <span className="sr-only">{UI.court.openCodex}</span>
           </button>
+          {/* The book of faces, and its own count: somebody is in it who was
+              not in it the last time it was opened. The shelf has carried one
+              of these since T-SHELF-1 and the book is the other page in this
+              game that gains things while you are looking elsewhere. Asked
+              for by the user. */}
           <button
             type="button"
             onClick={onRegister}
-            aria-label={UI.register.openLabel}
-            title={UI.register.openLabel}
-            className={box}
+            aria-label={faces.length > 0 ? faceNews : UI.register.openLabel}
+            title={faces.length > 0 ? faceNews : UI.register.openLabel}
+            className={`relative ${box}`}
           >
-            <span aria-hidden>📇</span>
+            <span aria-hidden>{UI.register.icon}</span>
             <span className="sr-only">{UI.register.openLabel}</span>
+            {faces.length > 0 && (
+              <span
+                aria-hidden
+                className="shelf-news absolute -right-1.5 -top-1.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-seal px-1 text-[10px] leading-none tabular-nums text-parchment"
+              >
+                {faces.length}
+              </span>
+            )}
           </button>
 
-          {/* the year and the season it is in are one fact, so they stand together */}
-          {/* The dial says which season, so the word "year" beside a number in
-              a row of numbers is the one word here that is not carrying its
-              own width. It is on the pointer instead. */}
-          <span
-            className="ml-1 flex shrink-0 items-center gap-2 whitespace-nowrap text-[11px] uppercase tracking-[0.2em] text-parchment-dim"
-            title={`${UI.court.turn} ${state.turn}`}
-          >
-            <SeasonDial season={season} turn={state.turn} />
-            <span className="tabular-nums">{state.turn}</span>
-            <span className="sr-only">
-              {UI.court.turn} {state.turn}
+          {/* The year, the season it is in, and the one date this place keeps,
+              in the middle of the bar and in a ring of their own.
+
+              Everything else up here is a dial or a door. Where the reign has
+              got to is neither, and in the row it was a number between two
+              buttons: the year of a reign read as one more piece of chrome.
+              The ring hangs a little below the bar, over the top of the
+              valley, which is what stops it reading as a seventh box.
+
+              Narrow, there is no middle to stand in: it goes back in the row
+              where it always was, which is what the `lg:` half of this says.
+              Asked for by the user. */}
+          <span className="ruler-topbar-clock ml-1 flex shrink-0 items-center gap-2 lg:absolute lg:left-1/2 lg:top-[15px] lg:ml-0 lg:-translate-x-1/2">
+            <span
+              className="flex items-center gap-2 rounded-full border border-ink-line bg-ink px-3 py-1.5 lg:shadow-[0_10px_24px_rgba(0,0,0,0.45)]"
+              title={`${UI.court.turn} ${state.turn}`}
+            >
+              <SeasonDial season={season} turn={state.turn} />
+              <span className="whitespace-nowrap text-[11px] uppercase tracking-[0.2em] tabular-nums text-parchment">
+                {UI.court.turn} {state.turn}
+              </span>
+            </span>
+
+            {/* the other clock, which runs whether or not anybody is looking */}
+            <span className="whitespace-nowrap text-[10px] text-seal/85" title={frost}>
+              <span aria-hidden>❄️</span> <span className="tabular-nums">{frostShort}</span>
+              <span className="sr-only">{frost}</span>
             </span>
           </span>
 
@@ -390,12 +432,6 @@ export function TopBar({
             <span aria-hidden>{UI.speed.marks[speed] ?? UI.speed.marks[0]}</span>
             <span className="sr-only">{UI.speed.names[speed] ?? UI.speed.names[0]}</span>
           </button>
-
-          {/* the other clock, which runs whether or not anybody is looking */}
-          <span className="ml-2 whitespace-nowrap text-[11px] text-seal" title={frost}>
-            <span aria-hidden>❄️</span> <span className="tabular-nums">{frostShort}</span>
-            <span className="sr-only">{frost}</span>
-          </span>
 
           {/* and the corner, which is not part of the reign at all */}
           <Menu onBeginAnew={onBeginAnew} />

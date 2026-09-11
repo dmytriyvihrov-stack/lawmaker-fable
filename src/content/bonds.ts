@@ -11,7 +11,12 @@ import type { BondLevel } from '../engine/types';
  *
  * The mark matters as much as the word. A register of thirty faces is read at
  * a glance or not at all, and the glance has to land on how they feel before
- * it lands on their name.
+ * it lands on their name. So the mark is the whole of it on the page and the
+ * word is under the pointer, and the five marks are five of one thing rather
+ * than a black heart, a cross, a dot, a smile and a red heart: a row of five
+ * different kinds of picture is five things to learn, and one row of hearts
+ * going from dark to red is a scale anybody can read once. Asked for by the
+ * user.
  */
 export interface BondWord {
   level: BondLevel;
@@ -31,19 +36,19 @@ export const BOND_WORDS: BondWord[] = [
   {
     level: -1,
     word: 'dislikes you',
-    mark: '💢',
+    mark: '💔',
     line: 'Civil, and no further. You are a thing that happened to them once.',
   },
   {
     level: 0,
     word: 'is all right with you',
-    mark: '·',
+    mark: '🤍',
     line: 'No opinion worth the walk. Most of a place is this, most of the time.',
   },
   {
     level: 1,
     word: 'likes you',
-    mark: '🙂',
+    mark: '💛',
     line: 'Glad it is you holding it, and says so where you can hear.',
   },
   {

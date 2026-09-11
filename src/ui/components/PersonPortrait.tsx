@@ -8,7 +8,7 @@
  * the hood you pick out of a street at a tenth of it.
  */
 
-import { folkLook } from '../../content/folk';
+import { AGES, folkLook } from '../../content/folk';
 import type { FolkLook } from '../../content/folk';
 import { foundingLooks } from '../../engine/folk';
 
@@ -16,6 +16,18 @@ const INK = 'var(--color-parchment-dim)';
 const SOFT = 'var(--color-ink-line)';
 const SEAL = 'var(--color-seal)';
 const HAIR = 'var(--color-hair)';
+/**
+ * And the hair of somebody who has been here a while.
+ *
+ * Tam is fifty eight in the first spring, Nell is seventy one, and both of
+ * them were drawn with the same dark crop as the girl at the gate: a player
+ * who has just been told a man's back has gone was looking at a face of
+ * twenty five. Age is not a different drawing, it is four strokes and a
+ * lighter head. Asked for by the user.
+ */
+const GREY = '#b8b0a2';
+/** Years, past which a face carries them. */
+const OLD_AT = 55;
 const GLOW = 'var(--color-parchment)';
 /** A face is the one light thing in the frame, and the frame is the wall. */
 const SKIN = '#e9dcbe';
@@ -57,6 +69,11 @@ export function PersonPortrait({
 
   const look = given ?? folkLook(character);
   const eyeY = look.y + (grim ? 1 : 0);
+  /* Off the register's own table of ages, so the face and the number under it
+     are the same fact. A look handed in directly (the founding) has no
+     character to be old. */
+  const old = given === undefined && (AGES[character ?? ''] ?? 0) >= OLD_AT;
+  const r = look.r;
 
   return (
     <svg
@@ -146,7 +163,28 @@ export function PersonPortrait({
         fill="none"
         strokeLinecap="round"
       />
-      {hair(look)}
+      {/* What the years do: the lines at the corner of the eye, the two from
+          the nose to the mouth, and one across the brow. Nothing is added to
+          the silhouette, because the silhouette is what makes somebody
+          recognisable at eight pixels. */}
+      {old && (
+        <g
+          stroke="var(--color-ink)"
+          strokeWidth="0.75"
+          strokeLinecap="round"
+          fill="none"
+          opacity="0.42"
+        >
+          <path d={`M${32 - r * 0.74} ${eyeY - 0.8} l-1.5 -0.9`} />
+          <path d={`M${32 - r * 0.74} ${eyeY + 0.5} l-1.6 0.4`} />
+          <path d={`M${32 + r * 0.74} ${eyeY - 0.8} l1.5 -0.9`} />
+          <path d={`M${32 + r * 0.74} ${eyeY + 0.5} l1.6 0.4`} />
+          <path d={`M${32 - 2} ${look.y + r * 0.2} q-1.1 ${r * 0.26} -0.5 ${r * 0.44}`} />
+          <path d={`M${32 + 2} ${look.y + r * 0.2} q1.1 ${r * 0.26} 0.5 ${r * 0.44}`} />
+          <path d={`M${32 - r * 0.48} ${look.y - r * 0.66} h${r * 0.96}`} opacity="0.55" />
+        </g>
+      )}
+      {hair(look, old)}
       {look.specs && specs(look)}
       {prop(look)}
     </svg>
@@ -183,8 +221,8 @@ function kind_hasEars(look: FolkLook): boolean {
   return look.hair !== 'hood' && look.hair !== 'long';
 }
 
-function hair({ r, y, hair: kind, seal }: FolkLook) {
-  const fill = seal ? SEAL : HAIR;
+function hair({ r, y, hair: kind, seal }: FolkLook, old = false) {
+  const fill = seal ? SEAL : old ? GREY : HAIR;
   switch (kind) {
     case 'long':
       return (

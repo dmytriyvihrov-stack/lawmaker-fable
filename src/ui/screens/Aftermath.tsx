@@ -1,4 +1,4 @@
-import { characterMeta, CITY_LABELS, PLACE_NAMES } from '../../content/meta';
+import { characterMeta, characterTitle, CITY_LABELS, PLACE_NAMES } from '../../content/meta';
 import { UI } from '../../content/ui-strings';
 import { getCase, getProposal, getWork } from '../../engine/registry';
 import { causeLawOf, lastTownChanges, threadsOf } from '../../engine/story';
@@ -44,7 +44,7 @@ export function Aftermath({ state, dev = false, onContinue }: Props) {
   const last = state.log[state.log.length - 1];
   const event = last?.kind === 'case' ? getCase(last.refId) : undefined;
   const cause = event ? causeLawOf(event, state) : null;
-  const who = event ? characterMeta(event.character) : null;
+  const who = event ? characterTitle(event.character) : null;
 
   // a ruling that cost somebody something is a face that leaves the room
   const choice = event?.choices.find((c) => c.id === last?.choiceId);
@@ -109,7 +109,7 @@ export function Aftermath({ state, dev = false, onContinue }: Props) {
             <span className="text-seal">{lawNumber(state, cause) ?? UI.aftermath.aLaw}</span>
           </>
         )}
-        {who && <span className="text-parchment"> &middot; {who.label}</span>}
+        {who && <span className="text-parchment"> &middot; {who}</span>}
       </h2>
 
       {/* What came of the answer, judged separately from the case that asked

@@ -635,6 +635,14 @@ export interface GameState {
    * loads with the mark quiet until the shelf is opened once.
    */
   worksSeen?: WorkId[];
+  /**
+   * TODO(architect): `facesSeen` is needed because the register now carries
+   * a mark when somebody new is in it, and new means "since you last opened
+   * it". This is who was in it then. Absent reads as nobody being new, so a
+   * save written before it loads with the mark quiet until the book is opened
+   * once. Asked for by the user.
+   */
+  facesSeen?: string[];
   /** The board that ended the reign, if one did. */
   defeat?: StatId;
   /**

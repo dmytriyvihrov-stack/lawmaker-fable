@@ -62,11 +62,19 @@ export function SealMoment({ state, onDone }: Props) {
       </div>
 
       <div className="drift-in relative mb-6 mt-[46vh] w-full max-w-md text-left">
-        {/* Its number, and then the sentence. The number is what the rest of
-            the reign will call it, and the ceremony line underneath now says
-            "it" rather than quoting the whole thing a second time. */}
+        {/* Its number, the year it was written in, and then the sentence.
+
+            The number is what the rest of the reign will call it. The year is
+            what a player reading the Codex later has to have: a law with a
+            numeral and no date is a law that arrived out of nowhere, and this
+            is the one screen where the date is free. Asked for by the user. */}
         <div className="text-[10px] uppercase tracking-[0.2em] text-seal">
-          {number ?? UI.seal.reads}
+          {number
+            ? UI.seal.numbered
+                .replace('{law}', number)
+                .replace('{year}', UI.court.turn)
+                .replace('{n}', String(state.turn))
+            : UI.seal.reads}
         </div>
         <p className="mt-1 text-[17px] leading-snug tracking-wide text-parchment">
           {law?.label ?? ''}
@@ -78,7 +86,7 @@ export function SealMoment({ state, onDone }: Props) {
         {paragraphs.length > 0 && (
           <div className="mt-3 space-y-2 border-t border-ink-line pt-2">
             {paragraphs.map((p, i) => (
-              <p key={i} className="text-[13px] leading-relaxed text-parchment-dim">
+              <p key={i} className="text-[12px] leading-relaxed text-parchment-dim">
                 {p}
               </p>
             ))}

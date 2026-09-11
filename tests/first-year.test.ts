@@ -28,6 +28,28 @@ describe('the first year', () => {
   });
 
   /**
+   * And the first seal of a reign is about the work, whatever else is ready.
+   *
+   * The fence used to open in the same spring, so the first law a player ever
+   * wrote was a choice between what the work is and what the gate is for. The
+   * work is the one every other law here is read against: the four fences in
+   * the meadow, the herd on the common and half the benches in the game hang
+   * on it, so it goes first and the fence waits for it. Asked for by the user.
+   */
+  it('offers the work and nothing else, and the fence waits for it', () => {
+    const s = opened();
+    s.turn = 2;
+    expect(openProposals(s), 'one law on the table, and it is the work').toEqual(['pv1_work']);
+
+    // the year after, still nothing, because nothing has been written yet
+    expect(openProposals({ ...s, turn: 3 })).toEqual(['pv1_work']);
+
+    // and the fence is on the table the moment a law about the work stands
+    const after = chooseLaw(s, 'pv1_work', 0, getProposal('pv1_work')!.options[0].label);
+    expect(openProposals({ ...after, turn: 3 })).toContain('pv2_strangers');
+  });
+
+  /**
    * And the second year holds both halves of the same argument.
    *
    * A decree used to spend the year's one dilemma as well as its slot, so the

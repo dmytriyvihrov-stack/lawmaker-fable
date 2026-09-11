@@ -172,6 +172,8 @@ const NOTE_KEYS = {
   door: 'lawmaker_seen_door_v1',
   /** What the small things on the map are, said over the first one. */
   smallThing: 'lawmaker_seen_small_thing_v1',
+  /** What the mark in the corner is, said the first year it is waiting. */
+  shelf: 'lawmaker_seen_shelf_v1',
 } as const;
 
 export type NoteId = keyof typeof NOTE_KEYS;

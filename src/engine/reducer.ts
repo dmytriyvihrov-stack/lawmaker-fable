@@ -14,6 +14,7 @@ import { evaluate } from './conditions';
 import { monarchOf, traitOf } from './monarch';
 import { renderTemplate, roman } from './format';
 import { pickEvent } from './scheduler';
+import { metCharacters } from './story';
 import { breachFor, truthOf, wrongfulConvictions } from './verdict';
 import { actAbroad, openWorld, tickWorld, type WorldAction } from './world';
 import {
@@ -809,6 +810,21 @@ export function seeWorks(s: GameState): GameState {
   }
   const draft = clone(s);
   draft.worksSeen = shelf;
+  return draft;
+}
+
+/**
+ * The book has been read. Who is in it now is who the mark on it compares
+ * against next time, the same way the shelf works.
+ */
+export function seeFaces(s: GameState): GameState {
+  const faces = metCharacters(s).map((p) => p.character);
+  const seen = s.facesSeen;
+  if (seen !== undefined && seen.length === faces.length && faces.every((id) => seen.includes(id))) {
+    return s;
+  }
+  const draft = clone(s);
+  draft.facesSeen = faces;
   return draft;
 }
 

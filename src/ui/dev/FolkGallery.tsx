@@ -3,7 +3,7 @@ import { FolkIcon } from '../components/Folk';
 import { PersonPortrait } from '../components/PersonPortrait';
 import { FOLK, STATIONS } from '../../content/folk';
 import type { Doing } from '../../content/folk';
-import { characterMeta } from '../../content/meta';
+import { characterTitle } from '../../content/meta';
 import type { FolkPin } from '../../engine/folk';
 import type { StatId } from '../../engine/types';
 
@@ -35,7 +35,7 @@ export function FolkGallery() {
     const station = STATIONS[doing];
     return {
       character,
-      label: characterMeta(character).label,
+      label: characterTitle(character),
       doing,
       x: station.x,
       y: station.y,
@@ -99,7 +99,7 @@ export function FolkGallery() {
             <PersonPortrait character={character} size={96} />
             <FolkIcon character={character} doing={FOLK[character].doing} size={96} />
             <figcaption className="mt-1 text-[10px] text-parchment-dim">
-              {characterMeta(character).label}
+              {characterTitle(character)}
             </figcaption>
           </figure>
         ))}

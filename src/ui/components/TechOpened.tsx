@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { characterMeta } from '../../content/meta';
+import { characterTitle } from '../../content/meta';
 import { UI } from '../../content/ui-strings';
 import { PersonPortrait } from './PersonPortrait';
 import { TYPE } from '../type';
@@ -33,7 +33,6 @@ export function TechOpened({ onDone }: Props) {
     return () => window.clearTimeout(id);
   }, [onDone]);
 
-  const who = characterMeta('clerk');
 
   return (
     <button
@@ -53,7 +52,9 @@ export function TechOpened({ onDone }: Props) {
             <PersonPortrait character="clerk" size={52} />
             <div className="min-w-0">
               <div className={`${TYPE.label} text-seal`}>{UI.techs.opened}</div>
-              <div className={`${TYPE.title} leading-tight text-parchment`}>{who.label}</div>
+              <div className={`${TYPE.title} leading-tight text-parchment`}>
+                {characterTitle('clerk')}
+              </div>
             </div>
           </div>
           <p className={`mt-3 ${TYPE.body} leading-relaxed text-parchment/90`}>

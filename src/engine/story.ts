@@ -297,3 +297,21 @@ export function metCharacters(s: GameState): MetCharacter[] {
   // whoever first came to the door leads the book
   return [...byCharacter.values()].sort((a, b) => a.entries[0].turn - b.entries[0].turn);
 }
+
+/**
+ * Who is in the register that was not in it the last time it was opened.
+ *
+ * The shelf's mark reads an unread shelf as no news at all (`shelfNews`),
+ * because the shelf is full from the first spring and the whole of it lighting
+ * up on load is a list and not news. A book of faces is the other way round:
+ * it starts empty and gains one person at a time, every one of them because
+ * something happened, so a book nobody has opened is a book where everybody
+ * in it is new. A reign loaded from an older save says so once, and then
+ * settles the first time the book is opened.
+ */
+export function newFaces(s: GameState): string[] {
+  const seen = s.facesSeen ?? [];
+  return metCharacters(s)
+    .map((p) => p.character)
+    .filter((id) => !seen.includes(id));
+}

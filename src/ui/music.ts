@@ -108,6 +108,18 @@ const HUSHED = 0.08;
 /** How long the room takes to go quiet, and how long it takes to come back. */
 const DUCK = 2.2;
 const LIFT = 5;
+/**
+ * How long the first sound takes to arrive.
+ *
+ * It was four seconds, on top of however long a nine minute mp3 takes to be
+ * decoded out of a data URI, and the two together were read as the toggle not
+ * working: somebody presses the note on the menu, hears nothing for several
+ * seconds, and presses it again. The pad now covers the decode (see
+ * `buildRecorded`), so this is only how long the room takes to fill.
+ */
+const FADE_IN = 1.5;
+/** And how long the pad takes to step aside once the tape is running. */
+const HANDOVER = 4;
 /** How far ahead the sound card is written into, in seconds. */
 const LOOKAHEAD = 2.5;
 /** How long a chord takes to become the next one. Slow enough to be weather. */
@@ -281,14 +293,15 @@ function schedule(): void {
 
 /**
  * (Re)arm the chord and bell scheduler. Called from `start()` every time
- * playback resumes, the same as before a recorded track existed at all;
- * never called while a recorded track is the thing playing, because a loop
- * on tape does not need a look-ahead window written into it every 700ms.
+ * playback resumes, and never once a recorded track is the thing playing,
+ * because a loop on tape does not need a look-ahead window written into it
+ * every 700ms. While one is being decoded the chords run and the bells do
+ * not: the first of them would land in the middle of the handover.
  */
 function startPad(): void {
   if (!ctx) return;
   nextChordAt = ctx.currentTime + MODES[season].hold * 0.5;
-  nextBellAt = ctx.currentTime + 3.5;
+  nextBellAt = ctx.currentTime + (waitingForRecorded ? 30 : 3.5);
   schedule();
   timer = window.setInterval(schedule, 700);
 }
@@ -303,7 +316,7 @@ function startPad(): void {
  * two octaves below the root, at a fifth of the level, which is the weight.
  */
 function buildPad(): void {
-  if (!ctx || !master) return;
+  if (!ctx || !master || pad) return;
   const mode = MODES[season];
   const gain = ctx.createGain();
   gain.gain.value = mode.padGain;
@@ -351,22 +364,31 @@ function buildPad(): void {
 }
 
 /**
- * True from the moment `start()` decides to reach for a recorded track,
- * whether or not the decode behind it has finished yet. `start()` reads this
- * synchronously to know whether to arm the pad scheduler; `buildRecorded`
- * flips it back on any failure, decode included.
+ * True from the moment a recorded track is actually running, and not a
+ * moment earlier. It used to go up when `start()` decided to reach for one,
+ * which is what left the room silent through the decode; the pad holds that
+ * window now and this says which of the two is the thing playing.
  */
 let usingRecorded = false;
+
+/**
+ * True while a recorded track is being decoded and the pad is holding the
+ * room for it. The bells stay out of that window: one ringing over the first
+ * bar of the tape is the handover announcing itself.
+ */
+let waitingForRecorded = false;
 
 /**
  * Decode the reign's chosen track and start it looping into `master`. Built
  * once, the same as the pad: once a source is running its `loop` flag keeps
  * it going for good, and every later toggle only ramps `master`, never
  * touches this again. Falls back to the pad on any failure, so a corrupt or
- * missing track never leaves the toggle silent. Decoding is asynchronous, so
- * if playback has already been asked for by the time it settles into the
- * fallback, the pad scheduler is armed here rather than left for a `start()`
- * call that already happened.
+ * missing track never leaves the toggle silent.
+ *
+ * The pad is already playing by the time this is called, because decoding
+ * several megabytes of mp3 is not instant and the alternative to the pad is
+ * an empty room: the handover happens here, when there is something to hand
+ * over to, and it is a crossfade rather than a cut.
  */
 async function buildRecorded(): Promise<void> {
   const tracks = recordedTracks();
@@ -386,8 +408,19 @@ async function buildRecorded(): Promise<void> {
     source.loop = true;
     source.connect(master);
     source.start();
+    /* And the pad, which has been holding the room since the click, walks
+       out of it. Both tracks are faded in at the head with ffmpeg (AUDIO.md
+       section 3), so this is a crossfade without anything having to be
+       written to make it one. */
+    usingRecorded = true;
+    waitingForRecorded = false;
+    if (timer !== null) window.clearInterval(timer);
+    timer = null;
+    pad?.gain.gain.cancelScheduledValues(ctx.currentTime);
+    pad?.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + HANDOVER);
   } catch {
     usingRecorded = false;
+    waitingForRecorded = false;
     buildPad();
     if (playing) startPad();
   }
@@ -459,16 +492,19 @@ export function start(): void {
       master = ctx.createGain();
       master.gain.value = 0;
       master.connect(ctx.destination);
+      /* The pad is built and started whatever else is coming, because the
+         thing it is competing with is silence. A recorded track is several
+         megabytes of base64 that has to be decoded before a sound card will
+         take it, and until this the toggle sat quiet through all of it. */
+      buildPad();
       if (recordedTracks()) {
-        usingRecorded = true;
+        waitingForRecorded = true;
         void buildRecorded();
-      } else {
-        buildPad();
       }
     }
     void ctx.resume();
     master?.gain.cancelScheduledValues(ctx.currentTime);
-    master?.gain.linearRampToValueAtTime(level(), ctx.currentTime + 4);
+    master?.gain.linearRampToValueAtTime(level(), ctx.currentTime + FADE_IN);
     // a recorded track loops on its own; only the pad needs its scheduler rearmed
     if (!usingRecorded) startPad();
     playing = true;

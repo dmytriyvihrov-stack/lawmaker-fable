@@ -113,12 +113,17 @@ export function Works({
       ? []
       : chain.filter((w) => offeredIds.has(w.id) || w.needsWork !== undefined);
 
-  // The year that costs nothing goes at the top: it is the one every reign
-  // reaches for when there is nothing left to spend, and hunting for it at the
-  // bottom of a list of things it cannot afford was the wrong shape of asking.
-  const works = offered
-    .filter((w) => w.group === undefined)
-    .sort((a, b) => (a.id === 'rest' ? -1 : b.id === 'rest' ? 1 : 0));
+  /* The year that costs nothing is not on the shelf at all.
+
+     It was the first card on it, above every building, on the grounds that a
+     reign with an empty store reaches for it and should not have to hunt. But
+     it is not a building, and a list of buildings whose first entry is "do not
+     build" is a list that opens by offering the way out. It is a line under
+     the shelf now, on the foot of this card, where it is still one click on
+     the years that need it. Asked for by the user. */
+  const works = offered.filter((w) => w.group === undefined && !isRest(w));
+  const resting = offered.find(isRest);
+  const restPicked = picked?.kind === 'work' && resting !== undefined && picked.id === resting.id;
   const reopenable = reopenableProposals(state);
 
   /* There used to be a red line over the shelf on the years nothing on it was
@@ -457,22 +462,52 @@ export function Works({
             sits on the bottom edge of the scroll now, on its own paper. */}
         {!spent && (
         <CardFoot>
-          <button
-            type="button"
-            disabled={picked === null || (asking && plot === null)}
-            onClick={() => {
-              if (!picked) return;
-              if (picked.kind === 'work') onBuild(picked.id, plot ?? undefined);
-              else onReopen(picked.id);
-            }}
-            className={`${CARD_BUTTON} bg-timber text-ink`}
-          >
-            {asking && plot !== null
-              ? UI.works.whereOn.replace('{where}', PLOT_NAMES[plot].label.toUpperCase())
-              : asking
-                ? UI.works.wherePick
-                : UI.works.choose}
-          </button>
+          <div className="flex min-w-0 flex-col items-center gap-1.5">
+            <button
+              type="button"
+              disabled={picked === null || (asking && plot === null)}
+              onClick={() => {
+                if (!picked) return;
+                if (picked.kind === 'work') onBuild(picked.id, plot ?? undefined);
+                else onReopen(picked.id);
+              }}
+              className={`${CARD_BUTTON} bg-timber text-ink`}
+            >
+              {asking && plot !== null
+                ? UI.works.whereOn.replace('{where}', PLOT_NAMES[plot].label.toUpperCase())
+                : asking
+                  ? UI.works.wherePick
+                  : UI.works.choose}
+            </button>
+
+            {/* And the year that puts nothing up, picked the way everything
+                else here is picked: this says which year it would be, the
+                button above spends it. One click on a line this quiet does
+                not cost a reign its year by accident. */}
+            {resting && (
+              <button
+                type="button"
+                onClick={() => pickWork(resting.id)}
+                aria-pressed={restPicked}
+                className={`answer flex max-w-full flex-wrap items-baseline justify-center gap-x-2 rounded-md border px-2.5 py-1 ${
+                  restPicked ? 'border-seal bg-seal/20' : 'border-transparent'
+                }`}
+              >
+                <span
+                  className={`${TYPE.note} ${restPicked ? 'text-parchment' : 'text-parchment-dim'}`}
+                >
+                  {UI.works.pass}
+                </span>
+                <span className={`${TYPE.note} text-parchment-dim/70`}>{resting.line}</span>
+                <MovedBoards row once={workOnceNow(state, resting)} place={state} />
+                {restShare(state) < 1 && (
+                  <span className={`${TYPE.note} text-parchment-dim`}>
+                    {restShare(state) <= 0 ? UI.works.restedOut : UI.works.restedAgain}
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
         </CardFoot>
         )}
       </div>

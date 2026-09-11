@@ -1,5 +1,5 @@
 import { BOND_UI, bondWord } from '../../content/bonds';
-import { STATS } from '../../content/meta';
+import { characterTitle, STATS } from '../../content/meta';
 import { UI } from '../../content/ui-strings';
 import { DOING_LINES, folkLook } from '../../content/folk';
 import { CONFIG } from '../../engine/config';
@@ -157,7 +157,22 @@ export function Register({ state, season, onGift, onTake, onVisit, onClose }: Pr
                 <PersonPortrait character={who} size={48} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline gap-2">
-                    <span className="text-[15px] text-parchment">{person.label}</span>
+                    {/* How they feel about you, in one mark, before their
+                        name: a register of thirty faces is read at a glance,
+                        and the glance lands here. The words are under the
+                        pointer. */}
+                    {canBeLiked && (
+                      <span
+                        className="text-[14px] leading-none"
+                        title={`${person.label} ${feeling.word}. ${feeling.line}`}
+                      >
+                        <span aria-hidden>{feeling.mark}</span>
+                        <span className="sr-only">
+                          {person.label} {feeling.word}
+                        </span>
+                      </span>
+                    )}
+                    <span className="text-[15px] text-parchment">{characterTitle(who)}</span>
                     {mine && (
                       <span className="text-[11px] text-seal">
                         <span aria-hidden>{BOND_UI.loverMark}</span> {BOND_UI.loverIs}
@@ -176,26 +191,6 @@ export function Register({ state, season, onGift, onTake, onVisit, onClose }: Pr
                       {UI.register.metOn.replace('{turn}', String(person.entries[0].turn))}
                     </span>
                   </div>
-
-                  {/* Where you stand with them, which is the half of this page
-                      that is not history. A word and a mark, never a number:
-                      nobody in this place would give you a number. */}
-                  {canBeLiked && (
-                    <div className="mt-1 flex items-baseline gap-2 text-[12px]" title={feeling.line}>
-                      <span aria-hidden>{feeling.mark}</span>
-                      <span
-                        className={
-                          level > 0
-                            ? 'text-good'
-                            : level < 0
-                              ? 'text-bad'
-                              : 'text-parchment-dim'
-                        }
-                      >
-                        {person.label} {feeling.word}
-                      </span>
-                    </div>
-                  )}
 
                   <p className="mt-1 text-[12px] leading-snug text-parchment/85">
                     {DOING_LINES[doings.get(who) ?? folkLook(who).doing]}

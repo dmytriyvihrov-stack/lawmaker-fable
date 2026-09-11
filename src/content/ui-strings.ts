@@ -7,7 +7,7 @@ export const UI = {
     staleSave:
       'There is a reign saved here that this version of the game cannot open. Beginning a new one will write over it.',
     name: 'Lawmaker Fable',
-    tagline: 'Five people, open ground, and a seal. Write the law before the place is big enough to need it.',
+    tagline: 'Can you be a consistent leader and bring your people to prosperity?',
     newGame: 'Begin a reign',
     /** The dev door: start a reign already grown, to read a later stage. */
     beginAt: 'Begin at',
@@ -19,7 +19,7 @@ export const UI = {
     /* The rider and the wax used to be a block of their own above the crown's
        portrait, which is a wrapper round a question that reads the same
        without it. It is half a sentence in front of the question now. */
-    question: 'Who is a good ruler?',
+    question: 'Your people ask you: who is a good ruler?',
     /**
      * The one place the game says what it is, and it now says it in four
      * lines instead of six paragraphs.
@@ -37,7 +37,7 @@ export const UI = {
       heading: 'The founding',
       kicker: 'Spring. Five of you.',
       caption:
-        'You walked out of the old place together and stopped here, for the water. On the second night the others voted in a field with their hands up, and the seal is yours.',
+        'You walked out of the old place together and stopped here, for the water. On the second evening the others voted for you as their leader.',
       /* Two blocks went out of here. `charge` said "look after them, settle
          what they bring to your door, and raise this place into a town",
          which is the tagline on the title screen said again in longer words;
@@ -46,10 +46,10 @@ export const UI = {
          into the question itself. Eight blocks of text down to six. */
     },
     answers: [
-      { tag: 'utilitarian' as PhilTag, text: 'One who leaves the most people better off.' },
-      { tag: 'egalitarian' as PhilTag, text: 'One who weighs every neck the same.' },
-      { tag: 'libertarian' as PhilTag, text: 'One who rules least, and is felt least.' },
-      { tag: 'kantian' as PhilTag, text: 'One who holds to their own rule on the day it costs them.' },
+      { tag: 'utilitarian' as PhilTag, text: 'One who cares for the most people, and sacrifices the fewest.' },
+      { tag: 'egalitarian' as PhilTag, text: 'One who treats every person the same, and holds every life sacred.' },
+      { tag: 'libertarian' as PhilTag, text: 'One who keeps the balance.' },
+      { tag: 'kantian' as PhilTag, text: 'One who always keeps their word.' },
     ],
   },
 
@@ -203,10 +203,34 @@ export const UI = {
     news: '{n} new things on the shelf',
     newsOne: 'one new thing on the shelf',
     newTag: 'new',
+    /** The mark, when the year has come round to it and nothing is picked. */
+    waitingShort: 'this year is still to be spent',
+    /**
+     * What the mark in the corner is, said once, the first year it waits.
+     *
+     * The shelf used to open itself over the valley at the end of every year.
+     * It is opened by hand now, so the first time a year is waiting on it the
+     * mark says what it is, in the shape of a note beside the thing rather
+     * than a screen in front of it. Asked for by the user.
+     */
+    firstHeading: 'The year of work',
+    firstLine:
+      'One thing a year goes up here, and this is where it is picked. It opens in any season, and the year waits until it is spent.',
     /** The mark, when the year is already spent. */
     spentShort: 'spent this year',
     spent: 'This year is spent on {name}. The next year of work opens in the spring.',
     spentRest: 'This year is spent. The next year of work opens in the spring.',
+    /**
+     * The year that goes by with nothing put up.
+     *
+     * It used to be the first card on the shelf: a building called "Rest. The
+     * year passes." among the buildings, which is the one thing on that page
+     * that is not a building, sitting above every building on it. It is a
+     * line under the shelf now. Still there on the year nothing is
+     * affordable, still worth what a rest is worth and less every time, and
+     * no longer the first thing anybody reads. Asked for by the user.
+     */
+    pass: 'Or let the year pass',
     /** Read in the spring: the rest of the year still comes, work or no work. */
     earlyLine: 'A year holds one of these, chosen in any season. Whoever is due this year still comes.',
   },
@@ -694,6 +718,11 @@ export const UI = {
     /** The half of the register that is not history: what they think of you. */
     standingHeading: 'Where you stand',
     openLabel: 'Register',
+    /** The chrome is icons: the word stays, as the label a reader hears. */
+    icon: '📇',
+    /** The mark on the book when somebody is in it who was not before. */
+    news: '{n} new faces in the book',
+    newsOne: 'a new face in the book',
     close: 'Close',
     empty: 'Nobody has come to the door yet.',
     metOn: 'first, year {turn}',
@@ -736,6 +765,8 @@ export const UI = {
 
   monarch: {
     heading: 'On the throne',
+    /** The board's own name, which is on the pointer and not on the rail. */
+    gaugeHover: 'How the crown is holding up',
     /** What the gauge is called on the page, and what it is called underneath. */
     gaugeName: 'Mood',
     gaugeIcon: '👑',
@@ -743,6 +774,10 @@ export const UI = {
     town: 'The town',
     traitLabel: 'Trait',
     servedUnder: 'You served under',
+    /* The card in the corner is your own face and your own mood, and it is the
+       one place the name is not somebody being talked about. Asked for by the
+       user after a session spent wondering who the person in the corner was. */
+    you: '{name} (you)',
     /** Nobody up there is getting any younger, and the year says so. */
     age: 'aged {n}',
   },
@@ -962,12 +997,14 @@ export const UI = {
      *  with a decimal point on it. */
     soulsShare: 'about {share} of you',
     shares: ['hardly any', 'a few', 'about a tenth', 'about a fifth', 'about a quarter', 'about a third', 'nearly half'],
-    dismiss: 'Click anywhere to carry on',
+    dismiss: 'Carry on',
   },
 
   /** The moment a decree becomes a fact, held long enough to read twice. */
   seal: {
     heading: 'Sealed',
+    /** Which law it is, and the year it was written in: "Law I, year 2". */
+    numbered: '{law}, {year} {n}',
     reads: 'The law now reads',
     andSo: 'And so',
     everyYear: 'every year',

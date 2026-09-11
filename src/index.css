@@ -918,7 +918,23 @@ button:disabled {
   animation: knock 1.4s ease-in-out 3;
   transform-origin: center;
 }
+
+/* And the mark itself, on the year that is waiting to be spent.
+
+   The shelf used to open itself at the end of every year, over the top of the
+   valley, whether or not there was anything on it worth a year. It is opened
+   by hand now, so the one thing the header has to do is say that the year is
+   still there. A slow breath in the seal's colour, which is the same light
+   the town uses for a thing that can be touched. */
+.shelf-waiting {
+  animation: shelf-waiting 2.6s ease-in-out infinite;
+}
+@keyframes shelf-waiting {
+  0%, 100% { border-color: var(--color-ink-line); box-shadow: 0 0 0 0 rgba(180, 60, 50, 0); }
+  50% { border-color: var(--color-seal); box-shadow: 0 0 0 3px rgba(180, 60, 50, 0.16); }
+}
 @media (prefers-reduced-motion: reduce) {
+  .shelf-waiting { animation: none; border-color: var(--color-seal); }
   .shelf-news { animation: none; opacity: 1; }
 }
 

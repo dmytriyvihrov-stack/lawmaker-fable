@@ -494,11 +494,22 @@ export function CityScape({
        the fire, and the bucket stays there with everybody else. */
     post(camping && paint.ice ? 'camp' : indoors, 4);
     post(together, 2);
-    post('wood', 2);
-    post('haul', 1);
+    /* A winter is not a season off.
+
+       It was four at the fire for every one at work, and from up here the
+       place read as a settlement that had stopped: two at the woodpile, one
+       under a load, and six standing round a flame all day. The wood is the
+       whole of a winter's work and it has to be cut, carried and split; the
+       stock is in and still eats twice a day; and the well does not freeze
+       because somebody breaks it every morning. The fire is still there, and
+       it is four people rather than six. Asked for by the user. */
+    post('wood', 4);
+    post('haul', 3);
+    post('pen', 2);
+    post('water', wellLevel > 0 ? 1 : 0);
     /* The cold is not a season with nothing in it. It is the one season with
        somewhere everybody goes, and this is that somewhere. */
-    post('warm', 6);
+    post('warm', 4);
   }
   if (raisingOf && WORK_SITES[raisingOf]) post('site', 4);
 

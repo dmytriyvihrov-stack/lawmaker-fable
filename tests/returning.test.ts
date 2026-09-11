@@ -3,11 +3,11 @@ import { AGES } from '../src/content/folk';
 import { bondLevel } from '../src/engine/bonds';
 import { agesNow, doingsNow } from '../src/engine/folk';
 import { agoWords, renderTemplate, yearsSince } from '../src/engine/format';
-import { chooseCase, newGame } from '../src/engine/reducer';
+import { chooseCase, newGame, seeFaces } from '../src/engine/reducer';
 import { getCase } from '../src/engine/registry';
 import { evaluate } from '../src/engine/conditions';
 import { pickEvent } from '../src/engine/scheduler';
-import { metCharacters } from '../src/engine/story';
+import { metCharacters, newFaces } from '../src/engine/story';
 import type { GameState, StoryFlag } from '../src/engine/types';
 
 /**
@@ -20,9 +20,16 @@ import type { GameState, StoryFlag } from '../src/engine/types';
  * scene left, and says out loud what you did and how long ago.
  */
 
-/** A reign that met somebody in year one and did something to them. */
+/**
+ * A reign that met somebody in year one and did something to them.
+ *
+ * With a fence up, because the two autumns Tam comes back in are about a
+ * night of wind taking every post in the valley, and since the user asked for
+ * that connection to be real those scenes wait for one to have been raised.
+ */
 function after(caseId: string, choiceId: string, flag: StoryFlag, turn: number): GameState {
   const s = newGame(11);
+  s.buildings.fence = 1;
   s.turn = 1;
   s.log.push({ turn: 1, kind: 'case', refId: caseId, choiceId, tags: [] });
   s.shownCases.push(caseId);
@@ -200,6 +207,27 @@ describe('the woman the scene was about', () => {
     base.current = { kind: 'case', id: 'v3_millwright' };
     return chooseCase(base, 'v3_millwright', choiceId);
   }
+
+  /**
+   * And the book says when somebody new is in it.
+   *
+   * The mark on the register is the same idea as the one on the shelf, read
+   * the other way round: a shelf nobody has opened is not news, and a book
+   * nobody has opened is nothing but news, because everybody in it got there
+   * by standing in front of you. Asked for by the user.
+   */
+  it('carries a mark for a face that was not in it last time it was opened', () => {
+    const taken = afterMill('plot_to_the_mill');
+    expect(newFaces(taken).sort()).toEqual(['marta', 'millwright']);
+
+    const read = seeFaces(taken);
+    expect(newFaces(read), 'the book has been opened').toEqual([]);
+    expect(seeFaces(read), 'and nothing changes when nothing is new').toBe(read);
+
+    // and the next person to stand there is the only one that lights it
+    const next = { ...read, log: [...read.log, { turn: 9, kind: 'case' as const, refId: 'v1_idle_hand', choiceId: 'feed_him', tags: [] }] };
+    expect(newFaces(next)).toEqual(['tam']);
+  });
 
   it('puts her in the register the year it happened, not eight years later', () => {
     const taken = afterMill('plot_to_the_mill');

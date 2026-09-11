@@ -26,6 +26,7 @@ import {
   roomFor,
   seasonOf,
   shelfNews,
+  shelfNewsReady,
   shelfOf,
   shelteredSouls,
   storeCap,
@@ -410,6 +411,25 @@ describe('the year of work', () => {
     const road = buildEarly(s, 'road');
     expect(shelfNews(road), 'the bridge is on the list the moment the road stands').toEqual(['bridge']);
     expect(shelfNews(seeWorks(road))).toEqual([]);
+  });
+
+  /* A red count in the corner is an errand. What the shelf holds is one
+     question and what the store can pay for today is another, and the mark
+     only lights when both of them answer. */
+  it('the mark counts only the news the store can pay for, and nothing once the year is spent', () => {
+    let s = at(6, 6);
+    s.stats.economy = 60;
+    s = seeWorks(s);
+    const road = buildEarly(s, 'road');
+    expect(shelfNewsReady(road), 'the year the road was built is spent').toEqual([]);
+    // the spring after, with a full store
+    const spring = { ...road, turn: road.turn + 1, stats: { ...road.stats, economy: 60 } };
+    expect(shelfNews(spring)).toEqual(['bridge']);
+    expect(shelfNewsReady(spring), 'a full store pays for it').toEqual(['bridge']);
+    // the same news, and nothing in the store to take it with
+    const poor = { ...spring, stats: { ...spring.stats, economy: 1 } };
+    expect(shelfNews(poor), 'it is still on the shelf').toEqual(['bridge']);
+    expect(shelfNewsReady(poor), 'and still out of reach').toEqual([]);
   });
 });
 

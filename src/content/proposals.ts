@@ -25,13 +25,13 @@ export const PROPOSALS: Proposal[] = [
      * the second spring, by which time there is something for it to be about.
      */
     unlockedBy: { kind: 'turn', op: 'gte', value: 2 },
-    title: 'Five Pairs of Hands',
+    title: 'Seven Pairs of Hands',
     advice: {
       option: 0,
-      line: "Share it. The day we start counting whose row is whose is the day somebody stops digging.",
+      line: "The day we start counting whose row is whose is the day somebody stops digging.",
     },
     problem: [
-      'A handful of us, open ground, water we have not lined yet, and a seal that somebody has to hold.',
+      'To survive, we have to decide how the work is split, and who gets what it brings.',
       'Say how the work goes. Everyone will hear you, because everyone is here.',
     ],
     options: [
@@ -88,9 +88,23 @@ export const PROPOSALS: Proposal[] = [
     id: 'pv2_strangers',
     act: 2,
     advisor: 'captain',
-    // the first spring is about the five of you and the field; nobody has
-    // stopped at the fence yet, because there is barely a fence
-    unlockedBy: { kind: 'turn', op: 'gte', value: 2 },
+    /* The first spring is about the seven of you and the field; nobody has
+       stopped at the fence yet, because there is barely a fence.
+
+       And the fence waits for the work as well. Both of these used to open in
+       the second spring together, so the first seal of a reign was a choice
+       between what the work is and what the gate is for, offered to somebody
+       who had been ruling for one year and had written nothing yet. The first
+       law of a reign is about the work, always: it is the one every other law
+       here is read against, and the four fences in the meadow and the herd on
+       the common are drawn from it. Asked for by the user. */
+    unlockedBy: {
+      kind: 'all',
+      conds: [
+        { kind: 'turn', op: 'gte', value: 2 },
+        { kind: 'lawActive', subject: 'work' },
+      ],
+    },
     title: 'The Fence',
     advice: {
       option: 1,

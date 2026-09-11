@@ -204,14 +204,29 @@ describe('the brother', () => {
 });
 
 describe('the idle hand', () => {
-  it('cutting a man off in a place of six is felt by the square', () => {
+  /**
+   * Every way of answering the idle hand is felt by the people who were
+   * digging that morning.
+   *
+   * The kind answer used to cost the store and nothing else, on the rule that
+   * kindness is not punished for being kind. The user put it the other way
+   * round, and it is the better scene: four people watch a man eat bread he
+   * did not dig for, and they are still watching you about it in the spring.
+   * What is still true is that it costs the square less than cutting him off
+   * does, and that the man himself knows who fed him (`bond`).
+   */
+  it('however the idle hand is answered, the square is in the room', () => {
     const tam = CASES.find((c) => c.id === 'v1_idle_hand')!;
-    for (const id of ['no_work_no_bread', 'cut_his_share']) {
+    for (const id of ['no_work_no_bread', 'cut_his_share', 'feed_him']) {
       const choice = tam.choices.find((c) => c.id === id)!;
       expect(choice.effects.mood, id).toBeLessThan(0);
     }
-    // and the kind answers are not punished for being kind
-    expect(tam.choices.find((c) => c.id === 'feed_him')!.effects.mood).toBeUndefined();
+    const fed = tam.choices.find((c) => c.id === 'feed_him')!;
+    const cut = tam.choices.find((c) => c.id === 'no_work_no_bread')!;
+    expect(fed.effects.mood!, 'feeding him is not the hardest of the three').toBeGreaterThan(
+      cut.effects.mood!,
+    );
+    expect(fed.bond, 'and the man who eats knows who fed him').toBe(1);
   });
 
   /**

@@ -177,6 +177,25 @@ and the edges between them: opens, blocks, needs, sets, schedules,
 decrees). One file to build a whole shareable mirror of the console out
 of, tabbed the same way it is: Cases, Laws, Tree.
 
+## Reading the words against the numbers
+
+```bash
+npx vite-node tools/audit-say.ts > say.txt
+npx vite-node tools/audit-law-say.ts > laws.txt
+```
+
+Two flat reads for one question: does the sentence under an answer say what
+the answer actually does. The first prints every bench as answer, result and
+the boards that move, in the sizes a year actually feels (the case scale is
+already applied). The second prints every law with its once, its yearly trend
+and its town trend, and the aftermath paragraphs under it.
+
+They are for reading, not for checking: this game says things sideways on
+purpose, and a sentence that carries its number in a picture rather than in a
+noun is the house style and not a fault. What they are good at is finding the
+answer whose sentence says the opposite of its numbers. T-FIX-11 found one of
+those in fifty eight scenes, and eight more where the number was invisible.
+
 ## When the console opens empty
 
 It did, for a while, and the reason is worth knowing because it will happen

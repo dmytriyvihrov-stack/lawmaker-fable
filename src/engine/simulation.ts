@@ -950,6 +950,44 @@ export function shelfNews(s: GameState): WorkId[] {
   return shelfOf(s).filter((id) => !seen.includes(id));
 }
 
+/**
+ * What a year could actually be spent on today: on the shelf, not already at
+ * its top floor, not waiting on the step before it in its own run, and inside
+ * what the store holds. Resting is not one of them, because resting is not
+ * building something.
+ *
+ * The shelf's own list leaves money out on purpose (`shelfOf`). This is the
+ * other question, the one the mark in the corner is answering when it lights
+ * up: is there anything here I can take this year.
+ */
+export function buildableNow(s: GameState): WorkId[] {
+  if (workSpent(s)) return [];
+  return worksFor(s)
+    .filter((w) => !isRest(w))
+    .filter((w) => w.maxLevel === 0 || (s.buildings[w.id] ?? 0) < w.maxLevel)
+    .filter(
+      (w) =>
+        w.needsWork === undefined ||
+        (s.buildings[w.needsWork.id] ?? 0) >= w.needsWork.level,
+    )
+    .filter((w) => workCost(s, w) <= s.stats.economy)
+    .map((w) => w.id);
+}
+
+/**
+ * The news worth a red mark: something on the shelf that was not there last
+ * time, and that this year could actually take.
+ *
+ * A count in the corner is a thing to go and do. It used to light on anything
+ * new whether or not the store could pay for it, so a hamlet with six in the
+ * store wore a red six for a season of works it could not afford, which is a
+ * mark that teaches a player to stop reading it. Asked for by the user.
+ */
+export function shelfNewsReady(s: GameState): WorkId[] {
+  const ready = new Set(buildableNow(s));
+  return shelfNews(s).filter((id) => ready.has(id));
+}
+
 export function workCost(s: GameState, work: WorkDef): number {
   const asked = workPrice(s, work);
   if (asked === 0) return 0;

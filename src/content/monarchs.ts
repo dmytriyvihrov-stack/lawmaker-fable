@@ -125,11 +125,11 @@ export const MONARCHS: MonarchDef[] = [
      * year, which is also why nobody comes near a place that hunts them.
      */
     id: 'vaelis',
-    name: 'Daenerys Targaryen',
+    name: 'Daenerys',
     emoji: '🐉',
     traitName: 'Dreaming',
     traitLine:
-      'She is certain there are dragons and funds the search out of the store. Nobody comes near a place that goes looking.',
+      'You believe there are dragons, and that one day you will rule a kingdom. The search is paid out of the store, and nobody comes near a place that goes looking.',
     portraitLine:
       'Daenerys never found one. She is still certain, still not from here, and the fourth expedition leaves in the spring.',
     trait: { yearly: { army: 2, economy: -2 } },

@@ -9,13 +9,13 @@ export const AFTERMATHS: AftermathScene[] = [
   {
     id: 'am_work_shared',
     paragraphs: [
-      '{{law:work_shared}} is said out loud at the woodpile, and five people nod, and the nodding is the whole of the ceremony.',
+      '{{law:work_shared}} is said out loud at the woodpile, and everybody nods, and the nodding is the whole of the ceremony.',
     ],
   },
   {
     id: 'am_work_ruled',
     paragraphs: [
-      '{{law:work_ruled}} makes one of five a headman and four of five an audience. The headman is you. The field notices by August.',
+      '{{law:work_ruled}} makes one of us a headman and the rest of us an audience. The headman is you. The field notices by August.',
       'By the second year the headman has a chair. It is the only chair, and people stand differently around it.',
     ],
   },
@@ -41,7 +41,7 @@ export const AFTERMATHS: AftermathScene[] = [
     id: 'am_strangers_turned_away',
     paragraphs: [
       '{{law:strangers_turned_away}} is painted on a board at the top of the lane by someone who can paint. It is the nicest thing in the hamlet.',
-      'The road learns. Fewer people stop. The five of you get very good at the five of you.',
+      'The road learns. Fewer people stop. The people already here get very good at the people already here.',
     ],
   },
   // ---------------------------------------------------------------- trade

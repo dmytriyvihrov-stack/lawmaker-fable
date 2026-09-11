@@ -1,6 +1,6 @@
 import type { Ref } from 'react';
 import { JOURNEY } from '../../content/journey';
-import { characterMeta } from '../../content/meta';
+import { characterTitle } from '../../content/meta';
 import { renderTemplate } from '../../engine/format';
 import { getCase } from '../../engine/registry';
 import type { GameState } from '../../engine/types';
@@ -12,7 +12,7 @@ export function JourneyCard({ state, control, cardRef, dev }: { state: GameState
   const event = s.visit ? getCase(s.visit.id) : undefined;
   const briefing = s.mode === 'briefing', walking = s.mode === 'event-walk';
   const who = event?.character === 'wolf' || event?.character === 'crowd' || !event?.character
-    ? JOURNEY.animalCaller : characterMeta(event.character).label;
+    ? JOURNEY.animalCaller : characterTitle(event.character);
   if (errand) return (
     <div ref={cardRef} className="journey-card journey-errand pointer-events-auto" role="status">
       <span className="journey-spark" aria-hidden="true">✦</span>

@@ -41,7 +41,13 @@ function toneOf(n: number): string {
  * the gauge lives here under the face rather than in the row with the harvest.
  */
 export function MonarchPanel({ state, variant, dev = false, doing }: Props) {
-  const gaugeHover = useHoverText('ui:monarch:gauge:hover', UI.monarch.gauge);
+  /* The word and what it means, both under the pointer. The rail used to
+     carry "MOOD" beside the crown in small capitals, which is a label on a
+     dial that already has a crown on it. Asked for by the user. */
+  const gaugeHover = useHoverText(
+    'ui:monarch:gauge:hover',
+    `${UI.monarch.gaugeName}: ${UI.monarch.gaugeHover}`,
+  );
   const monarch = monarchOf(state.seed);
   const age = monarchAge(state.seed, state.turn);
   const mood = state.stats.crownSanity;
@@ -113,7 +119,7 @@ export function MonarchPanel({ state, variant, dev = false, doing }: Props) {
           />
         </div>
         <div className="mt-2 text-center text-[13px] leading-tight text-parchment">
-          {monarch.name}
+          {UI.monarch.you.replace('{name}', monarch.name)}
         </div>
         {/* they are a year older every year you hold the seal, and it shows.
             What they are is one word beside it: the paragraph and the rows are
@@ -138,30 +144,26 @@ export function MonarchPanel({ state, variant, dev = false, doing }: Props) {
 
         {/* the monarch's own dial, under the monarch's own face, where it belongs */}
         <div className="group relative mt-3">
-          {/* The crown says whose gauge this is, and the arrow says which way
-              it is going, the same arrow every other board on the page uses.
-              What the number is actually called is under the pointer. */}
-          <div className="flex items-baseline justify-between gap-2" title={gaugeHover}>
-            <span className="flex items-baseline gap-1.5">
-              <span aria-hidden className="text-[12px] leading-none">
-                {UI.monarch.gaugeIcon}
-              </span>
-              <span className="text-[9px] uppercase tracking-[0.2em] text-parchment-dim">
-                {UI.monarch.gaugeName}
-              </span>
+          {/* The crown, then the line it is on, then which way it is going:
+              one row instead of a label over a bar. The crown says whose
+              gauge this is and the word it used to be labelled with is under
+              the pointer with the rest of the sentence. */}
+          <div className="flex items-center gap-1.5" title={gaugeHover}>
+            <span aria-hidden className="shrink-0 text-[12px] leading-none">
+              {UI.monarch.gaugeIcon}
             </span>
-            <span aria-hidden className={`text-[10px] leading-none ${toneOf(pull)}`}>
+            <span className="min-w-0 flex-1">
+              <Feeling
+                value={mood}
+                low={UI.feeling.crownLow}
+                high={UI.feeling.crownHigh}
+                label={UI.stats.crownSanity}
+              />
+            </span>
+            <span aria-hidden className={`shrink-0 text-[10px] leading-none ${toneOf(pull)}`}>
               {pull > 0 ? '▸' : pull < 0 ? '◂' : '·'}
             </span>
-            <span className="sr-only">{UI.monarch.gauge}</span>
-          </div>
-          <div className="mt-1.5">
-            <Feeling
-              value={mood}
-              low={UI.feeling.crownLow}
-              high={UI.feeling.crownHigh}
-              label={UI.stats.crownSanity}
-            />
+            <span className="sr-only">{gaugeHover}</span>
           </div>
 
           {/* What the mood of the crown means, in a sentence, where a sentence

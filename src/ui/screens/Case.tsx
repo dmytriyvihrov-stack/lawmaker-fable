@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { BOND_UI, bondWord } from '../../content/bonds';
 import { bondLevel, isLover, isPerson } from '../../engine/bonds';
-import { characterMeta } from '../../content/meta';
+import { characterMeta, characterTitle } from '../../content/meta';
 import { UI } from '../../content/ui-strings';
 import { TYPE } from '../type';
 import { AGES } from '../../content/folk';
@@ -123,8 +123,13 @@ function WhoStands({
   caseId: string;
 }) {
   const monarch = monarchOf(state.seed);
+  /* Who this is, and what they are, over their face: "Garry, the digger".
+     The crown is the one caller whose name is drawn from the seed. The bare
+     name is kept beside it, because a sentence wants "Tam is all right with
+     you" and not the whole introduction again. */
   const who =
-    character === 'monarch' ? { label: monarch.name } : characterMeta(character);
+    character === 'monarch' ? { label: monarch.name } : { label: characterTitle(character) };
+  const name = character === 'monarch' ? monarch.name : characterMeta(character).label;
   const age = character ? (agesNow(state).get(character) ?? AGES[character]) : undefined;
   const known = isPerson(character);
   const feeling = known ? bondWord(bondLevel(state, character)) : null;
@@ -148,10 +153,21 @@ function WhoStands({
         <PersonPortrait character={character} size={80} />
       </div>
       <div className={`mt-2 ${TYPE.title} leading-tight text-parchment`}>{who.label}</div>
-      {/* What they thought of you before you opened your mouth. */}
+      {/* What they thought of you before you opened your mouth.
+
+          The mark and nothing else. Five hearts from black to red is a scale
+          that is read once and recognised after that, and the words under it
+          were a second line of prose on the tallest column of the card.
+          Asked for by the user: the word is under the pointer. */}
       {feeling && (
-        <div className={`mt-1 ${TYPE.note} leading-snug text-parchment-dim`} title={feeling.line}>
-          <span aria-hidden>{feeling.mark}</span> {feeling.word}
+        <div
+          className={`mt-1 ${TYPE.body} leading-none`}
+          title={`${name} ${feeling.word}. ${feeling.line}`}
+        >
+          <span aria-hidden>{feeling.mark}</span>
+          <span className="sr-only">
+            {name} {feeling.word}
+          </span>
         </div>
       )}
       {mine && (
