@@ -18,6 +18,7 @@ import { GrowthNote } from './GrowthNote';
 import { Menu } from './Menu';
 import { SeasonDial } from './SeasonDial';
 import { TrendRows } from './TrendRows';
+import { WorksButton } from './WorksButton';
 import { DevEditTrigger, useHoverText } from './DevText';
 
 interface Props {
@@ -31,6 +32,11 @@ interface Props {
   /** The map out, which only a place with an outside has. */
   onWorld: () => void;
   onTree: () => void;
+  /**
+   * The shelf, from here only on a window with no column under the crown
+   * for it. Optional because the bench draws this bar too and has no shelf.
+   */
+  onWorks?: () => void;
   /** The way out of a reign, which is the one thing here that is not the reign. */
   onBeginAnew: () => void;
   /** Dev mode: what the pointer says about a board is game text too. */
@@ -237,6 +243,7 @@ export function TopBar({
   onRegister,
   onWorld,
   onTree,
+  onWorks,
   onBeginAnew,
   dev = false,
 }: Props) {
@@ -289,6 +296,10 @@ export function TopBar({
         </div>
 
         <span className="ruler-topbar-actions flex shrink-0 items-center gap-2.5">
+          {/* The shelf. On a wide window it sits in the column under the
+              crown, beside the laws; here only where that column is not
+              drawn, so it is on every window exactly once. */}
+          {onWorks && <WorksButton state={state} onOpen={onWorks} className={`${box} lg:hidden`} />}
           {opening > 0 && (
             <button
               type="button"

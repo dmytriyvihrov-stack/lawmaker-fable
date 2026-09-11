@@ -5,6 +5,7 @@ import {
   chooseCase,
   chooseDeclared,
   chooseLaw,
+  buildEarly,
   chooseWork,
   continueYear,
   focusTech,
@@ -13,6 +14,7 @@ import {
   openBoard,
   newGame,
   reopenLaw,
+  seeWorks,
   sendAbroad,
   takeLover,
   visitLover,
@@ -59,6 +61,7 @@ import { LoverMoment } from './components/LoverMoment';
 import { MonarchPanel } from './components/MonarchPanel';
 
 import { Popup } from './components/Popup';
+import { WorksButton } from './components/WorksButton';
 import { Primer } from './components/Primer';
 import { DoorNote } from './components/DoorNote';
 import { SmallThingNote } from './components/SmallThingNote';
@@ -111,6 +114,7 @@ type Action =
   | { type: 'case'; choiceId: string; ruling?: string }
   | { type: 'nextInYear' }
   | { type: 'build'; id: WorkId; plot?: PlotId }
+  | { type: 'seeWorks' }
   | { type: 'gift'; character: string }
   | { type: 'lover'; character: string }
   | { type: 'visit'; character: string }
@@ -147,7 +151,14 @@ function appReducer(game: GameState | null, action: Action): GameState | null {
     case 'nextInYear':
       return continueYear(game);
     case 'build':
-      return chooseWork(game, action.id, action.plot);
+      /* In the year's own turn for it the year turns on the choice; from the
+         shelf in any other season it does not, and whoever is due this year
+         still comes. */
+      return game.phase === 'works'
+        ? chooseWork(game, action.id, action.plot)
+        : buildEarly(game, action.id, action.plot);
+    case 'seeWorks':
+      return seeWorks(game);
     case 'gift':
       return giveGift(game, action.character);
     case 'lover':
@@ -230,6 +241,8 @@ export function App() {
   const [visiting, setVisiting] = useState<string | null>(null);
   const [worldOpen, setWorldOpen] = useState(false);
   const [treeOpen, setTreeOpen] = useState(false);
+  /** The shelf, opened from the mark in the corner in a season that is not its own. */
+  const [worksOpen, setWorksOpen] = useState(false);
   /** The books, and the rule that there is only ever one of them open. */
   const openOnly = useCallback((which: 'codex' | 'register' | 'world' | 'tree' | null) => {
     setCodexOpen(which === 'codex');
@@ -264,7 +277,22 @@ export function App() {
     setPicked(null);
     setPlot(null);
     setPlotHover(null);
+    setWorksOpen(false);
   }, [turnNow]);
+  /* The year has come round to the shelf on its own: the card that comes up
+     then is the year's, with no way out but to spend it, so the one opened
+     from the corner is put away. */
+  const phaseNow = game?.phase ?? null;
+  useEffect(() => {
+    if (phaseNow === 'works') setWorksOpen(false);
+  }, [phaseNow]);
+  /* The shelf has been read, whichever way it was opened, and what is on it
+     is what the mark compares against from now on. Nothing changes when
+     nothing new is on it, so this settles at once. */
+  const worksShown = game !== null && (game.phase === 'works' || worksOpen);
+  useEffect(() => {
+    if (worksShown) dispatch({ type: 'seeWorks' });
+  }, [worksShown, game]);
   /**
    * How fast the years go past. A preference, not part of the reign: it lives
    * in this browser and never goes into the save.
@@ -864,8 +892,12 @@ export function App() {
    * of something else is a promise about the wrong thing.
    */
   const plotWork =
-    game.phase === 'works' && picked !== null && needsPlacement(game, picked) ? picked : null;
-  const openPlots = plotWork !== null && !idling ? freePlots(game) : [];
+    (game.phase === 'works' || worksOpen) && picked !== null && needsPlacement(game, picked)
+      ? picked
+      : null;
+  /* The pegs go out whenever the shelf is up and asking, the years drifting
+     underneath it or not: the drift is weather, and a peg is a question. */
+  const openPlots = plotWork !== null && (!idling || worksOpen) ? freePlots(game) : [];
   const plotShown = plotWork !== null && preview === plotWork ? (plot ?? plotHover) : null;
   /** What the picture is standing on, this year's undecided building included. */
   const shownPlacements =
@@ -881,21 +913,25 @@ export function App() {
    * The year of work points at the ground a chosen building would stand on,
    * which is the one place the answer to "what does this change" lives.
    */
+  /* The thread points at the ground the building is actually going on, which
+     is the ground under the pointer while it is still being chosen and the
+     chosen one after that. */
+  const worksSpot = () => {
+    const at = preview ? siteOf(preview, shownPlacements) : undefined;
+    if (!at || !WORK_SITES[preview!]) return WORKS_SPOT;
+    return { x: at.x + 40 * at.scale, y: at.y + 30 * at.scale };
+  };
+  /* The shelf opened from the corner takes the thread, except while somebody
+     is knocking: the knock is the one mark on the town that is also a way
+     in, and it stays where it is until it is answered. */
   const markerSpot = drifting
     ? null
-    : game.current?.kind === 'case' && (game.phase === 'case' || game.phase === 'aftermath')
-      ? (handSpotNow ?? CASE_SPOTS[game.current.id] ?? null)
-      : game.phase === 'composer' || (game.current?.kind === 'proposal' && waiting)
-        ? LAW_SPOT
-        : game.phase === 'works'
-          ? (() => {
-              /* The thread points at the ground the building is actually going
-                 on, which is the ground under the pointer while it is still
-                 being chosen and the chosen one after that. */
-              const at = preview ? siteOf(preview, shownPlacements) : undefined;
-              if (!at || !WORK_SITES[preview!]) return WORKS_SPOT;
-              return { x: at.x + 40 * at.scale, y: at.y + 30 * at.scale };
-            })()
+    : game.phase === 'works' || (worksOpen && !waiting)
+      ? worksSpot()
+      : game.current?.kind === 'case' && (game.phase === 'case' || game.phase === 'aftermath')
+        ? (handSpotNow ?? CASE_SPOTS[game.current.id] ?? null)
+        : game.phase === 'composer' || (game.current?.kind === 'proposal' && waiting)
+          ? LAW_SPOT
           : null;
 
   /* The card is the bench's only while somebody is actually standing on it.
@@ -934,6 +970,39 @@ export function App() {
        place that does not exist yet, and it takes the window: see the full
        screen layer below the town. */
     if (game.phase === 'intro') return null;
+    /* The shelf, opened from the corner in a season that is not its own.
+       The same card the year brings up in the autumn, with a way to put it
+       away, and it stands in front of whatever else was on the table: the
+       person at the door is still there when it closes. */
+    if (worksOpen && game.phase !== 'works') {
+      const putAway = () => {
+        setPreview(null);
+        setPicked(null);
+        setPlot(null);
+        setPlotHover(null);
+        setWorksOpen(false);
+      };
+      return (
+        <Popup tone="seal" tailX={tailX} wide tall cardRef={cardRef}>
+          <Works
+            key={`shelf:${game.turn}`}
+            state={game}
+            dev={dev}
+            season={season}
+            onPreview={setPreview}
+            onPick={setPicked}
+            plot={plot}
+            onPlot={setPlot}
+            onBuild={(id, where) => {
+              putAway();
+              finishThen({ type: 'build', id, plot: where });
+            }}
+            onReopen={() => undefined}
+            onClose={putAway}
+          />
+        </Popup>
+      );
+    }
     if (journey.snapshot.errands.length || (game.phase === 'case' && !drifting && !journeyReady)) {
       return <JourneyCard state={game} control={journey} cardRef={cardRef} dev={dev} />;
     }
@@ -1169,6 +1238,7 @@ export function App() {
           onRegister={() => openOnly('register')}
           onWorld={() => openOnly('world')}
           onTree={() => openOnly('tree')}
+          onWorks={() => setWorksOpen(true)}
           onBeginAnew={() => {
             clearSave();
             setSaved(null);
@@ -1263,7 +1333,7 @@ export function App() {
           plotOn={plotShown}
           onPlotPick={setPlot}
           onPlotHover={setPlotHover}
-          preview={game.phase === 'works' ? preview : null}
+          preview={game.phase === 'works' || worksOpen ? preview : null}
           /* What was paid for is a frame with people at it for the whole year
              that follows, which is the year the player watches go past. */
           raising={game.turn - game.lastWorkTurn <= 1 ? game.lastWork : null}
@@ -1408,6 +1478,17 @@ export function App() {
               which is while the wheel is still turning and the drafting table
               is minutes away. It says it when the table is actually open. */}
           <StandingLaws state={game} writing={game.phase === 'composer' && !idling} dev={dev} flush />
+        </div>
+        {/* The shelf, on the same column as the laws: what the place has
+            decided, and what it could put up. Open in any season; the mark
+            says when something new is on it and when the year is spent. */}
+        <div className="pointer-events-auto relative z-0 flex justify-end pr-2.5">
+          <WorksButton
+            state={game}
+            onOpen={() => setWorksOpen(true)}
+            disabled={hand.zoomed || hand.busy}
+            className="flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-ink-line bg-ink-soft/95 px-3 text-[17px] leading-none text-parchment-dim shadow-[0_10px_28px_rgba(0,0,0,0.4)] backdrop-blur-[2px] hover:border-parchment-dim/60 disabled:cursor-default"
+          />
         </div>
       </div>
       )}

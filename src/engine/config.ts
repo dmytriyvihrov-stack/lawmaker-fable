@@ -86,6 +86,53 @@ export const CONFIG = {
     answers: { house: 40, well: 60, long_room: 90 },
   },
 
+  /**
+   * What goes missing, and the two boards that are the whole answer to it.
+   *
+   * The crowd already costs the conditions (above) and the square (`town`).
+   * This is the third thing a count costs, and it is the one the store feels:
+   * past a handful of people, a share of what the year makes never reaches the
+   * shelf. In a hamlet of five it is nothing, because in a hamlet of five it is
+   * a conversation and not a crime, which is what the law about wrongdoing says
+   * out loud when it arrives.
+   *
+   * Two things push back, and until now neither of them did anything at all
+   * once it was on the screen. **The songs**, because a place that sings
+   * together is a place where taking from the store is taking from somebody you
+   * were singing with. **The watch**, because a watch is somebody whose job it
+   * is. Between them a town that keeps both high can take this to nothing at
+   * three hundred souls, and a town that lets both slide pays a quarter of its
+   * year to it.
+   *
+   * Nothing here is a new board and nothing is stored: it is read off the count
+   * and off those two, every year, the way the crowding term is. The law about
+   * wrongdoing reaches it the way everything else does, through the watch:
+   * forgiven costs two of it a year, hanged pays two.
+   */
+  crime: {
+    /** Under this many souls there is nothing here to be a crime. */
+    freeBelow: 20,
+    /** A point of it for every this many souls past that. */
+    perSoul: 10,
+    /** And a point off for every this much of the songs, and of the watch. */
+    perCulture: 8,
+    perWatch: 6,
+    /** It never takes more than this share of the year's making. */
+    cap: 45,
+  },
+
+  /**
+   * And what the songs are worth to the square, every year.
+   *
+   * The other half of the same fix. Culture had a board, a building, a place on
+   * the ladder and two things downstream of it (the research pot, and now what
+   * goes missing), and no answer at all to the question a player asks about any
+   * dial: what is it FOR. This is the plainest answer there is. A place with
+   * songs in it is a nicer place to live, by one point a year for every this
+   * much of them.
+   */
+  culture: { moodPer: 25 },
+
   /** Bending your own law costs the square's trust; in a hamlet, the crown's. */
   exceptionCost: 8,
   /**
@@ -372,6 +419,25 @@ export const CONFIG = {
      */
     freeAbove: 70,
     surplusSpend: 10,     // and the surplus leaves the store anyway
+    /**
+     * What a rest is worth after the last one: in full, then half, then not
+     * at all until the year is spent on something else.
+     *
+     * Rest costs nothing and pays at once, and everything else costs ten to
+     * twenty one and pays a trend, so any player and every lookahead takes the
+     * immediate one: across twelve seeds it was 219 of 368 years for the most
+     * efficient player, 173 of 342 for the one that plays like a person, and
+     * 136 of 273 for the kindest. Fourteen buildings, six pieces of ground and
+     * a whole screen were competing for what was left of the year.
+     *
+     * It is deliberately not priced instead. A rest is the only repair the
+     * crown has against the town's own drift and the cost of reopening a law,
+     * and taking that away outright put `defeat:crownSanity` at the top of
+     * every column when it was tried. So the first one in a row is untouched
+     * and the reign is only stopped from living on it: a second is half a
+     * rest, and a third is a year sat on your hands.
+     */
+    restRun: [1, 0.5, 0] as readonly number[],
   },
 
   /**

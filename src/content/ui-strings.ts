@@ -150,6 +150,16 @@ export const UI = {
      */
     overShelf: 'Needs a granary before the store can hold it.',
     maxed: 'Already the biggest in the county.',
+    /**
+     * A rest after a rest, and a rest after that.
+     *
+     * Said on the card and not found out afterwards. The first one in a row is
+     * worth what it has always been worth; this is the reign being told, in
+     * the place it is deciding, that the second is worth half of one and the
+     * third is worth sitting down.
+     */
+    restedAgain: 'A second year of it. Worth half a rest.',
+    restedOut: 'Rested out. This one is a year sat on your hands.',
     level: 'level {n} of {max}',
     /** A run of works that only make sense one after the other. */
     groupInfrastructure: 'What the place is built on',
@@ -180,6 +190,25 @@ export const UI = {
        both. */
     wherePick: 'PICK THE GROUND FIRST',
     whereOn: 'SPEND THE YEAR: {where}',
+    /**
+     * The shelf is a page of its own now (T-SHELF-1): a mark in the corner
+     * opens it in any season, and the year is spent from it whenever it is
+     * spent. What does not change is that a year holds one thing, so once
+     * it is spent the page can be read and nothing on it taken.
+     */
+    open: 'The year of work',
+    openIcon: '🔨',
+    close: 'Close',
+    /** The mark, when there is something on the shelf that was not there before. */
+    news: '{n} new things on the shelf',
+    newsOne: 'one new thing on the shelf',
+    newTag: 'new',
+    /** The mark, when the year is already spent. */
+    spentShort: 'spent this year',
+    spent: 'This year is spent on {name}. The next year of work opens in the spring.',
+    spentRest: 'This year is spent. The next year of work opens in the spring.',
+    /** Read in the spring: the rest of the year still comes, work or no work. */
+    earlyLine: 'A year holds one of these, chosen in any season. Whoever is due this year still comes.',
   },
 
   techs: {
@@ -282,6 +311,12 @@ export const UI = {
     winter: '{n} off the long winter',
     /** The three questions a place works things out about. */
     sphereHint: 'Three spheres, and each of them answers a different question. Every path is a chain: the second step is not thinkable until the first is known. Nothing here closes anything else. The years do that.',
+    /** The rows of the tree, top to bottom: a first step, a second, a third. */
+    tiers: ['I', 'II', 'III'],
+    /** The bar (T-LADDER-1): one tick per count that opens something. */
+    growthBarHint: 'One tick for every count that opens something. The bar fills as the place does.',
+    growthHere: 'here',
+    growthPassedAt: 'passed',
   },
 
   /**
@@ -346,6 +381,8 @@ export const UI = {
       ground: 'The ground itself',
       births: 'Children',
       animals: 'What is underfoot',
+      songs: 'The songs',
+      crime: 'What goes missing',
       other: 'The place itself',
     } as Record<string, string>,
   },
@@ -600,6 +637,10 @@ export const UI = {
     crown: 'The crown, nervous about a town',
     crowding: 'Too many people for the place',
     culture: 'More people than songs',
+    /** What the songs give back, on the one board they are plainly for. */
+    songs: 'The songs, and a place worth living in',
+    /** And the share of the year's making that never reached the shelf. */
+    crime: 'What went missing on the way to the store',
     winter: 'The long winter',
     /** A year with no growing season in it, said as the store feels it. */
     winterStill: 'Nothing grows in a winter like this one',
@@ -735,10 +776,18 @@ export const UI = {
     take: 'TAKE IT ON',
     choose: 'Pick one. The other comes later, when there are more of you.',
     army: 'Somebody keeps a watch',
-    armyLine: 'A rota, a gate that is shut at night, and one person whose job is to notice things. The place stops being open to whatever walks up.',
+    /* And what it is actually for, which until now was nothing at all: the
+       watch was a board, a building and a line on the ladder with nothing
+       downstream of it, so the choice on this screen was a coin toss with a
+       paragraph. Both halves now answer the same question, from opposite
+       ends, and the sentence says so. */
+    armyLine: 'A rota, a gate that is shut at night, and one person whose job is to notice things. Less of the harvest goes missing on the way to the store, and the place stops being open to whatever walks up.',
     culture: 'Somebody keeps the songs',
-    cultureLine: 'A bell, a fair day, and somebody who remembers the words. The place stops being only the work it does.',
+    cultureLine: 'A bell, a fair day, and somebody who remembers the words. A pleasanter place to live in, less inclined to help itself out of its own store, and quicker at working things out.',
     opens: 'And you can build for it',
+    /** The sentence under both, said once, because it is the same argument. */
+    bothLine:
+      'Either one keeps a share of the year in the store instead of losing it. A watch is somebody minding it; the songs are everybody minding it themselves.',
   },
 
   /** The year the place stops being "the place" and starts being somewhere. */

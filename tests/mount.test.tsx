@@ -116,6 +116,21 @@ describe('every screen renders', () => {
         <Works state={s} season="autumn" plot={null} onPlot={noop} onBuild={noop} onReopen={noop} />,
       );
       expect(card.length).toBeGreaterThan(400);
+      /* And the same shelf opened from the corner in the spring (T-SHELF-1):
+         a way to put it away, and after the year is spent a line saying on
+         what and no button to spend it again. */
+      const spring = { ...state, phase: 'case' as const, lastWorkTurn: state.turn - 1 };
+      const early = draw(
+        <Works state={spring} season="spring" plot={null} onPlot={noop} onBuild={noop} onReopen={noop} onClose={noop} />,
+      );
+      expect(early).toContain(UI.works.close);
+      expect(early).toContain(UI.works.choose);
+      const spent = { ...spring, lastWorkTurn: state.turn, lastWork: 'fields' as const };
+      const read = draw(
+        <Works state={spent} season="summer" plot={null} onPlot={noop} onBuild={noop} onReopen={noop} onClose={noop} />,
+      );
+      expect(read).not.toContain(UI.works.choose);
+      expect(read).toContain(UI.works.spent.replace('{name}', 'Clear a field'));
     }
   });
 
@@ -136,6 +151,7 @@ describe('every screen renders', () => {
           onRegister={noop}
           onWorld={noop}
           onTree={noop}
+          onWorks={noop}
           onBeginAnew={noop}
         />,
       );

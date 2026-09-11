@@ -84,6 +84,13 @@ export function BoardChoice({ state, offer, onTake }: Props) {
           })}
         </div>
 
+        {/* And the one sentence that is true of both, said once under them
+            rather than twice inside them: whichever the place takes on, what
+            it buys is a share of the year that stops walking off. */}
+        {choosing && (
+          <p className="mt-2 text-[11px] leading-snug text-parchment-dim">{UI.boards.bothLine}</p>
+        )}
+
         <button
           type="button"
           disabled={picked === null}

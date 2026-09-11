@@ -128,6 +128,107 @@ export function crowdingOnHealth(s: GameState): number {
   return -Math.floor((under + over / 2) / healthEvery);
 }
 
+/**
+ * What never reaches the shelf, as a percent of what the year made.
+ *
+ * The third thing a count costs, after the conditions and the square. See the
+ * note on `CONFIG.crime`: it rises with how many of you there are and falls
+ * with the songs and with the watch, and it is read off those three every year
+ * rather than stored anywhere. A board the place has not opened is not read at
+ * all, so a hamlet that never chose a watch is not quietly credited with one.
+ */
+export function crimeOf(s: GameState): number {
+  const C = CONFIG.crime;
+  const raw = crimeSourcesOf(s).reduce((sum, part) => sum + part.percent, 0);
+  return Math.max(0, Math.min(C.cap, raw));
+}
+
+/**
+ * The same number, itemised, so the screen can say why. One line for the
+ * count, and one for each board that is pushing back and is open to be read.
+ */
+export function crimeSourcesOf(
+  s: GameState,
+): { kind: 'souls' | 'culture' | 'army'; percent: number }[] {
+  const C = CONFIG.crime;
+  const out: { kind: 'souls' | 'culture' | 'army'; percent: number }[] = [];
+
+  const felt = Math.max(0, s.population - C.freeBelow);
+  const fromSouls = Math.floor(felt / C.perSoul);
+  if (fromSouls > 0) out.push({ kind: 'souls', percent: fromSouls });
+
+  // and what answers it, neither of which is read while it is still hidden
+  if (isActiveStat(s, 'culture')) {
+    const songs = Math.floor(s.stats.culture / C.perCulture);
+    if (songs > 0) out.push({ kind: 'culture', percent: -songs });
+  }
+  if (isActiveStat(s, 'army')) {
+    const watch = Math.floor(s.stats.army / C.perWatch);
+    if (watch > 0) out.push({ kind: 'army', percent: -watch });
+  }
+
+  return out;
+}
+
+/**
+ * What the songs do for the square, every year. The one plain answer to what a
+ * culture board is for. See the note on `CONFIG.culture`.
+ */
+export function cultureOnMood(s: GameState): number {
+  if (!isActiveStat(s, 'culture') || !isActiveStat(s, 'mood')) return 0;
+  return Math.floor(s.stats.culture / CONFIG.culture.moodPer);
+}
+
+/**
+ * What a year's making loses on the way to the shelf.
+ *
+ * A share of what came in, and never a bite out of what was already there:
+ * this is production going missing, not the store being robbed. So a year that
+ * made nothing loses nothing, and a long winter, which makes nothing by
+ * definition, is not touched by it at all.
+ */
+export function crimeTakes(s: GameState, made: number): number {
+  if (made <= 0 || isWinter(s.turn)) return 0;
+  return Math.round(((made * crimeOf(s)) / 100) * 10) / 10;
+}
+
+/**
+ * What the place actually made this year, before anything is taken off it.
+ *
+ * Every pull on the store that puts something in, and none of the ones that
+ * take something out. A hand in the store takes from the harvest, not from
+ * what is left of the harvest after the laws have had their share, so a place
+ * whose decrees cost it more than its fields earn still loses a share of the
+ * fields. The list is exactly the one `trendOf` sums, so the number on the
+ * dial and the number the year takes are the same number.
+ */
+export function makingOf(s: GameState): number {
+  let out = 0;
+
+  for (const law of s.laws) {
+    if (law.status !== 'active') continue;
+    const option = findLawOption(law.subject, law.action, law.label);
+    if (!option) continue;
+    out += Math.max(0, lawTrend(s, option).economy ?? 0);
+  }
+
+  for (const work of allWorks()) {
+    const level = s.buildings[work.id] ?? 0;
+    if (level === 0) continue;
+    out += Math.max(0, (work.trend.economy ?? 0) * level);
+  }
+
+  for (const tech of allTechs()) {
+    if (!s.techs.includes(tech.id)) continue;
+    out += Math.max(0, tech.trend.economy ?? 0);
+  }
+
+  out += Math.max(0, animalKeep(s)?.every.economy ?? 0);
+  out += Math.max(0, monarchOf(s.seed).trait.yearly?.economy ?? 0);
+
+  return Math.round(out * 10) / 10;
+}
+
 /** The long winter comes every tenth year and holds for that year. */
 export function isWinter(turn: number): boolean {
   return turn > 0 && turn % CONFIG.winter.every === 0;
@@ -536,6 +637,9 @@ export function trendOf(s: GameState, stat: StatId): number {
   // the crowd, on the one board a crowd is always bad for
   if (stat === 'health') out += crowdingOnHealth(s);
 
+  // and the songs, on the one board they are plainly for
+  if (stat === 'mood') out += cultureOnMood(s);
+
   // whatever is being fed at the back door, which is a yearly fact like any other
   out += animalKeep(s)?.every[stat] ?? 0;
 
@@ -548,6 +652,10 @@ export function trendOf(s: GameState, stat: StatId): number {
 
   if (stageRule(s) === 'town' && stat === 'crownSanity') out += CONFIG.town.crownDrift;
 
+  // and what never reaches the shelf, which is a share of what the year made
+  // rather than of what is left of it once the laws have been paid
+  if (stat === 'economy') out -= crimeTakes(s, makingOf(s));
+
   // and the one year the store is not a trend at all. Everything above is a
   // promise about a growing season, and there is not one this year: the best a
   // winter can do for a store is leave it alone, and it does not do that
@@ -559,7 +667,10 @@ export function trendOf(s: GameState, stat: StatId): number {
 
 /** Who is pulling on a board. The screen names the ones with no label. */
 export type TrendKind =
-  | 'law' | 'work' | 'tech' | 'monarch' | 'animals' | 'crowd' | 'drift' | 'winter' | 'lover';
+  | 'law' | 'work' | 'tech' | 'monarch' | 'animals' | 'crowd' | 'drift' | 'winter' | 'lover'
+  /* The two the boards themselves are for: what the songs do to the square,
+     and what a count with nobody watching it takes off the year's making. */
+  | 'songs' | 'crime';
 
 /**
  * The same sum as `trendOf`, itemised. Every standing law is listed even when
@@ -600,6 +711,11 @@ export function trendSourcesOf(
     if (crowd !== 0) out.push({ kind: 'crowd', label: '', delta: crowd });
   }
 
+  if (stat === 'mood') {
+    const songs = cultureOnMood(s);
+    if (songs !== 0) out.push({ kind: 'songs', label: '', delta: songs });
+  }
+
   const kept = animalKeep(s);
   const keepDelta = kept?.every[stat] ?? 0;
   if (kept && keepDelta !== 0) out.push({ kind: 'animals', label: kept.label, delta: keepDelta });
@@ -614,6 +730,13 @@ export function trendSourcesOf(
 
   if (stageRule(s) === 'town' && stat === 'crownSanity') {
     out.push({ kind: 'drift', label: '', delta: CONFIG.town.crownDrift });
+  }
+
+  // and its own line for the share of all of that which never arrives, because
+  // a player who can see the store falling has to be able to see this doing it
+  if (stat === 'economy') {
+    const gone = crimeTakes(s, makingOf(s));
+    if (gone > 0) out.push({ kind: 'crime', label: '', delta: -gone });
   }
 
   // In a winter year the list above is a list of things that are not happening.
@@ -767,6 +890,64 @@ export function workPrice(s: GameState, work: WorkDef): number {
 /** What it pays out on the day, in the place it is being held in. */
 export function workOnce(s: GameState, work: WorkDef): Effects | undefined {
   return stageRule(s) === 'town' && work.townOnce !== undefined ? work.townOnce : work.once;
+}
+
+/**
+ * What a rest would be worth if the year were spent on one now: all of it, half
+ * of it, or none. See the note on `CONFIG.works.restRun`. Anything that is not
+ * a rest is worth what it says, always.
+ */
+export function restShare(s: GameState): number {
+  const run = s.restRun ?? 0;
+  const scale = CONFIG.works.restRun;
+  return scale[Math.min(run, scale.length - 1)];
+}
+
+/** Whether a work is the one that leaves nothing standing and pays at once. */
+export function isRest(work: WorkDef): boolean {
+  return work.id === 'rest';
+}
+
+/**
+ * What this work pays on the day, in this place, this year. The screen and the
+ * engine both read it here, so the card can never promise a rest the year is
+ * not going to give.
+ */
+export function workOnceNow(s: GameState, work: WorkDef): Effects | undefined {
+  const once = workOnce(s, work);
+  if (!isRest(work) || once === undefined) return once;
+  const share = restShare(s);
+  if (share <= 0) return undefined;
+  if (share >= 1) return once;
+  return scaleEffects(once, share);
+}
+
+/**
+ * What is on the shelf: everything a year could be spent on if the store
+ * could pay. This is the list the mark in the corner reads for news, and
+ * money is left out of it on purpose: the store moves every year, and a mark
+ * that lit every time it crossed a price would be a mark nobody reads.
+ */
+export function shelfOf(s: GameState): WorkId[] {
+  return worksFor(s)
+    .filter((w) => w.maxLevel === 0 || (s.buildings[w.id] ?? 0) < w.maxLevel)
+    .map((w) => w.id);
+}
+
+/** Whether this year's work is already spent, wherever in the year it was. */
+export function workSpent(s: GameState): boolean {
+  return s.lastWorkTurn === s.turn;
+}
+
+/**
+ * What is on the shelf that was not there the last time it was read. A save
+ * that has never read it has no news: the whole shelf lighting up on load is
+ * not news, it is a list.
+ */
+export function shelfNews(s: GameState): WorkId[] {
+  const seen = s.worksSeen;
+  if (seen === undefined) return [];
+  return shelfOf(s).filter((id) => !seen.includes(id));
 }
 
 export function workCost(s: GameState, work: WorkDef): number {

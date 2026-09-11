@@ -6,7 +6,16 @@ import { UI } from '../../content/ui-strings';
 import { CARD_BUTTON, CardFoot, PopupHead } from '../components/Popup';
 import { getProposal } from '../../engine/registry';
 import { reopenableProposals } from '../../engine/reducer';
-import { storeCap, workCost, workOnce, workSubsidised, worksFor } from '../../engine/simulation';
+import {
+  isRest,
+  restShare,
+  storeCap,
+  workCost,
+  workOnceNow,
+  workSpent,
+  workSubsidised,
+  worksFor,
+} from '../../engine/simulation';
 import { DevEffects } from '../components/DevCorner';
 import { MovedBoards } from '../components/MovedBoards';
 import { WORKS } from '../../content/works';
@@ -30,6 +39,12 @@ interface Props {
   onPlot: (plot: PlotId | null) => void;
   onBuild: (id: WorkId, plot?: PlotId) => void;
   onReopen: (proposalId: string) => void;
+  /**
+   * The shelf was opened from the mark in the corner rather than by the year
+   * arriving at it, so it can be put away again. Absent in the year's own
+   * turn for it, where the only way out is to spend the year.
+   */
+  onClose?: () => void;
 }
 
 type Pick = { kind: 'work'; id: WorkId } | { kind: 'law'; id: string };
@@ -53,8 +68,16 @@ export function Works({
   onPlot,
   onBuild,
   onReopen,
+  onClose,
 }: Props) {
   const [picked, setPicked] = useState<Pick | null>(null);
+  /* The year is spent, so the shelf is a thing to read and not a thing to
+     take from; or the year has come round to it, in which case reopening a
+     law is on the table as well. Reopening only then: it puts the drafting
+     table in front of you at once, and in the spring that would push out
+     whoever was already standing there. */
+  const spent = workSpent(state);
+  const inPhase = state.phase === 'works';
   /** The list of standing laws stays folded until somebody asks for it. */
   const [reopenOpen, setReopenOpen] = useState(false);
 
@@ -144,7 +167,7 @@ export function Works({
     const waiting =
       work.needsWork !== undefined &&
       (state.buildings[work.needsWork.id] ?? 0) < work.needsWork.level;
-    const open = !maxed && !tooDear && !waiting;
+    const open = !maxed && !tooDear && !waiting && !spent;
     const on = picked?.kind === 'work' && picked.id === work.id;
     return (
       <button
@@ -176,7 +199,15 @@ export function Works({
 
         {/* what it moves and what it costs, on one line, in that order */}
         <div className={`mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 pl-[22px] ${TYPE.note}`}>
-          <MovedBoards row once={workOnce(state, work)} every={work.trend} place={state} />
+          <MovedBoards row once={workOnceNow(state, work)} every={work.trend} place={state} />
+          {/* And why a rest is smaller than it was, said on the card rather
+              than discovered afterwards. A year sat on your hands is still a
+              legal answer; it is simply not worth anything. */}
+          {isRest(work) && restShare(state) < 1 && (
+            <span className="text-parchment-dim">
+              {restShare(state) <= 0 ? UI.works.restedOut : UI.works.restedAgain}
+            </span>
+          )}
           {waiting ? (
             <span className="text-parchment-dim">
               {UI.works.needsFirst.replace('{name}', nameOf(work.needsWork!.id))}
@@ -230,6 +261,36 @@ export function Works({
           .replace('{n}', String(state.turn))}`}
       />
       <div className="p-4">
+        {/* What the shelf is today, and the way out when there is one.
+
+            Opened from the corner in the spring it says the year still comes;
+            opened after the year is spent it says on what, and nothing below
+            it takes a click. In the year's own turn for it the head has said
+            everything already, and there is no way out but the year. */}
+        {(onClose !== undefined || !inPhase) && (
+          <div className="flex items-start justify-between gap-3">
+            <p className={`${TYPE.note} leading-snug text-parchment-dim`}>
+              {spent
+                ? state.lastWork
+                  ? UI.works.spent.replace('{name}', nameOf(state.lastWork))
+                  : UI.works.spentRest
+                : !inPhase
+                  ? UI.works.earlyLine
+                  : ''}
+            </p>
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label={UI.works.close}
+                title={UI.works.close}
+                className="min-h-[32px] min-w-[32px] shrink-0 rounded-md border border-ink-line text-parchment-dim"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
 
         {/* The other half of a year of work.
 
@@ -327,7 +388,7 @@ export function Works({
 
         {/* By the middle of a reign there is a card here for every law standing.
             Opening a law again is a rare thing to want, so it asks first. */}
-        {reopenable.length > 0 && (
+        {inPhase && reopenable.length > 0 && (
           <section className="mt-4">
             <button
               type="button"
@@ -394,6 +455,7 @@ export function Works({
             direction and a fold of standing laws the way to spend the year was
             below the bottom edge of the window until somebody went looking. It
             sits on the bottom edge of the scroll now, on its own paper. */}
+        {!spent && (
         <CardFoot>
           <button
             type="button"
@@ -412,6 +474,7 @@ export function Works({
                 : UI.works.choose}
           </button>
         </CardFoot>
+        )}
       </div>
     </>
   );

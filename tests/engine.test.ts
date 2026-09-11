@@ -3,23 +3,34 @@ import { evaluate } from '../src/engine/conditions';
 import { CONFIG } from '../src/engine/config';
 import {
   advance,
+  buildEarly,
   continueYear,
   chooseCase,
   chooseWork,
   focusTech,
   newGame,
   reopenLaw,
+  seeWorks,
 } from '../src/engine/reducer';
 import { traitOf } from '../src/engine/monarch';
 import {
+  crimeOf,
+  crimeTakes,
+  cultureOnMood,
   focusOf,
   isWinter,
+  restShare,
+  workOnce,
+  workOnceNow,
   researchGain,
   roomFor,
   seasonOf,
+  shelfNews,
+  shelfOf,
   shelteredSouls,
   storeCap,
   trendOf,
+  trendSourcesOf,
   workCost,
   worksFor,
 } from '../src/engine/simulation';
@@ -127,9 +138,63 @@ describe('the years', () => {
     expect(trendOf(s, 'economy')).toBe(law);
     s.buildings.fields = 2; // +2 each, and not scaled
     expect(trendOf(s, 'economy')).toBe(law + 4);
-    // the same sentence over a town of five hundred is weather
+    // the same sentence over a town of five hundred is weather. And a town of
+    // five hundred with no watch and no songs in it loses the whole of what
+    // goes missing, which is the cap, so the making arrives short.
     s.population = 500;
-    expect(trendOf(s, 'economy')).toBe(law * CONFIG.law.maxWeight + 4);
+    const made = law * CONFIG.law.maxWeight + 4;
+    expect(crimeOf(s)).toBe(CONFIG.crime.cap);
+    expect(trendOf(s, 'economy')).toBe(made - crimeTakes(s, made));
+  });
+
+  it('what goes missing is set by the count and answered by the songs and the watch', () => {
+    const s = at(5);
+    // a hamlet is too small for any of this to be a crime rather than a chat
+    s.population = CONFIG.crime.freeBelow;
+    expect(crimeOf(s)).toBe(0);
+
+    // and then it is one point for every so many souls past that
+    s.population = CONFIG.crime.freeBelow + CONFIG.crime.perSoul * 4;
+    expect(crimeOf(s)).toBe(4);
+
+    // the songs and the watch each take some back, and only once the place has
+    // actually opened that board: a hamlet is not credited with a watch it
+    // never chose
+    s.stats.culture = CONFIG.crime.perCulture * 2;
+    s.stats.army = CONFIG.crime.perWatch * 2;
+    expect(crimeOf(s)).toBe(4);
+    s.boards = ['culture', 'army'];
+    expect(crimeOf(s)).toBe(0);
+
+    // and it never goes below nothing, however loud the place is
+    s.stats.culture = 100;
+    expect(crimeOf(s)).toBe(0);
+  });
+
+  it('what goes missing is taken out of the making and never out of the store', () => {
+    const s = at(5);
+    s.stage = 'town'; // which opens the watch and the songs, so both are read
+    s.stats.army = 0;
+    s.stats.culture = 0;
+    s.population = CONFIG.crime.freeBelow + CONFIG.crime.perSoul * 10; // ten percent
+    expect(crimeOf(s)).toBe(10);
+    expect(crimeTakes(s, 20)).toBe(2);
+    // a year that made nothing loses nothing, and neither does one that lost
+    expect(crimeTakes(s, 0)).toBe(0);
+    expect(crimeTakes(s, -8)).toBe(0);
+    // and a long winter makes nothing by definition, so nothing goes missing
+    s.turn = CONFIG.winter.every;
+    expect(crimeTakes(s, 20)).toBe(0);
+  });
+
+  it('the songs lift the square, once there are songs and a square to lift', () => {
+    const s = at(5);
+    s.stats.culture = CONFIG.culture.moodPer * 3;
+    // the board is not open in a hamlet that never picked it
+    expect(cultureOnMood(s)).toBe(0);
+    s.boards = ['culture'];
+    expect(cultureOnMood(s)).toBe(3);
+    expect(trendSourcesOf(s, 'mood').some((x) => x.kind === 'songs')).toBe(true);
   });
 
   it('the long winter comes every tenth year and not in between', () => {
@@ -212,6 +277,46 @@ describe('the year of work', () => {
     expect(chooseWork(full, 'well')).toBe(full);
   });
 
+  it('a rest after a rest is worth half of one, and a third is worth nothing', () => {
+    let s = at(5, 4);
+    s.phase = 'works';
+    const rest = worksFor(s).find((w) => w.id === 'rest')!;
+    const full = workOnce(s, rest)!.crownSanity!;
+
+    // the first one in a row pays what it has always paid
+    expect(restShare(s)).toBe(1);
+    let before = s.stats.crownSanity;
+    s = chooseWork(s, 'rest');
+    expect(s.stats.crownSanity - before).toBe(full);
+    expect(s.restRun).toBe(1);
+
+    // the second is half a rest
+    s.phase = 'works';
+    s.lastWorkTurn = s.turn - 1;
+    expect(restShare(s)).toBe(0.5);
+    before = s.stats.crownSanity;
+    s = chooseWork(s, 'rest');
+    expect(s.stats.crownSanity - before).toBe(full / 2);
+
+    // the third is a year sat on your hands, and the card says so beforehand
+    s.phase = 'works';
+    s.lastWorkTurn = s.turn - 1;
+    expect(restShare(s)).toBe(0);
+    expect(workOnceNow(s, rest)).toBeUndefined();
+    before = s.stats.crownSanity;
+    s = chooseWork(s, 'rest');
+    expect(s.stats.crownSanity).toBe(before);
+    expect(s.restRun).toBe(3);
+
+    // and anything else at all puts the run back to nought
+    s.phase = 'works';
+    s.lastWorkTurn = s.turn - 1;
+    s.stats.economy = 60;
+    s = chooseWork(s, 'fields');
+    expect(s.restRun).toBe(0);
+    expect(restShare(s)).toBe(1);
+  });
+
   it('is half paid by the surplus, and the surplus is what the place learns with', () => {
     const s = at(5);
     // a surplus is only a thing a place with somewhere to put it can have
@@ -261,12 +366,50 @@ describe('the year of work', () => {
     expect(worksFor(s).map((w) => w.id)).toContain('fair');
   });
 
-  it('a year that already spent its work goes straight on', () => {
+  it('a year that already spent its work goes straight on, once nobody is due', () => {
     const s = at(5);
     s.lastWorkTurn = s.turn;
+    s.eventsThisYear = CONFIG.year.dilemmasPerYear + CONFIG.year.consequencesPerYear;
     s.shownCases = ['v1_idle_hand', 'v2_well', 'v3_millwright', 'v4_hay'];
     const after = continueYear(s);
     expect(after.turn).toBe(s.turn + 1);
+  });
+
+  /* The shelf is open in every season (T-SHELF-1), so a year can be spent in
+     the spring. What that must not do is cut the year short. */
+  it('a year spent from the shelf in the spring still hears whoever is due', () => {
+    const full = CONFIG.year.dilemmasPerYear + CONFIG.year.consequencesPerYear;
+    let s = seal(at(5, 1), 'pv1_work', 0);
+    s = { ...s, turn: 5, phase: 'case', current: { kind: 'case', id: 'v1_idle_hand' }, eventsThisYear: 1 };
+    const store = s.stats.economy;
+    const built = buildEarly(s, 'fields');
+    expect(built.turn, 'the year did not turn').toBe(5);
+    expect(built.phase, 'the person at the door is still there').toBe('case');
+    expect(built.current).toEqual({ kind: 'case', id: 'v1_idle_hand' });
+    expect(built.buildings.fields).toBe(1);
+    expect(built.stats.economy).toBeLessThan(store);
+    expect(built.lastWorkTurn).toBe(5);
+    // one thing in a year, wherever in the year it was chosen
+    expect(buildEarly(built, 'well')).toBe(built);
+    // and the year turns when it would have anyway
+    const heard = chooseCase(built, 'v1_idle_hand', 'feed_him');
+    const on = continueYear({ ...heard, eventsThisYear: full });
+    expect(on.turn).toBe(6);
+    expect(on.buildings.fields).toBe(1);
+  });
+
+  it('the shelf remembers what it showed, and a step that opens after is news', () => {
+    // the sixth year: the first offers a roof or a saw pit and nothing else
+    let s = at(6, 6);
+    s.stats.economy = 60;
+    expect(shelfNews(s), 'a shelf never read has no news').toEqual([]);
+    s = seeWorks(s);
+    expect(s.worksSeen).toEqual(shelfOf(s));
+    expect(shelfNews(s)).toEqual([]);
+    expect(s.worksSeen).not.toContain('bridge');
+    const road = buildEarly(s, 'road');
+    expect(shelfNews(road), 'the bridge is on the list the moment the road stands').toEqual(['bridge']);
+    expect(shelfNews(seeWorks(road))).toEqual([]);
   });
 });
 
@@ -284,6 +427,8 @@ describe('reopening a law', () => {
     expect(s.laws.map((l) => l.status)).toEqual(['replaced', 'active']);
     expect(s.stats.crownSanity).toBeLessThan(crownBefore);
     expect(s.ledger.some((e) => e.source.includes('reopened'))).toBe(true);
+    // and the year is full: the seal that follows a reopening opens no door
+    expect(continueYear(s).turn).toBe(7);
   });
 });
 

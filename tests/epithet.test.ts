@@ -124,10 +124,14 @@ describe('the ladder the place climbs by filling up', () => {
     expect([...counts].sort((a, b) => a - b)).toEqual(counts);
     expect(new Set(counts).size).toBe(counts.length);
 
-    // the three the config owns are on it
-    for (const at of [CONFIG.research.hintFrom, CONFIG.research.openAt, CONFIG.town.at]) {
+    // the three the config owns are on it, and the rumour of the cog is not:
+    // nothing opens at `hintFrom`, so it is not a rung (T-LADDER-1)
+    for (const at of [CONFIG.research.openAt, CONFIG.town.at, CONFIG.kingdom.at]) {
       expect(counts, String(at)).toContain(at);
     }
+    expect(counts).not.toContain(CONFIG.research.hintFrom);
+    // and every rung carries the short word the bar draws under its tick
+    for (const step of ladder) expect(step.short.length, String(step.at)).toBeGreaterThan(0);
 
     // and so is every crowd a thing on the tree is waiting for
     for (const tech of TECHS) {

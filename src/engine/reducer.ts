@@ -20,8 +20,13 @@ import {
   activeStats,
   animalKeep,
   herdKeep,
+  crimeTakes,
   crowdingOnHealth,
+  cultureOnMood,
   deathsOf,
+  isRest,
+  makingOf,
+  workOnceNow,
   isActiveStat,
   isWinter,
   lawTrend,
@@ -40,7 +45,7 @@ import {
   winterMouths,
   workCost,
   yearlyChange,
-  workOnce,
+  shelfOf,
 } from './simulation';
 import {
   allProposals,
@@ -691,7 +696,6 @@ export function continueYear(s: GameState): GameState {
     done.phase = 'portrait';
     return done;
   }
-  if (s.lastWorkTurn === s.turn) return advance(s);
   const draft = clone(s);
 
   /* One person at the door a year, and one thing coming back off an answer
@@ -733,6 +737,14 @@ export function continueYear(s: GameState): GameState {
     }
   }
 
+  /* Nobody else is due. A year whose work is already spent, in the spring
+     from the shelf or at the end on a reopened law, goes on to the next
+     one; any other year still has its work to spend. This used to be the
+     first line of the function, which was right for as long as the work was
+     always the last thing in a year: spent early, it would have sent the
+     year on before the person the law lands on had been heard. */
+  if (draft.lastWorkTurn === draft.turn) return advance(draft);
+
   draft.current = null;
   draft.phase = 'works';
   return draft;
@@ -766,6 +778,42 @@ export function takeMoment(s: GameState, id: string): GameState {
  * floors gains a floor.
  */
 export function chooseWork(s: GameState, id: WorkId, plot?: PlotId): GameState {
+  const draft = spendYearOn(s, id, plot);
+  return draft === s ? s : advance(draft);
+}
+
+/**
+ * The same year, spent before its own turn for it.
+ *
+ * The shelf is open in every season now, and a year holds one thing whenever
+ * it is chosen. Everything `chooseWork` does happens here except the turning
+ * of the year: whoever is due this year still comes, and the year turns when
+ * it would have anyway. A year already spent refuses a second thing, which
+ * is the whole of what "one thing in a year" means.
+ */
+export function buildEarly(s: GameState, id: WorkId, plot?: PlotId): GameState {
+  if (s.lastWorkTurn === s.turn) return s;
+  return spendYearOn(s, id, plot);
+}
+
+/**
+ * The shelf has been read. What is on it now is what the mark in the corner
+ * compares against next time, so a thing that arrives after this is news
+ * and a thing already seen is not.
+ */
+export function seeWorks(s: GameState): GameState {
+  const shelf = shelfOf(s);
+  const seen = s.worksSeen;
+  if (seen !== undefined && seen.length === shelf.length && shelf.every((id) => seen.includes(id))) {
+    return s;
+  }
+  const draft = clone(s);
+  draft.worksSeen = shelf;
+  return draft;
+}
+
+/** Pay for a thing, put it on the ground and write it down. The year does not turn here. */
+function spendYearOn(s: GameState, id: WorkId, plot?: PlotId): GameState {
   const work = getWork(id);
   if (!work) return s;
 
@@ -792,13 +840,18 @@ export function chooseWork(s: GameState, id: WorkId, plot?: PlotId): GameState {
   if (work.maxLevel > 0) draft.buildings[id] = (draft.buildings[id] ?? 0) + 1;
   if (ground !== null) draft.placements = { ...(draft.placements ?? {}), [id]: ground };
 
-  applyEffects(draft, workOnce(draft, work), work.name);
+  /* Read before the run is moved on, so what the card promised is what the
+     year pays. A rest after a rest is worth half of one, and a third in a row
+     is worth nothing at all; anything else is worth what it says and puts the
+     run back to nought. See `CONFIG.works.restRun`. */
+  applyEffects(draft, workOnceNow(draft, work), work.name);
+  draft.restRun = isRest(work) ? (draft.restRun ?? 0) + 1 : 0;
 
   draft.lastWorkTurn = draft.turn;
   // a fair and a rest leave nothing standing, so nothing is being raised
   draft.lastWork = work.maxLevel > 0 ? id : null;
   draft.log.push({ turn: draft.turn, kind: 'work', refId: id, choiceId: id, tags: [] });
-  return advance(draft);
+  return draft;
 }
 
 /**
@@ -820,6 +873,8 @@ export function sendAbroad(s: GameState, action: WorldAction, target: string): G
   }
   draft.lastWorkTurn = draft.turn;
   draft.lastWork = null;
+  // a year spent on somebody else's kingdom is not a year of resting
+  draft.restRun = 0;
   return advance(draft);
 }
 
@@ -832,6 +887,13 @@ export function reopenLaw(s: GameState, proposalId: string): GameState {
   draft.current = { kind: 'proposal', id: proposalId };
   draft.lastWorkTurn = draft.turn;
   draft.lastWork = null;
+  // and neither is a year spent arguing with your own writing
+  draft.restRun = 0;
+  /* The year is full. Reopening happens at the year's end, after whoever was
+     due has been heard, and the seal that follows must not open a slot for
+     somebody else: `continueYear` reads a spent year as one that goes on to
+     the next spring only once nobody is due, and this says nobody is. */
+  draft.eventsThisYear = CONFIG.year.dilemmasPerYear + CONFIG.year.consequencesPerYear;
   draft.phase = 'composer';
   return draft;
 }
@@ -876,6 +938,11 @@ export function advance(s: GameState): GameState {
 
   // 2. the yearly trend: every standing law, then every building
   const storeBefore = draft.stats.economy;
+  /* And what will not reach the shelf, read off the place as it stood at the
+     turn of the year. That is the reading the dial carried all through it;
+     taking it after the year had already moved the watch and the songs would
+     make the header a forecast nobody could check against the ledger. */
+  const goesMissing = crimeTakes(draft, makingOf(draft));
   for (const law of draft.laws) {
     if (law.status !== 'active') continue;
     const option = findLawOption(law.subject, law.action, law.label);
@@ -920,6 +987,16 @@ export function advance(s: GameState): GameState {
   // the whole reason conditions are not a store: they do not fill up, they are
   // leaned on, and the thing leaning is how many of you share one well.
   bump(draft, 'health', crowdingOnHealth(draft), UI.ledger.crowding, true);
+
+  // and the songs, on the one board they are plainly for. A place with music in
+  // it is a pleasanter place to live in, and that is the whole of the rule.
+  bump(draft, 'mood', cultureOnMood(draft), UI.ledger.songs, true);
+
+  // and what never reaches the shelf: a share of what this year actually made,
+  // set by the count and answered by the songs and the watch. It is taken out
+  // of the making and never out of the store, so a year that made nothing loses
+  // nothing to it. See `CONFIG.crime`.
+  bump(draft, 'economy', -goesMissing, UI.ledger.crime, true);
 
   // Nothing above happens in a long winter, as far as the store is concerned.
   // Every trend on it is a promise about a growing season and there is not one

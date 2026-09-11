@@ -150,6 +150,33 @@ true before it can happen and what waits on it afterwards, every year of work
 with the scenes it opens, every proposal with what unlocks it. It writes
 nothing and is what a shareable page of the order is built out of.
 
+## The full dump
+
+```bash
+npx vite-node tools/audit-full.ts > full.json
+```
+
+Every scene, in full, as JSON: the trigger in words, every scene paragraph,
+every answer with its full result and effects, and what waits on it before
+and after, story flags included and read both ways (a choice that sets one
+and the scene that waits on it). `tools/audit-order.ts` gives the same
+connections without the text, for a lighter read; this one is what a full
+shareable register of the game is built out of.
+
+## The console dump
+
+```bash
+npx vite-node tools/audit-console.ts > console.json
+```
+
+Everything the page above has, plus every law in full (the proposal's
+problem paragraphs, its advice, and every option's label, tags, effects,
+per-turn trends and city flags) and the same graph the Tree tab draws
+(nodes for every proposal, law option, case, year of work and story flag,
+and the edges between them: opens, blocks, needs, sets, schedules,
+decrees). One file to build a whole shareable mirror of the console out
+of, tabbed the same way it is: Cases, Laws, Tree.
+
 ## When the console opens empty
 
 It did, for a while, and the reason is worth knowing because it will happen

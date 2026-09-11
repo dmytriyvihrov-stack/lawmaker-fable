@@ -578,6 +578,16 @@ export interface GameState {
    * two people at it with tools, and the thing itself the year after.
    */
   lastWork: WorkId | null;
+  /**
+   * How many years in a row have now been rested, this one included.
+   *
+   * The one thing in the game that pays the same every time it is chosen was
+   * chosen for six years of every ten, so it is the one thing that pays less
+   * for being chosen again. Any other work resets it to nought. Optional
+   * because a save written before this reads as a reign that has not rested
+   * yet, which costs that reign one full rest and nothing else.
+   */
+  restRun?: number;
   /** Effects on the hidden boards that a hamlet could not take yet, paid out
    *  the year the charter arrives. */
   pendingTownBonus: Effects;
@@ -617,6 +627,14 @@ export interface GameState {
    * year of work asked the question does.
    */
   placements?: Partial<Record<WorkId, PlotId>>;
+  /**
+   * TODO(architect): `worksSeen` is needed because the shelf can be opened
+   * all year now (T-SHELF-1) and its mark lights when something is on it that
+   * was not there the last time it was read. What was on it then is this
+   * list. Absent reads as nothing being news, so a save written before it
+   * loads with the mark quiet until the shelf is opened once.
+   */
+  worksSeen?: WorkId[];
   /** The board that ended the reign, if one did. */
   defeat?: StatId;
   /**

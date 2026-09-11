@@ -18,6 +18,8 @@ export interface GrowthStep {
   at: number;
   title: string;
   line: string;
+  /** The same rung at the width of a tick on the bar: two or three words. */
+  short: string;
   /** Boards the place gains here. */
   boards: StatId[];
   /** True when those boards are an either/or rather than a gift. */
@@ -51,13 +53,14 @@ export interface GrowthStep {
 export function growthLadder(s: GameState): GrowthStep[] {
   const steps = new Map<number, GrowthStep>();
 
-  const put = (at: number, title: string, line: string): GrowthStep => {
+  const put = (at: number, title: string, line: string, short = title): GrowthStep => {
     const found = steps.get(at);
     if (found) return found;
     const step: GrowthStep = {
       at,
       title,
       line,
+      short,
       boards: [],
       choose: false,
       techs: [],
@@ -67,8 +70,12 @@ export function growthLadder(s: GameState): GrowthStep[] {
     return step;
   };
 
-  put(CONFIG.research.hintFrom, GROWTH_MARKS.hint.title, GROWTH_MARKS.hint.line);
-  put(CONFIG.research.openAt, GROWTH_MARKS.open.title, GROWTH_MARKS.open.line);
+  /* Not the rumour. The cog fades up over the bar from `hintFrom` souls and
+     that is a fact about the bar, not a rung: nothing opens at eight of you,
+     and a bar of what the count opens had a tick on it that opened nothing
+     (T-LADDER-1). The first rung is the count the screen actually opens at. */
+  const M = GROWTH_MARKS;
+  put(CONFIG.research.openAt, M.open.title, M.open.line, M.open.short);
 
   /* The two rungs the player actually decides, and what they decided.
 
@@ -76,7 +83,7 @@ export function growthLadder(s: GameState): GrowthStep[] {
      Afterwards they are a record, and the record is what the place did, in
      the order it did it. `s.boards` is written in the order they were opened,
      which is the only place that order is kept. */
-  const first = put(CONFIG.boards.firstAt, GROWTH_MARKS.first.title, GROWTH_MARKS.first.line);
+  const first = put(CONFIG.boards.firstAt, M.first.title, M.first.line, M.first.short);
   const took = s.boards;
   if (took.length >= 1) {
     first.boards = [took[0]];
@@ -86,7 +93,7 @@ export function growthLadder(s: GameState): GrowthStep[] {
     first.choose = true;
   }
 
-  const second = put(CONFIG.boards.secondAt, GROWTH_MARKS.second.title, GROWTH_MARKS.second.line);
+  const second = put(CONFIG.boards.secondAt, M.second.title, M.second.line, M.second.short);
   if (took.length >= 2) {
     second.boards = [took[1]];
     second.taken = true;
@@ -95,20 +102,22 @@ export function growthLadder(s: GameState): GrowthStep[] {
     second.boards = left.length > 0 ? left : [...OPENABLE_BOARDS];
   }
 
-  const charter = put(CONFIG.town.at, GROWTH_MARKS.charter.title, GROWTH_MARKS.charter.line);
+  const charter = put(CONFIG.town.at, M.charter.title, M.charter.line, M.charter.short);
   charter.stage = 'town';
 
   /* And the last rung, which was on nobody's ladder. A place of three
      hundred is a kingdom with neighbours on a map, three things a year of
      work can be spent abroad and a stage of its own, and the one screen in
      the game that says what a count opens did not mention it. */
-  const crown = put(CONFIG.kingdom.at, GROWTH_MARKS.crown.title, GROWTH_MARKS.crown.line);
+  const crown = put(CONFIG.kingdom.at, M.crown.title, M.crown.line, M.crown.short);
   crown.stage = 'kingdom';
 
   for (const tech of allTechs()) {
     if (tech.needsSouls === undefined) continue;
     const step = put(tech.needsSouls, tech.name, tech.line);
     step.techs.push(tech);
+    // two things thinkable at one count are one tick with two names on it
+    if (step.techs.length > 1) step.short = step.techs.map((t) => t.name).join(', ');
   }
 
   const ladder = [...steps.values()].sort((a, b) => a.at - b.at);

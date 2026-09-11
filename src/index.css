@@ -912,6 +912,16 @@ button:disabled {
   .drift-in { animation: none; }
 }
 
+/* the mark on the shelf when something new is on it: the town's own knock,
+   three times, and then it simply stays lit until the shelf is opened */
+.shelf-news {
+  animation: knock 1.4s ease-in-out 3;
+  transform-origin: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shelf-news { animation: none; opacity: 1; }
+}
+
 
 /* ============================================================================
    The four small things on the map.

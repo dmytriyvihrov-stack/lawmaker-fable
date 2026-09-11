@@ -19,7 +19,7 @@ the next free number and goes at the end of its describe.
 |---|---|---|
 | `content.test.ts` | the validator: 42 numbered checks (1 to 39, plus 4b, 17b, 25b) on the content tables; 7 on the people in the picture; 3 on seasons, ages and the reckoning | the content tables, no reign |
 | `smoke.test.ts` | config sanity, a new game, works offered by stage, the monarch off the seed, the bench parser | `newGame` |
-| `engine.test.ts` | the hamlet's boards, buildings, the ledger, trends, the long winter, the seasons, the charter, the year of work, the pot, reopening a law | `newGame` on a year |
+| `engine.test.ts` | the hamlet's boards, buildings, the ledger, trends, the long winter, the seasons, the charter, the year of work, the year spent from the shelf in the spring and what the shelf counts as news, the pot, reopening a law | `newGame` on a year |
 | `playthrough.test.ts` | golden runs: fixed pickers driven to the portrait; laws before cases, the closed hamlet, the long winter | `play(seed, pick)` |
 | `first-year.test.ts` | the first year: no law, a choice of two works | `chooseDeclared(newGame)` |
 | `chapters.test.ts` | `beginAt()`: a legal state at every stage, played on | `beginAt` |

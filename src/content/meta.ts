@@ -391,5 +391,10 @@ export const SOURCE_ICONS: Record<string, string> = {
   births: '👶',
   animals: '🐕',
   lover: '💗',
+  /* The two boards that were on the screen and doing nothing: the fiddle is
+     what the songs are worth, and the broom is the mark the law about
+     wrongdoing already wears, so the two read as the same argument. */
+  songs: '🎻',
+  crime: '🧹',
   other: '•',
 };
