@@ -48,11 +48,11 @@ export const CASES: CaseEvent[] = [
            out loud over it and the four fences in the spring. The knife and
            the half loaf that belonged to the other one came with it. */
         id: 'cut_his_share',
-        text: 'Cut his share, with the law read out over it.',
+        text: 'The four who dig cut his share, and the law is read out over it.',
         result:
           'The share is cut in front of four people who have all heard the law. They do not argue. They remember, and by spring each of the four has a fence round their own rows, which is not a thing a law about sharing alike ever asked anybody for.',
         tags: ['utilitarian'],
-        effects: { economy: 6, health: -4, mood: -10 },
+        effects: { economy: 4, health: -2, mood: -6 },
         exceptionToLaw: 'work_shared',
         beneficiary: 'the four who dig',
         setFlags: ['tam_cut'],
@@ -112,7 +112,7 @@ export const CASES: CaseEvent[] = [
         result:
           'Thin cups all week. The rain comes on the ninth day, and everybody is still there to be rained on.',
         tags: ['egalitarian'],
-        effects: { health: -8, economy: -4 },
+        effects: { health: -6, economy: -4 },
         setFlags: ['well_shared'],
       },
       {
@@ -121,7 +121,7 @@ export const CASES: CaseEvent[] = [
         result:
           'Pebbles in a hat, every dawn. Tam draws the short one three days running and says nothing about it.',
         tags: ['egalitarian'],
-        effects: { health: -4, crownSanity: -2 },
+        effects: { health: -6, crownSanity: -2 },
         setFlags: ['well_lots'],
       },
       {
@@ -130,7 +130,8 @@ export const CASES: CaseEvent[] = [
         result:
           'The diggers drink and dig. The weakest waits and watches them, and the field does very well that year.',
         tags: ['utilitarian'],
-        effects: { economy: 6, health: -12 },
+        // the field does very well that year, and the crown hears about the field
+        effects: { economy: 8, health: -12, crownSanity: 2 },
         setFlags: ['well_cut'],
       },
       {
@@ -289,7 +290,7 @@ export const CASES: CaseEvent[] = [
         text: 'Tell him the riders are coming. What he does is his.',
         result: 'He is gone before the riders are back, over the north field, with a loaf. Nobody counted the loaf.',
         tags: ['libertarian'],
-        effects: { crownSanity: -4, economy: -4 },
+        effects: { mood: 4, crownSanity: -4, economy: -2 },
         souls: -10,
       },
       {
@@ -508,7 +509,7 @@ export const CASES: CaseEvent[] = [
         result:
           'On Sunday there is bread, at four times, and everybody has some, and nobody says thank you.',
         tags: ['libertarian'],
-        effects: { mood: -16, economy: 8 },
+        effects: { mood: -12, economy: 8, crownSanity: 4 },
         setFlags: ['miller_stands'],
       },
       {
@@ -576,7 +577,7 @@ export const CASES: CaseEvent[] = [
         result:
           'He cries in the corridor. The eleven at the back go home knowing that freezing is survivable.',
         tags: ['communitarian'],
-        effects: { mood: 8, crownSanity: 8 },
+        effects: { mood: 8, crownSanity: 4 },
       },
       {
         id: 'dismiss',
@@ -601,16 +602,16 @@ export const CASES: CaseEvent[] = [
         result:
           'The clerk writes a number in the place where a man was standing. Bregg is given a copy to take home.',
         tags: ['utilitarian'],
-        effects: { mood: -16, health: 8 },
+        effects: { crownSanity: 8, mood: -16, health: 8 },
         setFlags: ['lever_praised'],
       },
       {
         id: 'was_right',
-        text: 'He was right not to choose.',
+        text: 'He was right not to choose, and every lever man hears it.',
         result:
           'The Chaplain reads it out twice. A widow in the third row asks afterwards whether it would be different with six.',
         tags: ['kantian'],
-        effects: { crownSanity: 8, mood: 8, health: -8 },
+        effects: { crownSanity: 12, mood: 4, health: -8 },
         setFlags: ['lever_condemned'],
       },
       {
@@ -619,7 +620,8 @@ export const CASES: CaseEvent[] = [
         result:
           'The ruling says the cup should have come out on the hillside. Drawing takes a minute. The cart took four seconds.',
         tags: ['egalitarian'],
-        effects: { mood: 8, crownSanity: -8 },
+        // the law's own word, and the eleven carry cups up the hill from then on
+        effects: { crownSanity: 6, mood: 2, health: -8 },
       },
     ],
   },
@@ -684,7 +686,7 @@ export const CASES: CaseEvent[] = [
         result:
           'His whole crime is that he did not draw lots on a collapsing bridge. A man in the room works out what that means for him.',
         tags: ['egalitarian'],
-        effects: { mood: -8, economy: -8 },
+        effects: { crownSanity: 4, mood: -4, economy: 4 },
       },
     ],
   },
@@ -726,15 +728,15 @@ export const CASES: CaseEvent[] = [
         result:
           'The clerk has a form, and the form has a line for the estate. The town learns to dread a bag at the door.',
         tags: ['utilitarian'],
-        effects: { economy: -8, mood: -8, crownSanity: -8 },
+        effects: { health: 6, mood: -8, economy: 4, crownSanity: -4 },
       },
       {
         id: 'within_the_law',
-        text: 'That is exactly what your law allows.',
+        text: 'That is exactly what your law allows. Nobody is thanked and nobody pays.',
         result:
           'She goes back to her old voice, the one people believed. The children are told to ask a clerk about wills.',
         tags: ['communitarian'],
-        effects: { mood: 8, health: -8 },
+        effects: { crownSanity: 8, mood: 4, health: -6 },
       },
       {
         id: 'sold_a_licence',
@@ -742,7 +744,7 @@ export const CASES: CaseEvent[] = [
         result:
           'She pins a season licence above the bed she works at, where the dying can see it. Two of them ask what it is for.',
         tags: ['meritocratic'],
-        effects: { economy: 8, mood: -8, crownSanity: -8 },
+        effects: { economy: 8, mood: -8, health: -4, crownSanity: 2 },
       },
     ],
   },
@@ -783,7 +785,7 @@ export const CASES: CaseEvent[] = [
         result:
           'Asked the same honest question about his own house, he describes the barn behind the counting house, in order, in front of the Chaplain. The warrant is withdrawn before supper.',
         tags: ['communitarian'],
-        effects: { mood: 16, crownSanity: 8, army: -8 },
+        effects: { mood: 12, crownSanity: -6, army: -8 },
       },
       {
         id: 'backdated',
@@ -980,7 +982,7 @@ export const CASES: CaseEvent[] = [
         result:
           'Two riders and eleven days, and on the twelfth a brother arrives from the third valley and takes him home, and shakes the hand of everybody here.',
         tags: ['communitarian'],
-        effects: { mood: 6, economy: -8, health: -4 },
+        effects: { mood: 6, economy: -8, health: -2, crownSanity: 6 },
         setFlags: ['road_buried'],
       },
       {
@@ -989,7 +991,8 @@ export const CASES: CaseEvent[] = [
         result:
           'He is carried past the last marker and left where the next parish begins, decently, and the men who carry him do not talk on the way back.',
         tags: ['utilitarian'],
-        effects: { economy: 6, mood: -10 },
+        // not our ground and not our morning, which the crown calls thrift
+        effects: { economy: 6, mood: -10, crownSanity: 4 },
         setFlags: ['road_refused'],
       },
       {
@@ -1051,7 +1054,7 @@ export const CASES: CaseEvent[] = [
         result:
           'The decree is read out over a basket of mushrooms to a child and a woman with a spade, and by the following dawn there are five people in the wood with lamps.',
         tags: ['libertarian'],
-        effects: { economy: 6, mood: -4 },
+        effects: { economy: 6, mood: -4, crownSanity: 4 },
         setIva: 'helped',
       },
       {
@@ -1180,7 +1183,7 @@ export const CASES: CaseEvent[] = [
         result:
           'She is on her own from dawn until the sun is over the roof, every day, and never once mentions it to anybody who comes in at noon.',
         tags: ['utilitarian'],
-        effects: { economy: -4, mood: -4, health: -4 },
+        effects: { economy: -4, mood: -6 },
         setFlags: ['corner_carried'],
       },
       {
@@ -1735,7 +1738,7 @@ export const CASES: CaseEvent[] = [
         text: 'He keeps it. She is asked to let it go.',
         result: 'She agrees, in front of everyone, and does not look at you again that year. The boy is warm.',
         tags: ['communitarian'],
-        effects: { mood: 6, economy: -4 },
+        effects: { mood: 6, crownSanity: -4 },
       },
       {
         id: 'whipped',
@@ -2140,7 +2143,7 @@ export const CASES: CaseEvent[] = [
         result:
           'Every yard has a goat in it by Sunday and every house is pleased with you for two weeks. Four of them are back on the common by Friday, standing where Odo usually stands, and he has taken a basket to the beeches instead.',
         tags: ['egalitarian'],
-        effects: { mood: 6, economy: 2 },
+        effects: { mood: 6, economy: -3 },
       },
       {
         id: 'his_herd',
@@ -2148,7 +2151,7 @@ export const CASES: CaseEvent[] = [
         result:
           'He is told in front of everybody that they are his, goes red, says nothing, and is out on the common before light. There is cheese at the door by autumn, at a price, and it is a fair price.',
         tags: ['libertarian'],
-        effects: { economy: 3, mood: 2 },
+        effects: { economy: 4, mood: -2 },
       },
       {
         id: 'he_walks_them',
@@ -2156,7 +2159,7 @@ export const CASES: CaseEvent[] = [
         result:
           'He is given the herd to walk and a share of what it gives, which is the first wage anybody here has been paid for anything. The Treasurer wants that written down. It is written down.',
         tags: ['communitarian'],
-        effects: { mood: 3, economy: 1, crownSanity: -1 },
+        effects: { mood: 4, economy: 2, crownSanity: -2 },
       },
       {
         // what the law already said, on the day it turns out to have been
@@ -2219,7 +2222,7 @@ export const CASES: CaseEvent[] = [
         result:
           'The finder buys a horse and a coat and stops speaking to his neighbour, and the boundary is quietly never walked at all.',
         tags: ['libertarian'],
-        effects: { economy: 2, mood: -6 },
+        effects: { economy: 2, mood: -6, crownSanity: 4 },
       },
       {
         id: 'store',
@@ -2286,7 +2289,7 @@ export const CASES: CaseEvent[] = [
         result:
           'A bed, a rota, a woman who has done this before, and a quiet arrangement with the store that everybody works out inside a week. It costs, and it is the reason the first year goes by without an incident.',
         tags: ['egalitarian'],
-        effects: { mood: -8, economy: -12 },
+        effects: { mood: -4, economy: -12 },
         setFlags: ['brother_kept', 'brother_carried'],
         schedule: { caseId: 'w_brother_easel', inTurns: 5 },
       },
@@ -2383,7 +2386,7 @@ export const CASES: CaseEvent[] = [
         result:
           'The board goes behind the long house and he is in the field by the following Monday, and works hard, and is perfectly civil about it for the rest of his life.',
         tags: ['meritocratic'],
-        effects: { economy: 8, mood: -6, crownSanity: -6 },
+        effects: { economy: 8, mood: -6, crownSanity: 4 },
       },
     ],
   },
@@ -2435,7 +2438,8 @@ export const CASES: CaseEvent[] = [
         result:
           'Six people, six stretches, one night, and by morning it is a fence except for the two gaps that belong to nobody, which the goats find by noon. Tam mends those too, later, without being asked.',
         tags: ['libertarian'],
-        effects: { economy: -2, health: -4, mood: 2 },
+        // six houses and nobody asked the chair, which the chair is told about
+        effects: { economy: -2, health: -4, mood: 2, crownSanity: 2 },
       },
       {
         id: 'pen_them_till_spring',
@@ -2443,7 +2447,7 @@ export const CASES: CaseEvent[] = [
         result:
           'The stock lives in the yards all winter and the yards smell like it, and what was left of the corn is eaten by December. The fence goes up in April with Tam pointing, and it is a good fence, and a late one.',
         tags: ['utilitarian'],
-        effects: { economy: -8, mood: -4, health: -2 },
+        effects: { economy: -8, mood: -4, crownSanity: 4 },
       },
     ],
   },
@@ -2489,7 +2493,7 @@ export const CASES: CaseEvent[] = [
         result:
           'It goes up crooked in a week and comes down in the first frost in three places, and Tam watches it come down from his door and says nothing, which everybody hears.',
         tags: ['kantian'],
-        effects: { economy: -4, health: -6, mood: -4 },
+        effects: { economy: -4, health: -6, mood: -4, crownSanity: 4 },
       },
     ],
   },
@@ -2565,7 +2569,7 @@ export const CASES: CaseEvent[] = [
         result:
           "She names a year of the mill's flour, and it is paid, and she buys the stony ground on the far side of the stream with it and plants it, badly, out of practice, and happily.",
         tags: ['egalitarian'],
-        effects: { economy: -10, mood: 6, health: 2 },
+        effects: { economy: -10, mood: 6, health: 4 },
       },
       {
         id: 'take_it_as_before',
@@ -2582,7 +2586,7 @@ export const CASES: CaseEvent[] = [
         result:
           'The mill-wright pays, out of the flour her old plot has ground since, and is not pleased about it, and Marta buys a cow with it and names the cow after nobody in particular, loudly, in the lane.',
         tags: ['communitarian'],
-        effects: { economy: 2, mood: 8, crownSanity: 2 },
+        effects: { economy: -4, mood: 8, crownSanity: 2 },
       },
     ],
   },
@@ -2670,7 +2674,7 @@ export const CASES: CaseEvent[] = [
         result:
           'It is lifted in the same square, at the same hour, with rather fewer people watching. She thanks you once, correctly, and is at the gate with a full basket the following Tuesday and every Tuesday after that.',
         tags: ['communitarian'],
-        effects: { mood: 12, economy: 4 },
+        effects: { mood: 12, economy: 4, crownSanity: -6 },
         bond: 1,
       },
       {
@@ -2828,7 +2832,7 @@ export const CASES: CaseEvent[] = [
         result:
           'The first race is run in front of about eleven people the following spring. Wat does not come and watch it. The ponies are still in the field beside the road, and everybody looks at them on the way past.',
         tags: ['utilitarian'],
-        effects: { mood: -10, crownSanity: 4 },
+        effects: { mood: -10, crownSanity: 4, culture: 4 },
         bond: -2,
       },
     ],

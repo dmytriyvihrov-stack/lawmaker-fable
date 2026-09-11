@@ -29,6 +29,7 @@ import { researchGain } from '../src/engine/simulation';
 import type {
   ActionId,
   CaseChoice,
+  CaseEvent,
   CityFlag,
   Condition,
   WorkId,
@@ -1207,6 +1208,102 @@ describe('content validator', () => {
     expect(allRoom, 'the tree is a bigger valley than the valley').toBeLessThan(
       CONFIG.population.room.base,
     );
+  });
+
+  /**
+   * 40. No answer is a worse copy of another one on the same bench.
+   *
+   * The reading of a bench is in three parts: what happened, which law of
+   * yours is standing, and what each word costs under it. A player reads
+   * the three and picks; a player who cannot tell two words apart clicks.
+   * So under every law that can be standing (and under none), for every two
+   * answers the bench can reach at once, if one of them is at least as good
+   * on every board once the crown's bill for breaking or bending the law is
+   * added in, and better on one, then the worse one has to be *about*
+   * something else: a flag none of the others sets, a layer on the town,
+   * somebody coming back, souls, a decree, a step of Iva's, a verdict, or a
+   * bond. Or it crosses the law harder, which is the one way a worse answer
+   * is meant to be worse: the kind word that goes against the law pays the
+   * crown for it, and the law's own word does not.
+   *
+   * What this found, before the numbers were moved: the healer thanked and
+   * the healer within the law were the same answer with one of them eight
+   * points warmer; the hunter asked was the widow acquitted with sixteen
+   * points on top and nothing against it; the lever man pardoned beat the
+   * law's own word under every law about lives; and the herd on the common
+   * had three answers that were all free.
+   */
+  it('40. no answer is a worse copy of another under the same law', () => {
+    const marks = (ch: CaseChoice): string =>
+      [
+        [...(ch.setFlags ?? [])].sort().join(','),
+        [...(ch.cityFlagsOn ?? [])].sort().join(','),
+        [...(ch.cityFlagsOff ?? [])].sort().join(','),
+        ch.souls ?? 0,
+        ch.schedule?.caseId ?? '',
+        ch.enactLaw ? 'decree' : '',
+        ch.setIva ?? '',
+        ch.verdict ?? '',
+        ch.bond ?? 0,
+      ].join('|');
+
+    /** How hard a word goes against a standing law: 0 clean, 1 bends, 2 breaks. */
+    const crossing = (caseId: string, ch: CaseChoice, law: string | null): number => {
+      if (ch.exceptionToLaw) return 2;
+      if (!law) return 0;
+      const ruling = CASE_VERDICTS[caseId]?.rulings.find((r) => r.choiceId === ch.id);
+      const against = ruling?.against?.find((a) => a.law === law);
+      return against?.how === 'breaks' ? 2 : against?.how === 'bends' ? 1 : 0;
+    };
+    const billed = (caseId: string, ch: CaseChoice, law: string | null): Effects => {
+      const out: Effects = { ...ch.effects };
+      const cost = [0, CONFIG.exceptionCost * CONFIG.bendShare, CONFIG.exceptionCost][
+        crossing(caseId, ch, law)
+      ];
+      if (cost) out.crownSanity = (out.crownSanity ?? 0) - cost;
+      return out;
+    };
+    const reachable = (event: CaseEvent, law: string | null): CaseChoice[] => {
+      const grammar = CASE_VERDICTS[event.id];
+      if (!grammar) return event.choices;
+      return event.choices.filter((ch) =>
+        grammar.rulings.some((r) => r.choiceId === ch.id && (!r.needsLaw || r.needsLaw === law)),
+      );
+    };
+
+    for (const event of CASES) {
+      const subject = subjectOf(event.id);
+      const laws: (string | null)[] =
+        subject && /^[vdcs]\d/.test(event.id)
+          ? PROPOSALS.flatMap((p) => p.options).filter((o) => o.subject === subject).map(lawIdOf)
+          : [null];
+      for (const law of laws) {
+        const rows = reachable(event, law).map((ch) => ({
+          ch,
+          fx: billed(event.id, ch, law),
+          how: crossing(event.id, ch, law),
+        }));
+        for (const a of rows) {
+          for (const b of rows) {
+            if (a === b) continue;
+            let atLeast = true;
+            let better = false;
+            for (const stat of STAT_IDS) {
+              const x = a.fx[stat] ?? 0;
+              const y = b.fx[stat] ?? 0;
+              if (x < y) atLeast = false;
+              if (x > y) better = true;
+            }
+            if (!atLeast || !better) continue;
+            if (marks(a.ch) !== marks(b.ch)) continue;
+            if (b.how > a.how) continue;
+            expect.fail(
+              `${event.id} under ${law ?? 'no law'}: ${b.ch.id} is ${a.ch.id} with worse numbers and nothing else`,
+            );
+          }
+        }
+      }
+    }
   });
 });
 

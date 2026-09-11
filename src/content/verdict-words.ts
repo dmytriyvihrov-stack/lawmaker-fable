@@ -397,6 +397,16 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
         choiceId: 'draw_lots',
         against: [
           {
+            /* Alike is the word on the post, and a pebble is not alike: one
+               of you goes without so the rest can drink a full cup. It is
+               fair, and it is not the law, and the one who draws short
+               three days running has read the post. */
+            law: 'work_shared',
+            how: 'bends',
+            result:
+              'A hat by the well under a law that says alike. Everybody draws, and the one who draws short three mornings running looks at the post while he waits, and says nothing, which is heard.',
+          },
+          {
             law: 'work_ruled',
             how: 'bends',
             result:

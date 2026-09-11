@@ -251,6 +251,22 @@ export function Case({ state, dev = false, onChoose }: Props) {
 
   const pickVerb = (id: string) => setVerb(verb === id ? null : id);
   const verbs = grammar ? availableVerbs(event.id, state) : [];
+  /**
+   * A word a law put on the bench that is itself an exception to that law.
+   *
+   * Seven of the granted words are the law's own escape hatch: THE GIRL PAYS
+   * ANYWAY exists because free trade is standing and breaks free trade the
+   * moment it is said. The tile wore the seal-coloured number of the law
+   * that granted it and nothing else, which is what the lawful words wear,
+   * so the one answer on the bench that goes in the Codex against the law
+   * looked like the one the law asked for. The sentence under the tiles said
+   * "breaks" once it was picked; the tile says so now, before.
+   */
+  const exceptionOf = (verbId: string): string | undefined => {
+    const ruling = grammar?.rulings.find((r) => r.verb === verbId && r.needsLaw);
+    if (!ruling) return undefined;
+    return event.choices.find((c) => c.id === ruling.choiceId)?.exceptionToLaw;
+  };
 
   return (
     <div className="ruler-case-body p-4">
@@ -342,7 +358,9 @@ export function Case({ state, dev = false, onChoose }: Props) {
                   title={v.grantedBy ? v.grantedBy.label : v.against ? v.against.label : undefined}
                   className={`${tile} ${verb === v.id ? tileOn : tileOpen} ${
                     v.grantedBy
-                      ? 'border-seal/70'
+                      ? exceptionOf(v.id)
+                        ? tileBreaks
+                        : 'border-seal/70'
                       : v.against?.how === 'breaks'
                         ? tileBreaks
                         : v.against?.how === 'bends'
@@ -354,6 +372,12 @@ export function Case({ state, dev = false, onChoose }: Props) {
                   {v.grantedBy && (
                     <span className={`ml-1.5 rounded-sm bg-seal/40 px-1 ${TYPE.tag} tracking-normal text-parchment`}>
                       {v.grantedBy.index}
+                    </span>
+                  )}
+                  {/* the law's own escape hatch: granted by it, and against it */}
+                  {v.grantedBy && exceptionOf(v.id) && (
+                    <span className={`ml-1.5 rounded-sm bg-bad/40 px-1 ${TYPE.tag} tracking-normal text-parchment`}>
+                      {UI.bench.breaksMark} {v.grantedBy.index}
                     </span>
                   )}
                   {/* the law it crosses, by number, and how hard */}
