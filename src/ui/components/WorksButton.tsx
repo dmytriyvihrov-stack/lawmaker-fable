@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { UI } from '../../content/ui-strings';
 import { hasSeenNote, markNoteSeen } from '../../engine/save';
-import { shelfNewsReady, workSpent } from '../../engine/simulation';
+import { buildableNow, workSpent } from '../../engine/simulation';
 import type { GameState } from '../../engine/types';
 import { TYPE } from '../type';
 
@@ -20,40 +20,42 @@ interface Props {
  * and at no other time, so the one question a player asks all year, "what
  * could I put up, and what would it cost", had no answer until the autumn.
  * This opens the same shelf in any season. Three things are on the mark
- * itself: a count when something is on the shelf that was not there the
- * last time it was read (a chain step that opened, a thing the place worked
- * out how to spend a year on, a board that made a building thinkable) **and
- * that the store can pay for today**, a slow breath on the year that is
- * waiting to be spent, and a dimming when the year is already spent, because
- * then the shelf can be read and nothing on it taken.
+ * itself: a count, a slow breath on the year that is waiting to be spent, and
+ * a dimming when the year is already spent, because then the shelf can be
+ * read and nothing on it taken.
  *
- * The count waits on the money, which the shelf itself does not
- * (`shelfNewsReady`). A red number is an errand, and an errand nobody can
- * run is the kind of mark a player learns to stop looking at.
+ * **The count is how many things the store could pay for today**
+ * (`buildableNow`). It used to be how many of them were *new* since the shelf
+ * was last opened, which is a fact about the reader's memory and not about
+ * the place: a hamlet with four affordable works and nothing new since April
+ * wore no mark at all, and the year went by. Since the year no longer stops
+ * and waits to be spent, this mark is the whole of what says a year is still
+ * there to spend, so it says the useful number. Asked for by the user, who
+ * put the reason plainly: it is their choice and their responsibility to
+ * look.
  *
- * The breath is new with the shelf no longer opening itself at the end of a
- * year (the user asked for that: a card over the valley every autumn whether
- * or not anything on it was affordable). Something has to say the year is
- * still there, and the first time it ever happens the note underneath says
- * what the mark is for, once per browser, the same terms as the other two
- * notes in `save.ts`.
+ * It waits on the money either way. A red number is an errand, and an errand
+ * nobody can run is the kind of mark a player learns to stop looking at.
+ *
+ * The first time a year ever waits on it the note underneath says what the
+ * mark is for, once per browser, the same terms as the other two notes in
+ * `save.ts`.
  */
 export function WorksButton({ state, onOpen, className, disabled = false }: Props) {
-  const news = shelfNewsReady(state);
+  const open = buildableNow(state);
   const spent = workSpent(state);
   /** The year has come round to it and nothing has been picked yet. */
   const waiting = state.phase === 'works';
   const [note, setNote] = useState(() => !hasSeenNote('shelf'));
-  const what =
-    news.length > 1
-      ? UI.works.news.replace('{n}', String(news.length))
-      : news.length === 1
-        ? UI.works.newsOne
-        : spent
-          ? UI.works.spentShort
-          : waiting
-            ? UI.works.waitingShort
-            : '';
+  const what = spent
+    ? UI.works.spentShort
+    : open.length > 1
+      ? UI.works.canBuild.replace('{n}', String(open.length))
+      : open.length === 1
+        ? UI.works.canBuildOne
+        : waiting
+          ? UI.works.waitingShort
+          : UI.works.canBuildNone;
   const title = what ? `${UI.works.open}: ${what}` : UI.works.open;
 
   return (
@@ -75,12 +77,12 @@ export function WorksButton({ state, onOpen, className, disabled = false }: Prop
     >
       <span aria-hidden>{UI.works.openIcon}</span>
       <span className="sr-only">{title}</span>
-      {news.length > 0 && (
+      {open.length > 0 && (
         <span
           aria-hidden
           className="shelf-news absolute -right-1.5 -top-1.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-seal px-1 text-[10px] leading-none tabular-nums text-parchment"
         >
-          {news.length}
+          {open.length}
         </span>
       )}
 

@@ -6,6 +6,7 @@ import {
   continueYear,
   chooseCase,
   chooseLaw,
+  buildEarly,
   chooseWork,
   newGame,
 } from '../src/engine/reducer';
@@ -30,6 +31,8 @@ interface Run {
   events: string[];
   laws: string[];
   works: string[];
+  /** The years the store could not pay for one single thing on the shelf. */
+  poor: number;
   state: GameState;
 }
 
@@ -46,6 +49,7 @@ function play(seed: number, pick: Pick, declared: PhilTag): Run {
   s.declaredTag = declared;
   const events: string[] = [];
   const works: string[] = [];
+  const poor = new Set<number>();
 
   for (let guard = 0; guard < 400 && s.phase !== 'portrait'; guard++) {
     if (s.phase === 'intro') {
@@ -53,18 +57,43 @@ function play(seed: number, pick: Pick, declared: PhilTag): Run {
       continue;
     }
 
-    if (s.phase === 'works') {
-      // ask the engine what this year can be spent on rather than working it
-      // out again here: a year that can be spent twice has its own rule, and a
-      // driver that guesses will happily pick a fair the store cannot pay for
+    /* Spend the year, wherever in the year we are standing.
+
+       The year stops on the shelf only when there is nothing else in it and
+       the store can pay for something (the first spring, and the odd year with
+       nobody at the door); every other year runs on past it, and a player who
+       wants a building opens the shelf during the year and takes one. So does
+       this: the same pick, through `buildEarly` when the year is still running
+       and `chooseWork` when the shelf is the year.
+
+       A year the store cannot pay for anything in is spent on nothing at all.
+       There used to be a year of rest on the shelf, free and always takeable,
+       so there was no such year and every year of every reign here ended with
+       something in `works`. It is counted instead of being taken.
+
+       Ask the engine what this year can be spent on rather than working it
+       out again here: a year that can be spent twice has its own rule, and a
+       driver that guesses will happily pick a fair the store cannot pay for. */
+    const spendTheYear = () => {
+      if (s.lastWorkTurn === s.turn || s.turn <= 0) return;
       const open = worksFor(s).filter((w) => canBuild(s, w.id));
+      if (open.length === 0) {
+        poor.add(s.turn);
+        return;
+      }
       const work = choose(open, pick);
       works.push(`${s.turn}:${work.id}`);
-      s = chooseWork(s, work.id);
+      s = s.phase === 'works' ? chooseWork(s, work.id) : buildEarly(s, work.id);
+    };
+
+    if (s.phase === 'works') {
+      spendTheYear();
+      if (s.phase === 'works') break; // nothing on the shelf and no way forward
       continue;
     }
 
     if (s.phase === 'aftermath') {
+      spendTheYear();
       s = continueYear(s);
       continue;
     }
@@ -90,13 +119,21 @@ function play(seed: number, pick: Pick, declared: PhilTag): Run {
     events,
     laws: s.laws.map((l) => `${l.subject}_${l.action}`),
     works,
+    poor: poor.size,
     state: s,
   };
 }
 
 describe('golden playthroughs', () => {
   const open = play(5, 'first', 'kantian');
-  const closed = play(101, 'last', 'libertarian');
+  /* Reseeded when the year of rest left the shelf. This driver takes the LAST
+     thing on the list, and the year of rest was the last row in `works.ts`, so
+     for as long as it was there the harshest player in the suite answered every
+     year by sitting down. With it gone it builds, and on 101 that is a hamlet
+     that limps to a portrait instead of one the square walks out of. 102 is the
+     same reign as 101 was meant to be: nine years, thirteen souls, the
+     deputation to your face and then the empty square. */
+  const closed = play(102, 'last', 'libertarian');
   /* Reseeded twice. First when the crag became a town work and a hamlet's
      fair stopped buying culture: on 101 the middling player held a fair every
      year for fourteen years and was walked out on anyway, which is the new
@@ -121,7 +158,13 @@ describe('golden playthroughs', () => {
 
   it('both reigns start as a hamlet and hear the hamlet out', () => {
     for (const run of [open, closed]) {
-      expect(run.events.slice(0, 2)).toEqual(['proposal:pv1_work', 'case:v1_idle_hand']);
+      /* The glade first, which is the first spring and waits on nothing,
+         then the work and the man the work lands on, both in the second. */
+      expect(run.events.slice(0, 3)).toEqual([
+        'case:w_ring',
+        'proposal:pv1_work',
+        'case:v1_idle_hand',
+      ]);
       expect(run.events).toContain('proposal:pv2_strangers');
       /* Not the mill-wright: his year waits on a field to want, so which
          year he walks in is a fact about what the reign has built. What is
@@ -200,7 +243,7 @@ describe('golden playthroughs', () => {
     expect(middling.state.flags).not.toContain('square_walked');
     expect(middling.state.turn).toBeGreaterThanOrEqual(CONFIG.winter.every);
     expect(middling.events).toContain('case:wv_hearth');
-    expect(middling.works.length).toBeGreaterThanOrEqual(middling.state.turn - 2);
+    expect(middling.works.length + middling.poor).toBeGreaterThanOrEqual(middling.state.turn - 2);
   });
 
   /**
@@ -253,9 +296,9 @@ describe('golden playthroughs', () => {
     ).toBe(true);
   });
 
-  it('every year spends itself on something', () => {
+  it('every year the store can pay for something spends itself on it', () => {
     for (const run of [open, closed]) {
-      expect(run.works.length).toBeGreaterThanOrEqual(run.state.turn - 2);
+      expect(run.works.length + run.poor).toBeGreaterThanOrEqual(run.state.turn - 2);
     }
   });
 

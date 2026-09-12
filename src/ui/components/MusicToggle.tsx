@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { UI } from '../../content/ui-strings';
 import type { Season } from '../../engine/types';
-import { hush, isPlaying, musicWanted, setSeason, setSeed, toggle } from '../music';
+import { hush, isPlaying, musicWanted, setSeason, setSeed, subscribeMusic, toggle } from '../music';
 
 interface Props {
   seed: number;
@@ -14,12 +14,22 @@ interface Props {
 }
 
 /**
- * The switch for the music, and nothing else. It starts off: a browser will
- * not make a sound before somebody asks, and neither should a game. Once it
- * has been asked once, it remembers, and the next reign starts already playing.
+ * The switch for the music, and nothing else.
+ *
+ * It starts on, and it starts silent, because those are two different facts. A
+ * browser will not make a sound until somebody has clicked something, so the
+ * card opens on the first click anywhere and the note in the corner says so
+ * from the start: drawn struck through until then, it read as a game with the
+ * music switched off, and the first thing a player did about it was press the
+ * one control that turns it off.
+ *
+ * Turned off, it stays off for the rest of that reign and no longer: a new
+ * one opens with the room full again (`wantMusic`). Which is why this reads
+ * the preference rather than keeping its own copy of it - the thing that
+ * turns it back on is a new reign, and that happens with this on the screen.
  */
 export function MusicToggle({ seed, season, hushed = false }: Props) {
-  const [on, setOn] = useState(false);
+  const on = useSyncExternalStore(subscribeMusic, musicWanted, musicWanted);
 
   useEffect(() => {
     setSeed(seed);
@@ -37,7 +47,7 @@ export function MusicToggle({ seed, season, hushed = false }: Props) {
   useEffect(() => {
     if (!musicWanted() || isPlaying()) return;
     const wake = (): void => {
-      if (!isPlaying()) setOn(toggle());
+      if (!isPlaying()) toggle();
       window.removeEventListener('pointerdown', wake);
     };
     window.addEventListener('pointerdown', wake);
@@ -47,7 +57,7 @@ export function MusicToggle({ seed, season, hushed = false }: Props) {
   return (
     <button
       type="button"
-      onClick={() => setOn(toggle())}
+      onClick={() => toggle()}
       title={on ? UI.music.off : UI.music.on}
       aria-label={on ? UI.music.off : UI.music.on}
       aria-pressed={on}

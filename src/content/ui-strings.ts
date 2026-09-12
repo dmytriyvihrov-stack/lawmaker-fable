@@ -13,6 +13,13 @@ export const UI = {
     beginAt: 'Begin at',
     continueGame: 'Continue your reign',
     confirmNew: 'This burns your current reign. There is no second copy. Begin anew?',
+    /* Said under the first button, before anything is at stake.
+
+       The game writes the reign down after every answer and there is no save
+       button anywhere in it, which is a thing a player can only find out by
+       closing the tab and hoping. One line on the first screen, where the
+       question is actually being asked. Asked for by the user. */
+    autoSave: 'Your progress will be saved automatically.',
   },
 
   intro: {
@@ -150,16 +157,6 @@ export const UI = {
      */
     overShelf: 'Needs a granary before the store can hold it.',
     maxed: 'Already the biggest in the county.',
-    /**
-     * A rest after a rest, and a rest after that.
-     *
-     * Said on the card and not found out afterwards. The first one in a row is
-     * worth what it has always been worth; this is the reign being told, in
-     * the place it is deciding, that the second is worth half of one and the
-     * third is worth sitting down.
-     */
-    restedAgain: 'A second year of it. Worth half a rest.',
-    restedOut: 'Rested out. This one is a year sat on your hands.',
     level: 'level {n} of {max}',
     /** A run of works that only make sense one after the other. */
     groupInfrastructure: 'What the place is built on',
@@ -203,6 +200,12 @@ export const UI = {
     news: '{n} new things on the shelf',
     newsOne: 'one new thing on the shelf',
     newTag: 'new',
+    /* What the mark in the corner counts: how many things the store could
+       pay for today. Not how many are new, which is a fact about what the
+       reader last looked at rather than about the place. */
+    canBuild: '{n} things this year could put up',
+    canBuildOne: 'one thing this year could put up',
+    canBuildNone: 'nothing on the shelf is within the store this year',
     /** The mark, when the year has come round to it and nothing is picked. */
     waitingShort: 'this year is still to be spent',
     /**
@@ -215,24 +218,13 @@ export const UI = {
      */
     firstHeading: 'The year of work',
     firstLine:
-      'One thing a year goes up here, and this is where it is picked. It opens in any season, and the year waits until it is spent.',
+      'One thing a year goes up here, and this is where it is picked. It opens in any season, and the year runs on whether or not it is spent.',
     /** The mark, when the year is already spent. */
     spentShort: 'spent this year',
     spent: 'This year is spent on {name}. The next year of work opens in the spring.',
     spentRest: 'This year is spent. The next year of work opens in the spring.',
-    /**
-     * The year that goes by with nothing put up.
-     *
-     * It used to be the first card on the shelf: a building called "Rest. The
-     * year passes." among the buildings, which is the one thing on that page
-     * that is not a building, sitting above every building on it. It is a
-     * line under the shelf now. Still there on the year nothing is
-     * affordable, still worth what a rest is worth and less every time, and
-     * no longer the first thing anybody reads. Asked for by the user.
-     */
-    pass: 'Or let the year pass',
     /** Read in the spring: the rest of the year still comes, work or no work. */
-    earlyLine: 'A year holds one of these, chosen in any season. Whoever is due this year still comes.',
+    earlyLine: 'A year holds one of these, chosen in any season. Whoever is due this year still comes, and the year does not wait.',
   },
 
   techs: {
@@ -379,6 +371,12 @@ export const UI = {
     health: 'What the sickness takes',
     mood: 'A place people want to live in',
     births: 'Children, one a year, whatever you do',
+    /* What the valley has no room for. Everything above this row is a
+       reason somebody sets out; this is whether there is anywhere to put
+       them when they arrive, and it is the row that makes the column add
+       up to the figure under it. A year of work that clears ground, lines
+       a well or raises a roof is read here, getting smaller. */
+    room: 'No room for them yet',
     perYear: '{n}%',
     net: 'Next spring',
     /** What the count is actually for: the next thing it unlocks. */
@@ -856,7 +854,14 @@ export const UI = {
         subject, then what it says", which is what the two rows of tiles
         directly beneath it are visibly for. */
     draftingTable: 'Create the law',
-    inTheMargin: 'In the margin',
+    /* The person standing beside the draft, and what they think of it.
+
+       It read "In the margin", which is where they are drawn and not who
+       they are: a player who has never seen a marginal note in a law book
+       reads it as a heading about layout. They are the one who brought the
+       matter in and they are not neutral about it, so they are called what
+       they are. Asked for by the user. */
+    inTheMargin: 'Your advisor says',
     yourRulingReads: 'Your ruling reads',
     whatItDoes: 'And so',
     /** The line the card puts under a season, so the year reads in one place. */
@@ -1025,6 +1030,11 @@ export const UI = {
     heading: 'Under the table',
     raw: 'as written',
     felt: 'as felt',
+    /* Which half of a decree a block of figures is about. The day it is
+       sealed and every year after are two different scalings, and the yearly
+       one used to be printed raw, where it disagreed with the tile. */
+    onTheDay: 'the day it is sealed',
+    everyYear: 'every year after',
     scaleLaw: 'decree scale',
     scaleCase: 'case scale',
     weight: 'law weight',

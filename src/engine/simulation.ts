@@ -453,7 +453,23 @@ export function yearlyChange(s: GameState): number {
   const slack = Math.max(0, 1 - s.population / Math.max(1, roomFor(s)));
   const rate = gain * slack - deaths;
   const births = s.stage === 'village' ? Math.round(CONFIG.village.births * slack) : 0;
-  return Math.round(s.population * rate + births);
+  const change = s.population * rate + births;
+  /**
+   * And a place that is growing gains somebody.
+   *
+   * Seven people growing at six percent is four tenths of a person, which
+   * rounded to nobody: the header said the count was rising, listed three
+   * reasons it was rising, and then the spring came and there were still
+   * seven. Under a whole person it is a rate and not an arrival, and a rate
+   * the place can never collect is a promise the game does not keep. Asked
+   * for by the user.
+   *
+   * It cannot push past the room: as the count comes up on `roomFor` the
+   * slack goes to nothing, the gain goes with it, and what is left is minus
+   * the deaths, which is never above zero.
+   */
+  if (change > 0) return Math.max(1, Math.round(change));
+  return Math.round(change);
 }
 
 /**
@@ -479,16 +495,35 @@ export function roomFor(s: GameState): number {
   );
 }
 
+/** Who is pulling on the count of people. The screen names each one. */
+export type GrowthKind =
+  | 'winter' | 'law' | 'ground' | 'health' | 'mood' | 'births'
+  /* What the valley has no room for: `roomFor` against the count, which is
+     the term that decides how many of the people on their way actually get
+     anywhere. */
+  | 'room';
+
 /**
  * Why the count of people is doing what it is doing, itemised, in percent a
  * year. Growth is the one number on screen that nothing on the boards obviously
  * explains, and a player who cannot see why a place is emptying cannot do
  * anything about it. Labels come from content; the caller names the kinds.
+ *
+ * The rows add up to the number under them, and that is a rule and not a
+ * coincidence. They used to be the four reasons people arrive and leave, read
+ * straight off the config: twelve percent for the ground, five for the
+ * sickness, a fraction for the square, and a line about children carrying no
+ * figure at all. None of it was multiplied by how much room the valley had
+ * left, which is the term that actually decides how many walk in, so a place
+ * listing seven percent of eight people gained two of them and the list could
+ * not be made to say why. What the ceiling takes is a row of its own now, the
+ * children carry their share of the count, and the sum of the column times the
+ * count is the figure at the foot of it. Asked for by the user.
  */
 export function growthSourcesOf(
   s: GameState,
-): { kind: 'winter' | 'law' | 'ground' | 'health' | 'mood' | 'births'; label: string; percent: number }[] {
-  const out: { kind: 'winter' | 'law' | 'ground' | 'health' | 'mood' | 'births'; label: string; percent: number }[] = [];
+): { kind: GrowthKind; label: string; percent: number }[] {
+  const out: { kind: GrowthKind; label: string; percent: number }[] = [];
   const pct = (n: number): number => Math.round(n * 1000) / 10;
 
   if (isWinter(s.turn)) {
@@ -505,36 +540,38 @@ export function growthSourcesOf(
   const law = s.laws.find((l) => l.status === 'active' && l.subject === 'strangers');
   const option = law ? findLawOption(law.subject, law.action, law.label) : undefined;
 
-  if (s.stage === 'village') {
-    out.push({ kind: 'ground', label: '', percent: pct(CONFIG.village.growthNoLaw - 1) });
-    if (option) {
-      out.push({
-        kind: 'law',
-        label: law!.label,
-        percent: pct((option.growth ?? CONFIG.village.growthNoLaw) - CONFIG.village.growthNoLaw),
-      });
-    }
-  } else {
-    out.push({ kind: 'ground', label: '', percent: pct(P.townBase - 1) });
-    if (option) {
-      out.push({
-        kind: 'law',
-        label: law!.label,
-        percent: pct(((option.growth ?? 1) - 1) * P.townShareOfLaw),
-      });
-    }
-  }
-
+  /* The same three terms `yearlyChange` uses, in the same order, so the
+     column under the pointer and the year the place actually lives are the
+     one arithmetic. */
+  const ground = s.stage === 'village' ? CONFIG.village.growthNoLaw - 1 : P.townBase - 1;
+  const lawPart = option
+    ? s.stage === 'village'
+      ? (option.growth ?? CONFIG.village.growthNoLaw) - CONFIG.village.growthNoLaw
+      : ((option.growth ?? 1) - 1) * P.townShareOfLaw
+    : 0;
+  const cheer = isActiveStat(s, 'mood')
+    ? (s.stats.mood - P.moodNeutral) * P.growthPerMood
+    : 0;
+  const gain = Math.max(0, ground + lawPart + cheer);
+  const slack = Math.max(0, 1 - s.population / Math.max(1, roomFor(s)));
   const deaths = Math.max(0, P.deathFrom - s.stats.health) * P.deathPerPoint;
+  const births = s.stage === 'village' ? Math.round(CONFIG.village.births * slack) : 0;
+
+  out.push({ kind: 'ground', label: '', percent: pct(ground) });
+  if (option) out.push({ kind: 'law', label: law!.label, percent: pct(lawPart) });
+  /* Whatever is left of the arrivals once the square has had its say. Usually
+     that is the cheer itself; on a place nobody wants to live in the whole
+     gain is clipped at nothing, and then this is the row that cancels the two
+     above it, which is the true reading of that year. */
+  const mood = gain - ground - lawPart;
+  if (mood !== 0) out.push({ kind: 'mood', label: '', percent: pct(mood) });
+  /* And the ceiling: what the valley has no room for. It is drawn from the
+     same `roomFor` the ladder counts, so a year of work that clears ground is
+     visible here as this row getting smaller. */
+  if (gain > 0 && slack < 1) out.push({ kind: 'room', label: '', percent: -pct(gain * (1 - slack)) });
   if (deaths > 0) out.push({ kind: 'health', label: '', percent: -pct(deaths) });
-
-  if (isActiveStat(s, 'mood')) {
-    const cheer = (s.stats.mood - P.moodNeutral) * P.growthPerMood;
-    if (cheer !== 0) out.push({ kind: 'mood', label: '', percent: pct(cheer) });
-  }
-
   if (s.stage === 'village' && CONFIG.village.births > 0) {
-    out.push({ kind: 'births', label: '', percent: 0 });
+    out.push({ kind: 'births', label: '', percent: pct(births / Math.max(1, s.population)) });
   }
 
   return out;
@@ -893,33 +930,18 @@ export function workOnce(s: GameState, work: WorkDef): Effects | undefined {
 }
 
 /**
- * What a rest would be worth if the year were spent on one now: all of it, half
- * of it, or none. See the note on `CONFIG.works.restRun`. Anything that is not
- * a rest is worth what it says, always.
- */
-export function restShare(s: GameState): number {
-  const run = s.restRun ?? 0;
-  const scale = CONFIG.works.restRun;
-  return scale[Math.min(run, scale.length - 1)];
-}
-
-/** Whether a work is the one that leaves nothing standing and pays at once. */
-export function isRest(work: WorkDef): boolean {
-  return work.id === 'rest';
-}
-
-/**
  * What this work pays on the day, in this place, this year. The screen and the
- * engine both read it here, so the card can never promise a rest the year is
- * not going to give.
+ * engine both read it here, so the card can never promise what the year is not
+ * going to give.
+ *
+ * There used to be a second reading under this one. The shelf carried a year
+ * of rest, worth full the first time, half the second and nothing the third,
+ * and `restShare` scaled it. The rest is gone (`content/works.ts`) and so is
+ * the scaling; `CONFIG.works.restRun` and `GameState.restRun` are left where
+ * they are because nothing in this repository deletes a field.
  */
 export function workOnceNow(s: GameState, work: WorkDef): Effects | undefined {
-  const once = workOnce(s, work);
-  if (!isRest(work) || once === undefined) return once;
-  const share = restShare(s);
-  if (share <= 0) return undefined;
-  if (share >= 1) return once;
-  return scaleEffects(once, share);
+  return workOnce(s, work);
 }
 
 /**
@@ -953,8 +975,7 @@ export function shelfNews(s: GameState): WorkId[] {
 /**
  * What a year could actually be spent on today: on the shelf, not already at
  * its top floor, not waiting on the step before it in its own run, and inside
- * what the store holds. Resting is not one of them, because resting is not
- * building something.
+ * what the store holds.
  *
  * The shelf's own list leaves money out on purpose (`shelfOf`). This is the
  * other question, the one the mark in the corner is answering when it lights
@@ -963,7 +984,6 @@ export function shelfNews(s: GameState): WorkId[] {
 export function buildableNow(s: GameState): WorkId[] {
   if (workSpent(s)) return [];
   return worksFor(s)
-    .filter((w) => !isRest(w))
     .filter((w) => w.maxLevel === 0 || (s.buildings[w.id] ?? 0) < w.maxLevel)
     .filter(
       (w) =>
@@ -1073,7 +1093,7 @@ export function worksFor(s: GameState): WorkDef[] {
 export function canBuild(s: GameState, id: WorkId): boolean {
   const work = getWork(id);
   if (!work) return false;
-  // rest is always available; the fair is available whenever the store can pay
+  // the fair leaves nothing standing, so it is available whenever the store can pay
   if (work.maxLevel === 0) return s.stats.economy >= workPrice(s, work);
   if ((s.buildings[id] ?? 0) >= work.maxLevel) return false;
   return s.stats.economy >= workCost(s, work);

@@ -20,12 +20,12 @@ import { actAbroad, openWorld, tickWorld, type WorldAction } from './world';
 import {
   activeStats,
   animalKeep,
+  buildableNow,
   herdKeep,
   crimeTakes,
   crowdingOnHealth,
   cultureOnMood,
   deathsOf,
-  isRest,
   makingOf,
   workOnceNow,
   isActiveStat,
@@ -592,6 +592,10 @@ export function chooseCase(
   if (choice.souls) {
     draft.population = Math.max(1, Math.round(draft.population * (1 + choice.souls / 100)));
   }
+  // and the ones that are about one person, counted as one person
+  if (choice.soulsExact) {
+    draft.population = Math.max(1, draft.population + choice.soulsExact);
+  }
 
   // 4. flags, Iva, city layers
   for (const f of choice.setFlags ?? []) {
@@ -738,17 +742,41 @@ export function continueYear(s: GameState): GameState {
     }
   }
 
-  /* Nobody else is due. A year whose work is already spent, in the spring
-     from the shelf or at the end on a reopened law, goes on to the next
-     one; any other year still has its work to spend. This used to be the
-     first line of the function, which was right for as long as the work was
-     always the last thing in a year: spent early, it would have sent the
-     year on before the person the law lands on had been heard. */
-  if (draft.lastWorkTurn === draft.turn) return advance(draft);
+  /* Nobody else is due, so the year is over.
+   *
+   * It used to stop here instead, on `phase: 'works'`, and wait: the seasons
+   * stopped turning, the screen held the valley and nothing else, and the
+   * only way forward was to open the shelf and spend the year or say out
+   * loud that it would not be spent. A year that has already had its law and
+   * its caller does not need a fourth screen to end on, and the player who
+   * reported this put it exactly right: the shelf is open in every season,
+   * the mark in the corner says how many things the store can pay for today,
+   * and going to look at it is their own business. A year nobody spent is a
+   * year nobody spent.
+   *
+   * Two stops are left and both of them now want something to stop for: the
+   * first spring, here, and the year the scheduler has nobody for (step 8 of
+   * `advance`). Neither stops when the store cannot pay for anything, which
+   * is what used to leave a reign on a screen whose only live answer was to
+   * rest, and the rest is gone. Where it does stop, the card is on the screen
+   * (`App.tsx` opens it) and closing it turns the year, so the shelf is a card
+   * like every other card and never a held clock.
+   */
 
-  draft.current = null;
-  draft.phase = 'works';
-  return draft;
+  /* And the first spring, which has somebody in it now.
+
+     The first year used to be the shelf and nothing else, so step 8 caught it
+     along with every other empty year. There is a caller in it since the
+     glade, and a year with a caller runs straight on, which would have carried
+     the first year of work past the only player who has never seen the shelf.
+     So the first spring ends at it, once, whatever else was in the year,
+     unless it has already been spent by hand. */
+  if (draft.turn === 1 && draft.lastWorkTurn !== draft.turn && buildableNow(draft).length > 0) {
+    draft.current = null;
+    draft.phase = 'works';
+    return draft;
+  }
+  return advance(draft);
 }
 
 /**
@@ -856,15 +884,10 @@ function spendYearOn(s: GameState, id: WorkId, plot?: PlotId): GameState {
   if (work.maxLevel > 0) draft.buildings[id] = (draft.buildings[id] ?? 0) + 1;
   if (ground !== null) draft.placements = { ...(draft.placements ?? {}), [id]: ground };
 
-  /* Read before the run is moved on, so what the card promised is what the
-     year pays. A rest after a rest is worth half of one, and a third in a row
-     is worth nothing at all; anything else is worth what it says and puts the
-     run back to nought. See `CONFIG.works.restRun`. */
   applyEffects(draft, workOnceNow(draft, work), work.name);
-  draft.restRun = isRest(work) ? (draft.restRun ?? 0) + 1 : 0;
 
   draft.lastWorkTurn = draft.turn;
-  // a fair and a rest leave nothing standing, so nothing is being raised
+  // a fair leaves nothing standing, so nothing is being raised
   draft.lastWork = work.maxLevel > 0 ? id : null;
   draft.log.push({ turn: draft.turn, kind: 'work', refId: id, choiceId: id, tags: [] });
   return draft;
@@ -889,8 +912,6 @@ export function sendAbroad(s: GameState, action: WorldAction, target: string): G
   }
   draft.lastWorkTurn = draft.turn;
   draft.lastWork = null;
-  // a year spent on somebody else's kingdom is not a year of resting
-  draft.restRun = 0;
   return advance(draft);
 }
 
@@ -903,8 +924,6 @@ export function reopenLaw(s: GameState, proposalId: string): GameState {
   draft.current = { kind: 'proposal', id: proposalId };
   draft.lastWorkTurn = draft.turn;
   draft.lastWork = null;
-  // and neither is a year spent arguing with your own writing
-  draft.restRun = 0;
   /* The year is full. Reopening happens at the year's end, after whoever was
      due has been heard, and the seal that follows must not open a slot for
      somebody else: `continueYear` reads a spent year as one that goes on to
@@ -1192,12 +1211,25 @@ export function advance(s: GameState): GameState {
     return draft;
   }
 
-  // 8. an empty year is still a year, and it still gets its work
-  if (ev === null) {
+  /* 8. an empty year is still a year, and it still gets its work.
+
+     A year with a law or a caller in it runs on past the work (`continueYear`),
+     but a year with neither has nothing else to be, and turning it unwatched
+     would be a year of somebody's reign going by with no screen in it at all.
+
+     Unless there is nothing on the shelf the store can pay for, in which case
+     it turns anyway. That is the case this used to stop in and had no answer
+     for: the shelf was all dim, the only live line on it was the year of rest,
+     and taking the rest away would have left a screen with no way out of it at
+     all. It was reported as the game freezing, and it was. The turn is already
+     counted above and `hardCapTurn` ends the reign, so a run of years too poor
+     to build in walks forward and cannot walk forever. */
+  if (ev === null && buildableNow(draft).length > 0) {
     draft.current = null;
     draft.phase = 'works';
     return draft;
   }
+  if (ev === null) return advance(draft);
 
   draft.current = ev;
   draft.eventsThisYear = 1;

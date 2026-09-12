@@ -7,8 +7,6 @@ import { CARD_BUTTON, CardFoot, PopupHead } from '../components/Popup';
 import { getProposal } from '../../engine/registry';
 import { reopenableProposals } from '../../engine/reducer';
 import {
-  isRest,
-  restShare,
   storeCap,
   workCost,
   workOnceNow,
@@ -77,7 +75,14 @@ export function Works({
      table in front of you at once, and in the spring that would push out
      whoever was already standing there. */
   const spent = workSpent(state);
+  /* The shelf is the whole of this screen: the dev fixtures open on it, and
+     nothing else in the game does any more. */
   const inPhase = state.phase === 'works';
+  /* Opening a law again is the year's own business rather than the shelf's,
+     so it is offered where the year has finished with whoever was at the door:
+     on the shelf screen itself, and on the ruling just read. Anywhere else it
+     would put the drafting table in front of somebody still standing there. */
+  const canReopen = !spent && (inPhase || state.phase === 'aftermath');
   /** The list of standing laws stays folded until somebody asks for it. */
   const [reopenOpen, setReopenOpen] = useState(false);
 
@@ -113,17 +118,15 @@ export function Works({
       ? []
       : chain.filter((w) => offeredIds.has(w.id) || w.needsWork !== undefined);
 
-  /* The year that costs nothing is not on the shelf at all.
+  /* The year that costs nothing is not on the shelf, and is not under it
+     either.
 
-     It was the first card on it, above every building, on the grounds that a
-     reign with an empty store reaches for it and should not have to hunt. But
-     it is not a building, and a list of buildings whose first entry is "do not
-     build" is a list that opens by offering the way out. It is a line under
-     the shelf now, on the foot of this card, where it is still one click on
-     the years that need it. Asked for by the user. */
-  const works = offered.filter((w) => w.group === undefined && !isRest(w));
-  const resting = offered.find(isRest);
-  const restPicked = picked?.kind === 'work' && resting !== undefined && picked.id === resting.id;
+     It was the first card on the shelf, then a line under it on the foot of
+     this card, and now it is gone: a year nobody spends is a year nobody
+     spends, it pays nothing and it takes no click. What it used to be was the
+     only way out of a screen that held the year still, and no screen holds the
+     year still now. Asked for by the user. */
+  const works = offered.filter((w) => w.group === undefined);
   const reopenable = reopenableProposals(state);
 
   /* There used to be a red line over the shelf on the years nothing on it was
@@ -205,14 +208,6 @@ export function Works({
         {/* what it moves and what it costs, on one line, in that order */}
         <div className={`mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 pl-[22px] ${TYPE.note}`}>
           <MovedBoards row once={workOnceNow(state, work)} every={work.trend} place={state} />
-          {/* And why a rest is smaller than it was, said on the card rather
-              than discovered afterwards. A year sat on your hands is still a
-              legal answer; it is simply not worth anything. */}
-          {isRest(work) && restShare(state) < 1 && (
-            <span className="text-parchment-dim">
-              {restShare(state) <= 0 ? UI.works.restedOut : UI.works.restedAgain}
-            </span>
-          )}
           {waiting ? (
             <span className="text-parchment-dim">
               {UI.works.needsFirst.replace('{name}', nameOf(work.needsWork!.id))}
@@ -264,37 +259,23 @@ export function Works({
         kicker={`${UI.works.heading} · ${UI.popup.ofYear
           .replace('{season}', UI.seasons[season])
           .replace('{n}', String(state.turn))}`}
+        onClose={onClose}
+        closeLabel={UI.works.close}
       />
       <div className="p-4">
-        {/* What the shelf is today, and the way out when there is one.
+        {/* What the shelf is today.
 
-            Opened from the corner in the spring it says the year still comes;
-            opened after the year is spent it says on what, and nothing below
-            it takes a click. In the year's own turn for it the head has said
-            everything already, and there is no way out but the year. */}
-        {(onClose !== undefined || !inPhase) && (
-          <div className="flex items-start justify-between gap-3">
-            <p className={`${TYPE.note} leading-snug text-parchment-dim`}>
-              {spent
-                ? state.lastWork
-                  ? UI.works.spent.replace('{name}', nameOf(state.lastWork))
-                  : UI.works.spentRest
-                : !inPhase
-                  ? UI.works.earlyLine
-                  : ''}
-            </p>
-            {onClose && (
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label={UI.works.close}
-                title={UI.works.close}
-                className="min-h-[32px] min-w-[32px] shrink-0 rounded-md border border-ink-line text-parchment-dim"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+            Opened from the corner it says the year still comes; opened after
+            the year is spent it says on what, and nothing below it takes a
+            click. The way out is in the head now, beside the hammer. */}
+        {(spent || !inPhase) && (
+          <p className={`${TYPE.note} leading-snug text-parchment-dim`}>
+            {spent
+              ? state.lastWork
+                ? UI.works.spent.replace('{name}', nameOf(state.lastWork))
+                : UI.works.spentRest
+              : UI.works.earlyLine}
+          </p>
         )}
 
         {/* The other half of a year of work.
@@ -393,7 +374,7 @@ export function Works({
 
         {/* By the middle of a reign there is a card here for every law standing.
             Opening a law again is a rare thing to want, so it asks first. */}
-        {inPhase && reopenable.length > 0 && (
+        {canReopen && reopenable.length > 0 && (
           <section className="mt-4">
             <button
               type="button"
@@ -479,34 +460,6 @@ export function Works({
                   ? UI.works.wherePick
                   : UI.works.choose}
             </button>
-
-            {/* And the year that puts nothing up, picked the way everything
-                else here is picked: this says which year it would be, the
-                button above spends it. One click on a line this quiet does
-                not cost a reign its year by accident. */}
-            {resting && (
-              <button
-                type="button"
-                onClick={() => pickWork(resting.id)}
-                aria-pressed={restPicked}
-                className={`answer flex max-w-full flex-wrap items-baseline justify-center gap-x-2 rounded-md border px-2.5 py-1 ${
-                  restPicked ? 'border-seal bg-seal/20' : 'border-transparent'
-                }`}
-              >
-                <span
-                  className={`${TYPE.note} ${restPicked ? 'text-parchment' : 'text-parchment-dim'}`}
-                >
-                  {UI.works.pass}
-                </span>
-                <span className={`${TYPE.note} text-parchment-dim/70`}>{resting.line}</span>
-                <MovedBoards row once={workOnceNow(state, resting)} place={state} />
-                {restShare(state) < 1 && (
-                  <span className={`${TYPE.note} text-parchment-dim`}>
-                    {restShare(state) <= 0 ? UI.works.restedOut : UI.works.restedAgain}
-                  </span>
-                )}
-              </button>
-            )}
           </div>
         </CardFoot>
         )}

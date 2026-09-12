@@ -230,12 +230,29 @@ function hair({ r, y, hair: kind, seal }: FolkLook, old = false) {
           <path d={`M${32 - r} ${y} a${r} ${r} 0 0 1 ${r * 2} 0 l0 ${r * 1.4} l-3 0 l0 -${r} l-${r * 2 - 6} 0 l0 ${r} l-3 0 z`} />
         </g>
       );
+    /* A scarf over the crown, and hair coming out from under it at both
+       sides.
+
+       It used to be the band alone: an arc across the top of the head five
+       units deep, which at the size a portrait is actually read is a flat cap
+       and reads as a man in one. The woman who farms the field on the stream
+       was told apart from the digger by a spade neither of them is holding,
+       and a player said so. The fall down the sides is the whole fix: it is
+       the same silhouette `long` uses, which is the one shape in this
+       vocabulary nobody has ever misread. Asked for by the user. */
     case 'kerchief':
       return (
-        <path
-          d={`M${32 - r} ${y - 1} a${r} ${r} 0 0 1 ${r * 2} 0 l-3 -3 l-${r * 2 - 6} 0 z`}
-          fill={fill}
-        />
+        <g fill={fill}>
+          <path
+            d={`M${32 - r} ${y - 1} a${r} ${r} 0 0 1 ${r * 2} 0 l0 ${r * 1.15} l-2.8 0 l0 -${
+              r * 0.8
+            } l-${r * 2 - 5.6} 0 l0 ${r * 0.8} l-2.8 0 z`}
+          />
+          {/* and the knot, which is what says scarf rather than hair */}
+          <path
+            d={`M${32 + r - 2} ${y - 3.4} l${r * 0.62} ${r * 0.14} l-${r * 0.54} ${r * 0.44} z`}
+          />
+        </g>
       );
     case 'hood':
       return (

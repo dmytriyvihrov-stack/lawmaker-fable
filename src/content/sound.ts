@@ -1,4 +1,16 @@
 /**
+ * Nothing in this file is played any more.
+ *
+ * The whole effects layer went with the toggle that carried it: the cues under
+ * the hand, the click on the river, the murmur at the door, and the switch in
+ * the corner that turned them on and off. What the game makes is music or it
+ * is silence, and that was asked for in those words. The tables below stay
+ * because they are readings and not sounds: `HUSHED_CASES` still says which
+ * scenes the music drops under, and the two voices are what a caller would
+ * sound like on the day anybody records one.
+ */
+
+/**
  * Two voices.
  *
  * There used to be twenty eight, one authored pitch and vowel per caller, and
@@ -32,7 +44,7 @@ export const VOICE_OF: Record<string, VoiceKind> = {
   tam: 'man', miller: 'man', lever: 'man', pusher: 'man', chaplain: 'man',
   clerk: 'man', millwright: 'man', charter: 'man', treasurer: 'man',
   captain: 'man', fool: 'man', lark: 'man', ferrier: 'man', singer: 'man',
-  runner: 'man', brother: 'man', digger: 'man', odo: 'man',
+  runner: 'man', brother: 'man', digger: 'man', odo: 'man', fugitive: 'man',
   riders: 'man', crowd: 'man', players: 'man', wolf: 'man',
 };
 
@@ -55,10 +67,3 @@ export const HUSHED_CASES = new Set([
   'x_revolt', 'x_plague', 'x_ruin', 'x_abdication', 'x_flight', 'x_square',
 ]);
 
-export const SOUND_UI = {
-  label: 'Sound effects',
-  on: 'Turn on settlement sounds, voices and effects',
-  off: 'Mute settlement sounds, voices and effects',
-  unavailable: 'Sound effects are unavailable in this browser',
-  volume: 'Sound effects volume',
-};

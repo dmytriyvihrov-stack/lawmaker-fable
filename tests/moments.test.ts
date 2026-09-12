@@ -3,7 +3,7 @@ import { MOMENTS, MOMENT_SOURCE } from '../src/content/moments';
 import { CASE_SPOTS } from '../src/content/meta';
 import { CASES } from '../src/content/cases';
 import { MOMENTS_PER_YEAR, getMoment, momentTaken, momentsNow, momentsOfYear } from '../src/engine/moments';
-import { chooseWork, takeMoment } from '../src/engine/reducer';
+import { advance, takeMoment } from '../src/engine/reducer';
 import type { GameState, Season } from '../src/engine/types';
 import { reignAt } from './helpers';
 
@@ -158,7 +158,7 @@ describe('the small things', () => {
     expect(once.ledger.filter((l) => l.source === `${MOMENT_SOURCE}: ${id}`).length).toBe(1);
 
     // the year turns and the map has things on it again
-    const next = chooseWork(once, 'rest');
+    const next = advance(once);
     expect(next.turn).toBe(s.turn + 1);
     expect(momentsNow(next, 'summer').length).toBe(MOMENTS_PER_YEAR);
   });

@@ -43,7 +43,8 @@ describe('smoke', () => {
     // needs it lifted, so it is on the list from the first year
     expect(village).toContain('granary');
     expect(village).not.toContain('long_room');
-    expect(village).toContain('rest');
+    // and there is nothing on the shelf that is not a thing to build
+    expect(village).not.toContain('rest');
 
     const town: GameState = { ...s, stage: 'town' };
     const townWorks = worksFor(town).map((w) => w.id);
@@ -73,7 +74,7 @@ describe('the bench', () => {
     const s = withLaw('shared');
     expect(parseVerdict('v1_idle_hand', 'eats', null, s)?.choiceId).toBe('feed_him');
     expect(parseVerdict('v1_idle_hand', 'share_is_cut', null, s)?.sentence).toBe(
-      'TAM HAS HIS SHARE CUT, AND THE LAW READ OUT',
+      'TAM HAS HIS SHARE CUT',
     );
   });
 

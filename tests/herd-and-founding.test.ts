@@ -7,7 +7,7 @@ import { VOICE_OF } from '../src/content/sound';
 import { CASE_VERDICTS } from '../src/content/verdict-words';
 import { evaluate } from '../src/engine/conditions';
 import { doingsNow, foundingLooks, townFolk } from '../src/engine/folk';
-import { chooseCase, chooseWork, newGame } from '../src/engine/reducer';
+import { advance, chooseCase, newGame } from '../src/engine/reducer';
 import { reignAt, withCase } from './helpers';
 import { herdKeep } from '../src/engine/simulation';
 import type { CaseEvent, GameState } from '../src/engine/types';
@@ -78,7 +78,7 @@ describe('the herd on the common', () => {
 
   it('is paid into the ledger every year, under its own name', () => {
     // a year spent on nothing in particular is still a year the goats are out
-    const walked = chooseWork(chooseCase(years(6, 14), 'w_goats', 'he_walks_them'), 'rest');
+    const walked = advance(chooseCase(years(6, 14), 'w_goats', 'he_walks_them'));
     expect(walked.turn, 'the year never turned').toBe(7);
     const named = walked.ledger.filter((e) => e.source === HERD_WALKED.label);
     expect(named.length, 'the herd paid nothing anybody can read').toBe(2);
@@ -89,7 +89,7 @@ describe('the herd on the common', () => {
     }
 
     // and a reign that never had the scene in it pays nothing at all
-    const quiet = chooseWork(years(6, 14), 'rest');
+    const quiet = advance(years(6, 14));
     expect(quiet.ledger.some((e) => e.source === HERD_WALKED.label)).toBe(false);
   });
 

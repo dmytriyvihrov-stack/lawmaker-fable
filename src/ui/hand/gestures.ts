@@ -399,9 +399,41 @@ export function makeGesture(
       };
     }
     case 'turn_away': {
+      /**
+       * The one act with nothing in the hand: the picture is dragged until
+       * the person is off the edge of it.
+       *
+       * The head turns faster than the hand, and that is not a flourish. A
+       * scene is played at four times the town, so the frame is a couple of
+       * hundred map units across and somebody standing in the middle of it
+       * does not leave until the picture has been dragged the better part of
+       * a screen and a half. That is not a gesture, it is an errand, and the
+       * one answer in the game that asks for it could be sat in front of for
+       * as long as anybody liked with nothing happening and nothing on the
+       * screen saying why. It swings at `SWING` times the finger now, so one
+       * decisive drag turns the whole valley, and it lands the moment he is
+       * gone rather than waiting for the finger to come up.
+       */
+      const SWING = 2.4;
       let pan = false;
       let cx = 0;
       let cy = 0;
+      /* Where the frame was when this started, and how far it has been
+         carried since. The camera is clamped to the picture, so a target
+         too near the middle of a small map could in principle never clear
+         the edge: a frame and a bit of travel is plainly a turn away, and
+         it is the floor that keeps this from ever being a lock. */
+      const first = ctx.view();
+      const home = { x: first.x + first.w / 2, y: first.y + first.h / 2 };
+      const gone = (): boolean => {
+        const tg = target();
+        const v = ctx.view();
+        const out =
+          tg.x + tg.r < v.x || tg.x - tg.r > v.x + v.w || tg.y + tg.r < v.y || tg.y - tg.r > v.y + v.h;
+        if (out) return true;
+        const far = Math.hypot(v.x + v.w / 2 - home.x, v.y + v.h / 2 - home.y);
+        return far > Math.max(v.w, v.h) * 1.2;
+      };
       return {
         down(_p, e) {
           pan = true;
@@ -410,18 +442,18 @@ export function makeGesture(
         },
         move(_p, e) {
           if (!pan) return;
-          ctx.pan(e.clientX - cx, e.clientY - cy);
+          ctx.pan((e.clientX - cx) * SWING, (e.clientY - cy) * SWING);
           cx = e.clientX;
           cy = e.clientY;
+          if (gone()) {
+            pan = false;
+            finish();
+          }
         },
         up() {
           if (!pan) return;
           pan = false;
-          const tg = target();
-          const v = ctx.view();
-          const out =
-            tg.x + tg.r < v.x || tg.x - tg.r > v.x + v.w || tg.y + tg.r < v.y || tg.y - tg.r > v.y + v.h;
-          if (out) finish();
+          if (gone()) finish();
         },
       };
     }

@@ -24,7 +24,11 @@ function toneOf(n: number): string {
  * strangers, the sickness, and whether anybody wants to live here.
  */
 export function GrowthNote({ state }: Props) {
-  const sources = growthSourcesOf(state).filter((s) => s.percent !== 0 || s.kind === 'births');
+  /* Every row carries a figure now, children included, and the figures add up
+     to the count at the foot of the list. A row worth nothing is not a row:
+     the children used to be a line with an empty column beside it, which is
+     what made the list stop explaining the number under it. */
+  const sources = growthSourcesOf(state).filter((s) => s.percent !== 0);
   const next = yearlyChange(state);
   // a count is only interesting because of what it opens, and the ladder that
   // says so lives two clicks away behind a gear
@@ -36,6 +40,7 @@ export function GrowthNote({ state }: Props) {
     if (kind === 'health') return UI.growth.health;
     if (kind === 'mood') return UI.growth.mood;
     if (kind === 'births') return UI.growth.births;
+    if (kind === 'room') return UI.growth.room;
     return UI.growth.ground;
   };
 

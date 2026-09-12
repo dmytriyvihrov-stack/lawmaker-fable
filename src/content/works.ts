@@ -210,14 +210,13 @@ export const WORKS: WorkDef[] = [
     once: { mood: 8, health: -1 },
     townOnce: { mood: 10, culture: 6, health: -1 },
   },
-  {
-    id: 'rest',
-    stage: 'both',
-    name: 'Rest. The year passes.',
-    line: 'Nothing is built. The monarch sleeps better for it.',
-    cost: 0,
-    maxLevel: 0,
-    trend: {},
-    once: { crownSanity: 4, health: 2 },
-  },
+  /* There is no year of rest on this shelf any more.
+
+     It was a row like any other, priced at nothing, paying the crown four
+     and the people two for a year in which nothing was built, and it was the
+     one answer the shelf could always give. That made it the way out of every
+     year the store could not pay for, and it made the shelf stop the year to
+     offer it: a screen whose only live button was "do nothing". A year nobody
+     spends is now simply a year nobody spends, and it costs no click and pays
+     nothing. Asked for by the user. */
 ];

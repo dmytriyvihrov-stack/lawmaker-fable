@@ -132,6 +132,79 @@ describe('the minigame layer', () => {
     }
   });
 
+  /**
+   * Turning away, which is the one act with nothing in the hand.
+   *
+   * It reads the frame rather than the pointer, so this needs a camera:
+   * a view of the map that moves when it is panned and stops at the edge
+   * of the picture the way the real one does. What is checked is the thing
+   * that was wrong with it, which is that a whole screen of dragging left
+   * the man exactly where he was and the act could not be finished at all.
+   */
+  describe('turning away', () => {
+    const act: ActDef = ACTS['v1_idle_hand:his_own_field'];
+    /** A frame over the 1440 by 820 picture, at the closeness a scene uses. */
+    const camera = () => {
+      const w = 360;
+      const h = 205;
+      /* centred on Tam, which is where the act starts */
+      const at = { x: 604 - w / 2, y: 264 - h / 2 };
+      const ctx: GestureCtx = {
+        /* A wide window at the closeness a scene is played at: the picture
+           is drawn 1440 across and hung over about two thousand pixels of
+           glass, so a map unit is nearly six pixels and a whole screen of
+           dragging is a good deal less ground than it sounds like. */
+        unitsPerPx: () => 0.174,
+        pan: (dx, dy) => {
+          at.x = Math.max(0, Math.min(1440 - w, at.x - dx * 0.174));
+          at.y = Math.max(0, Math.min(820 - h, at.y - dy * 0.174));
+        },
+        view: () => ({ x: at.x, y: at.y, w, h }),
+        swingTool: () => {},
+        strainTool: () => {},
+      };
+      return ctx;
+    };
+    const tam = () => fig(604, 264, 12);
+
+    /** Drag the picture by `px` screen pixels, in `steps` moves. */
+    const swipe = (g: ReturnType<typeof makeGesture>, px: number, steps = 12) => {
+      g.down({ x: 0, y: 0 }, { clientX: 0, clientY: 0, timeStamp: 0 });
+      for (let i = 1; i <= steps; i++) {
+        g.move({ x: 0, y: 0 }, { clientX: (px * i) / steps, clientY: 0, timeStamp: i * 16 });
+      }
+      g.up({ x: 0, y: 0 }, { clientX: px, clientY: 0, timeStamp: steps * 16 });
+    };
+
+    it('takes one decisive drag, and not a nudge', () => {
+      const small = { done: false };
+      const a = makeGesture(act, scene({ tam: tam() }), {}, camera(), () => {
+        small.done = true;
+      });
+      swipe(a, 120);
+      expect(small.done, 'a nudge is not turning away').toBe(false);
+
+      const big = { done: false };
+      const b = makeGesture(act, scene({ tam: tam() }), {}, camera(), () => {
+        big.done = true;
+      });
+      swipe(b, 900);
+      expect(big.done, 'a screen of dragging and he is still there').toBe(true);
+    });
+
+    it('lands the moment he leaves the frame, without waiting for the finger', () => {
+      const state = { done: false };
+      const g = makeGesture(act, scene({ tam: tam() }), {}, camera(), () => {
+        state.done = true;
+      });
+      g.down({ x: 0, y: 0 }, { clientX: 0, clientY: 0, timeStamp: 0 });
+      for (let i = 1; i <= 12 && !state.done; i++) {
+        g.move({ x: 0, y: 0 }, { clientX: i * 100, clientY: 0, timeStamp: i * 16 });
+      }
+      expect(state.done, 'it waited for the finger to come up').toBe(true);
+    });
+  });
+
   describe('bread in a fist', () => {
     const act: ActDef = ACTS['v1_idle_hand:no_work_no_bread'];
 

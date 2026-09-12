@@ -27,7 +27,6 @@ import { setTextEditMode } from '../ui/dev/textEditMode';
 import { Interlude } from '../ui/components/Interlude';
 import { MonarchPanel } from '../ui/components/MonarchPanel';
 import { MusicToggle } from '../ui/components/MusicToggle';
-import { Soundscape } from '../ui/components/Soundscape';
 import { Popup } from '../ui/components/Popup';
 import { SealMoment } from '../ui/components/SealMoment';
 import { StandingLaws } from '../ui/components/StandingLaws';
@@ -421,7 +420,6 @@ export function MiniApp() {
       )}
 
       <div className="fixed bottom-2 right-9 z-40 flex items-center gap-2">
-        <Soundscape game={game} season={season} ready={handReady} zoomed={hand.zoomed} mapRef={mapRef} />
         <MusicToggle seed={game.seed} season={season} />
       </div>
 

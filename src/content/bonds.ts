@@ -77,7 +77,6 @@ export function bondWord(level: BondLevel): BondWord {
  */
 export const CHOICE_BOND_OTHERS: Record<string, Record<string, number>> = {
   'v3_millwright:marta_keeps': { marta: 1 },
-  'v3_millwright:share_the_stream': { marta: 1 },
   'v3_millwright:plot_to_the_mill': { marta: -1 },
   'v3_millwright:a_year_first': { marta: 1 },
   'v7_beeches:the_strip_owns': { marta: 1 },

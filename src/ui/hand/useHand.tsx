@@ -11,7 +11,6 @@ import { makeGesture } from './gestures';
 import type { Gesture, GestureCtx } from './gestures';
 import { DEFS, SCENES } from './scenes';
 import type { ActHooks, Scene } from './scenes';
-import { play } from '../audio/sound';
 
 /**
  * The step between the word and the ruling.
@@ -133,6 +132,11 @@ function hintOf(act: ActDef, sc: Scene | undefined, step: number): Hint | null {
     if (!s) return null;
     return { from: at(s.item), to: at(s.to) };
   }
+  /* A ring in this game means the hand goes here. Turning away is the one
+     act where it does not go anywhere at all, and a ring round the man you
+     are being asked to leave alone reads as an instruction to take hold of
+     him. The strip says what to do instead. */
+  if (act.kind === 'turn_away') return null;
   return { from: at(act.target), to: null };
 }
 
@@ -344,7 +348,6 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
   };
 
   function finishAct(a: Acting) {
-    play('rustle');
     gesture.current = null;
     setTool(null);
     setHint(null);
@@ -365,10 +368,11 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
     /* the first step of this act, pointed at before a finger has moved */
     let at = 0;
     setHint(hintOf(act, sc, 0));
-    const contact = () => play(act.tool === 'bucket' ? 'water'
-      : act.tool === 'torch' ? 'fire'
-      : act.kind === 'taps' ? 'wood'
-      : act.kind === 'shake' ? 'stone' : 'rustle', .14);
+    /* There used to be a sound here, one per tool, and another on every step
+       of the act. The whole effects layer is gone (see `music.ts`): what the
+       game makes now is music or nothing. The hook stays because the acts
+       hang their own work off it. */
+    const contact = () => {};
     let heat = 0;
     const hooks: ActHooks = {
       ...a.hooks,
@@ -385,9 +389,9 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
         setHint(hintOf(act, sc, at));
         a.hooks.step?.(i, kind);
       },
-      pull: (n) => { play('strain', .18); a.hooks.pull?.(n); },
-      freed: (i) => { play('rustle'); a.hooks.freed?.(i); },
-      slip: (x, y) => { play('wood'); a.hooks.slip?.(x, y); },
+      pull: (n) => a.hooks.pull?.(n),
+      freed: (i) => a.hooks.freed?.(i),
+      slip: (x, y) => a.hooks.slip?.(x, y),
       progress: (p) => {
         if (p > heat + .1) { contact(); heat = p; }
         if (p < heat) heat = p;
@@ -541,7 +545,10 @@ export function useHand({ mapRef, fit, caseId, spot, ready, anchor, tone, onAnsw
       className="absolute inset-0 h-full w-full"
       style={{
         pointerEvents: stage === 'act' ? 'auto' : 'none',
-        cursor: stage === 'act' && tool ? 'none' : 'default',
+        /* No tool in the hand and an act to do means the act is the picture
+           itself: the pointer says so rather than leaving a scene that looks
+           like it is waiting for something else. */
+        cursor: stage === 'act' ? (tool ? 'none' : 'grab') : 'default',
         touchAction: 'none',
       }}
       onPointerDown={onPointerDown}

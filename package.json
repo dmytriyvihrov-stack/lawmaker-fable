@@ -12,7 +12,8 @@
     "test": "vitest run --passWithNoTests",
     "validate": "vitest run tests/content.test.ts --passWithNoTests",
     "bundle:minigames": "vite build --config vite.minigames.config.ts && node bundle-minigames.mjs",
-    "reign": "vite-node tools/reign.ts"
+    "reign": "vite-node tools/reign.ts",
+    "bundle:itch": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/build-itch.ps1"
   },
   "dependencies": {
     "react": "^18.3.1",

@@ -13,12 +13,35 @@ function opened(): GameState {
 }
 
 describe('the first year', () => {
-  it('has no law in it at all', () => {
+  it('has no law in it, and one person at the door', () => {
     const s = opened();
     expect(s.turn).toBe(1);
     expect(openProposals(s), 'the seal comes out in the first spring').toEqual([]);
-    // and nothing knocks either: every dilemma waits on a law of its chain
-    expect(pickEvent(s, { lawAllowed: true }), 'somebody is at the door in year one').toBeNull();
+    /* Every dilemma with a law behind it waits on that law, so the only
+       thing that can knock in the first spring is the one scene written to
+       arrive before everything: a glade nobody owns and more of it than
+       five people can eat. The year still ends at the shelf. */
+    expect(pickEvent(s, { lawAllowed: true })).toEqual({ kind: 'case', id: 'w_ring' });
+  });
+
+  /**
+   * And the first spring still ends at the shelf.
+   *
+   * A year with somebody in it runs straight on to the next one, which is
+   * right for every year but this one: the first year of work is the only
+   * one a player has never seen the shelf before, and a reign that turned
+   * past it would have spent that year on nothing without being asked.
+   */
+  it('hears the glade and then stops on the shelf, in the same year', () => {
+    let s = chooseCase(opened(), 'w_ring', 'share_alike');
+    expect(s.phase, 'the aftermath of the only scene in the year').toBe('aftermath');
+    s = continueYear(s);
+    expect(s.turn, 'the first spring has not turned').toBe(1);
+    expect(s.phase, 'and it ends where the year is spent').toBe('works');
+
+    // and spending it is what turns the year, exactly as it always was
+    s = chooseWork(s, 'house');
+    expect(s.turn).toBe(2);
   });
 
   it('and the seal comes out in the second', () => {
@@ -73,10 +96,18 @@ describe('the first year', () => {
       id: 'v1_idle_hand',
     });
 
-    // and that is the year full: two things, and the rest belongs to the place
+    /* And that is the year full: two things, and then the year turns.
+
+       It used to stop here on `phase: 'works'` and wait to be spent. The year
+       runs on past the shelf now unless there is nothing else in the year at
+       all, so the second spring ends in the third. */
     s = continueYear(chooseCase(s, 'v1_idle_hand', 'feed_him'));
-    expect(s.phase).toBe('works');
-    expect(s.turn).toBe(2);
+    expect(s.turn, 'the year did not wait to be spent').toBe(3);
+    /* And the third year has no law due and one person in it: the leg,
+       which waits on nothing but the year and is the second of the two
+       scenes a reign meets before it has written anything down. */
+    expect(s.phase).toBe('case');
+    expect(s.current).toEqual({ kind: 'case', id: 'w_hurt' });
   });
 
   it('offers a roof or somewhere to work, and only those two to start with', () => {
@@ -86,8 +117,8 @@ describe('the first year', () => {
     expect(open, 'no cabin on offer').toContain('woodcutter');
     // and nothing else: a granary is not a thing five people decide about in
     // the first spring, and neither is going back to bed. The first year is
-    // the one with no law and no caller in it, so the shelf is the whole of
-    // the decision and resting would empty the screen.
+    // the one with no law in it, so the shelf is the whole of what the year
+    // is spent on and resting would empty the screen.
     expect(open.sort()).toEqual(['house', 'woodcutter']);
     expect(open, 'the first year can be slept through').not.toContain('rest');
     // the store holds one building and not two, so the first year is a choice

@@ -18,8 +18,8 @@ export const CASES: CaseEvent[] = [
     title: 'The Idle Hand',
     question: 'One pair of hands has stopped working. Every other pair is looking at you.',
     scene: [
-      'Tam says his back. Tam said his back last spring too, and dug anyway, so nobody knows which back this is.',
-      'One field, one store, and a winter that does not count hands.',
+      'Tam says his back hurts and he cannot work. But he wants to eat.',
+      'You know that in a village this small, every mouth that is not working is a burden.',
     ],
     choices: [
       {
@@ -174,7 +174,7 @@ export const CASES: CaseEvent[] = [
   // ================================================================= village: strangers
   {
     id: 'v3_millwright',
-    /* A mill wants a plot, and a plot wants ground somebody has broken.
+    /* A mill wants a field, and a field wants ground somebody has broken.
        This walked in on a bare valley in the second spring, where the best
        land on the stream had been farmed for eleven years by a woman standing
        in grass nobody had ever ploughed, and a stranger offered to put a wheel
@@ -199,47 +199,36 @@ export const CASES: CaseEvent[] = [
     priority: 1,
     character: 'millwright',
     title: 'The Mill-Wright',
-    question: 'The best plot on the stream is farmed by Marta. A stranger could put a mill on it.',
+    question: 'The best field on the stream is farmed by Marta. A stranger could put a mill on it.',
     scene: [
-      'He has built two mills before and shows his hands to prove it. Marta has farmed that plot longer than anybody here has farmed anything, and shows nothing.',
+      'He has built two mills before and shows his hands to prove it. Marta has farmed that field longer than anybody here has farmed anything, and shows nothing.',
       'A mill would feed twice the hamlet. Marta feeds Marta.',
     ],
     choices: [
       {
         id: 'marta_keeps',
-        text: 'Marta keeps her plot. He builds downstream, or nowhere.',
+        text: 'Marta keeps her field. He builds downstream, or nowhere.',
         result:
           'Marta keeps the field, and what he does about it is his own business. There is slow water downstream and there is the road, and the fence between the two is whatever this place has already decided a fence is for.',
         tags: ['kantian'],
         effects: { crownSanity: 4, economy: 2 },
         setFlags: ['marta_kept'],
       },
-      {
-        /* The compromise, and what it costs. It used to be the easy way out
-           of the whole dilemma: the store went up, nobody lost a field, and
-           the only downside was an argument about noise. A split still keeps
-           Marta on her ground and gets the hamlet a mill, and now the store
-           pays for the half of the wheel that stands on nobody's ground, and
-           the mill is a slow one for a year. Every door here gives something
-           up; this one gives up coin and time rather than a person. */
-        id: 'share_the_stream',
-        text: 'Split it: the mill on the bank, Marta on the field. The place pays for the wheel.',
-        result:
-          "The wheel goes in at the bank and Marta keeps the field behind it, and the store pays for the half of the wheel that stands on nobody's ground. It turns by the second autumn, slowly. They argue about the noise for eleven years.",
-        tags: ['communitarian'],
-        effects: { economy: -6, health: 2, mood: 4 },
-        setFlags: ['marta_kept'],
-        cityFlagsOn: ['mill_on_the_water'],
-      },
+      /* There was a fourth door here and it was the way out of the dilemma:
+         split it, mill on the bank and Marta on the field, and the only thing
+         anybody gave up was coin. A question with a door in it that costs
+         nobody anything is a question nobody has to answer, and the user asked
+         for it to go. What is left is her ground or the mill, and the two the
+         laws grant. */
       {
         id: 'plot_to_the_mill',
-        text: 'The plot goes to the mill. Marta gets a share of the flour.',
+        text: 'The field goes to the mill. Marta gets a share of the flour.',
         result: 'The mill feeds the hamlet by autumn. Marta eats the flour and does not plant again.',
         tags: ['utilitarian'],
         // done in the open, under the law, and it still takes a field off a woman
         effects: { economy: 14, crownSanity: -4, health: 2 },
         setFlags: ['marta_moved'],
-        /* Her plot was the best ground on the stream, so the wheel goes exactly
+        /* Her field was the best ground on the stream, so the wheel goes exactly
            where she was standing, and it is the biggest thing in the valley. */
         cityFlagsOn: ['mill_on_the_water'],
       },
@@ -250,6 +239,23 @@ export const CASES: CaseEvent[] = [
           'He digs for Marta for a year and the store feeds him for it, and on the second year he builds her a mill out of gratitude and spite in equal parts. It stands on her ground, and it is hers, and everybody watched a stranger keep your law to the letter before he got anything at all.',
         tags: ['meritocratic'],
         effects: { economy: -4, mood: 8, crownSanity: 8 },
+        setFlags: ['marta_kept'],
+        cityFlagsOn: ['mill_on_the_water'],
+      },
+      {
+        /* And the answer the open door writes for you.
+
+           With the split gone this bench has two plain words on it, and a
+           chain case needs three answers under every law of its chain. Under a
+           law that gives a stranger a roof and a share, the share is the
+           argument: he is owed one like anybody, and what the place can do
+           about a wheel it is paying for is own it. */
+        id: 'the_mill_is_ours',
+        text: "He came in on a roof and a share. The wheel is the place's, and so is the flour.",
+        result:
+          "He builds it on the bank and it is not his, and Marta keeps the field behind it. He grinds for a share like everybody with a share, and says the word share more often that first winter than anybody here has said it in their life.",
+        tags: ['egalitarian'],
+        effects: { economy: 6, crownSanity: -2, mood: 2 },
         setFlags: ['marta_kept'],
         cityFlagsOn: ['mill_on_the_water'],
       },
@@ -277,49 +283,59 @@ export const CASES: CaseEvent[] = [
     id: 'v4_hay',
     trigger: { kind: 'lawActive', subject: 'strangers' },
     priority: 2,
-    character: 'riders',
+    /* The man, and not the two on horses.
+
+       It was filed under `riders`, so the face at the door was a stranger in
+       a good coat who leaves at dusk either way, and the one person the
+       ruling actually lands on had no name, no face and no line in the
+       register. He is the question. Asked for by the user. */
+    character: 'fugitive',
     title: 'The Man in the Hay',
-    question: 'The riders want a man who has been digging beside you since April.',
+    question: 'Two riders have a paper with Fen’s name on it. He has dug beside you since April.',
     scene: [
-      'Two riders, one paper, one name. The name is his. He has dug every day since April and never said why he left.',
-      'The riders will be back at dusk. The hay is behind the house.',
+      'Fen came up the road in April, asked for work, and has done it every day since. He has never said what he did before, and nobody has asked him.',
+      'The riders will be back at dusk. He is in the hay behind the house, and everybody in the place knows it.',
     ],
     choices: [
       {
         id: 'hide_him',
-        text: 'He is one of us now. The hay says nothing.',
+        /* Hiding him is not free and used to pay: the store went up four,
+           because a pair of hands stays. What it costs is the afternoon spent
+           keeping two men with a paper looking somewhere else, and what they
+           are given so that they do. Asked for by the user. */
+        text: 'Say he is not here. Keep the riders looking somewhere else.',
         result:
-          'The riders leave at dark with a paper and no man. He digs the next morning as if nothing happened, and so do you.',
+          'They are fed, watered, walked round the wrong field and sent off at dark with the paper and no man. Fen digs the next morning as if nothing happened, and so do you.',
         tags: ['communitarian'],
-        effects: { crownSanity: -12, economy: 4 },
+        effects: { crownSanity: -12, economy: -4 },
         setFlags: ['fugitive_hidden'],
       },
       {
         id: 'let_him_choose',
-        text: 'Tell him the riders are coming. What he does is his.',
+        text: 'Tell Fen they are coming. What he does about it is his.',
         result: 'He is gone before the riders are back, over the north field, with a loaf. Nobody counted the loaf.',
         tags: ['libertarian'],
         effects: { mood: 4, crownSanity: -4, economy: -2 },
-        souls: -10,
+        soulsExact: -1,
       },
       {
         id: 'hand_him_over',
-        text: 'Hand him over. The paper is the paper.',
+        text: 'Give Fen up. The paper is the paper.',
         result:
-          'The riders take him at dusk. The hamlet is one pair of hands short, and very quiet at supper for a month.',
+          'The riders take him at dusk. The place is one pair of hands short, and very quiet at supper for a month.',
         tags: ['kantian'],
         effects: { crownSanity: 10, economy: -6 },
-        souls: -10,
+        soulsExact: -1,
         setFlags: ['fugitive_given'],
       },
       {
         id: 'his_year_is_owed',
-        text: 'He owes a year. The riders can have him in April.',
+        text: 'He owes this place a year first. The riders can have him in April.',
         result:
-          'The riders come back in April, on the day. He has been gone since March. The law was kept to the letter by everyone.',
+          'The riders come back in April, on the day. Fen has been gone since March. The law was kept to the letter by everyone.',
         tags: ['meritocratic'],
         effects: { crownSanity: -4, economy: 6 },
-        souls: -10,
+        soulsExact: -1,
       },
     ],
   },
@@ -900,17 +916,23 @@ export const CASES: CaseEvent[] = [
     priority: 3,
     season: 'winter',
     character: 'digger',
-    title: 'The Winter Ground',
+    /* The title used to be "The Winter Ground", which is a phrase and not a
+       question: a player read it and did not know what was being asked. What
+       is being asked is where three dead people go when the ground will not
+       open. Asked for by the user, along with the four answers, which used to
+       be written as things done to the ground rather than things done with
+       the three of them. */
+    title: 'Three Dead, and the Ground Frozen',
     question:
-      'The ground is frozen two feet down and there are three of them waiting in the long house.',
+      'Three people died this week. The ground is frozen too hard to dig, so they are lying in the long house.',
     scene: [
-      'It took four men a morning to get a foot into it and the fourth foot is where the digging stops. The frost has another six weeks in it and everybody has done that arithmetic.',
-      'The long house is where the sick are. It is also, this week, where the three of them are, behind a curtain, and nobody has said out loud what a room can hold.',
+      'Four men spent a morning getting one foot down. A grave wants four feet, and the frost has six weeks left in it. Everybody has done that arithmetic.',
+      'The long house is the only warm room in the place, which is why the sick are in it, and why the three of them are behind a curtain at the end of it. Nobody has said out loud what one room can hold.',
     ],
     choices: [
       {
         id: 'burn_the_wood',
-        text: 'Burn what we have on the ground until it gives. All week if it takes it.',
+        text: 'Burn the woodpile on the ground until it thaws, and dig. All week if it takes all week.',
         result:
           'Fires on the strip for five nights and a hole by the sixth, and the woodpile is a third of what it was going into February.',
         tags: ['communitarian'],
@@ -920,7 +942,7 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'the_barn',
-        text: 'They wait in the barn, not the long house, until the thaw.',
+        text: 'Move them to the barn, out of the long house, and wait for the thaw.',
         result:
           'The barn is cold enough and far enough and everybody knows exactly what is in it until April, which is not the same as it being all right.',
         tags: ['utilitarian'],
@@ -931,7 +953,7 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'the_stones',
-        text: 'Under stones, at the edge, above the frost. It is what the ground allows.',
+        text: 'No hole. Stones over them at the edge, above the frost, today.',
         result:
           'A long low pile of stones goes up at the edge in one afternoon and stays there, and in the spring nobody moves it, and it is still there.',
         tags: ['kantian'],
@@ -941,7 +963,7 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'all_of_us_dig',
-        text: 'Everyone digs. The law says the work stops, so the work stops for this.',
+        text: 'Every pair of hands on one hole. The law says the work stops for a death, so it stops.',
         result:
           'Everybody on one hole for two days in the cold, and it is done, and four of them cough for a month afterwards.',
         tags: ['communitarian'],
@@ -951,7 +973,7 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'their_own_houses',
-        text: 'Three houses, three holes, three problems. The law is clear whose they are.',
+        text: 'Three houses, three holes. The law says a house carries its own, and these are theirs.',
         result:
           'Two of the houses manage it. The third is one woman of sixty with a pick, and the place watches her at it for a day and a half before somebody breaks and helps.',
         tags: ['libertarian'],
@@ -1006,13 +1028,16 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'edge_same_day',
-        text: 'The edge, the same day. The law does not ask where anybody was born.',
+        text: 'The river, the same day. The law does not ask where anybody was born.',
         result:
           'It is done before the middle of the morning and the field is worked in the afternoon, and the coat with the name in it goes on the pile with the rest.',
         tags: ['utilitarian'],
-        effects: { economy: 8, mood: -8, health: 4 },
+        /* No ground kept and no morning lost, and the same water as the law
+           it is granted by. Health is where the two answers stop being the
+           same answer: over the boundary he is the next parish's problem, and
+           in the river he is yours, downstream, all summer. */
+        effects: { economy: 8, mood: -8, health: -8 },
         setFlags: ['road_refused'],
-        cityFlagsOn: ['graves_at_the_edge'],
       },
     ],
   },
@@ -2110,6 +2135,121 @@ export const CASES: CaseEvent[] = [
     ],
   },
 
+  // ================================================================ the glade
+  /**
+   * The first person who ever knocks, and the only one in the game who
+   * knocks about good news.
+   *
+   * A reign opened on the shelf: a list of buildings, in an empty valley,
+   * before anybody had said a word to anybody. The first spring has somebody
+   * in it now, and it is deliberate that nothing is wrong and nobody is at
+   * fault. There is no law yet, so there is nothing here to be right about
+   * either: the three answers are three ideas about what a place does with
+   * more than it needs, and the place is five people in a valley they walked
+   * into last year. Whatever is said here is the argument the law about the
+   * wood gets written out of, years later, by people who were standing in
+   * this doorway. Asked for by the user.
+   */
+  {
+    id: 'w_ring',
+    /* The first spring, and the second if a reign somehow gets past it. It
+       is not a scene that waits for anything, because the whole point of it
+       is that it arrives before everything. */
+    trigger: { kind: 'turn', op: 'lte', value: 2 },
+    priority: 12,
+    character: 'marta',
+    title: 'More Than the Place Can Eat',
+    question:
+      'Marta is at the door with a sack of mushrooms and no idea at all what is supposed to happen next.',
+    scene: [
+      'She went up for firewood and came down with a glade. Two hours of picking, a sack she cannot carry upright, and the good kind, which nobody here has tasted since the old place. There are not many of you, and there is a good deal more in that sack than the lot of you can eat before it turns.',
+      'Nothing is written down yet. Nobody has been wronged and nobody is owed, which is exactly why the other three are standing in the doorway behind her, not helping, waiting to hear what sort of place this is going to be.',
+    ],
+    choices: [
+      {
+        id: 'share_alike',
+        text: 'The same to every one of us, and nothing said about who walked.',
+        result:
+          'A pile each, on a board, counted twice because one of them looked smaller. They eat the way people eat who have not eaten like that in a year, and talk about it until the frost, and not one of them mentions the walking.',
+        tags: ['egalitarian'],
+        effects: { mood: 6, health: 2 },
+      },
+      {
+        id: 'finder_first',
+        text: 'She picked them. She takes the best of it, and the rest goes round.',
+        result:
+          'She takes a third and hands the sack over herself, which nobody asked her to do. She is up there again on Thursday, and every Thursday after that, and she knows precisely who said she could be.',
+        tags: ['meritocratic'],
+        effects: { mood: 3, economy: 2 },
+        /* The one thing this answer has that the other two have not: a
+           person who is on your side about it, for years, and goes on being
+           on your side when a child is standing on her strip with a basket. */
+        bond: 2,
+      },
+      {
+        id: 'the_house_takes',
+        text: 'The most of it comes to the house. What is left goes round.',
+        result:
+          'The best of them dry on a string over your own fire all autumn, which is warm, and quiet, and a great deal less pleasant than it sounded in the doorway. The other four eat the small ones and say nothing whatever about it, which is its own kind of speech.',
+        tags: ['libertarian'],
+        effects: { crownSanity: 3, economy: 4, mood: -5 },
+      },
+    ],
+  },
+
+  // ================================================================= the leg
+  /**
+   * The other early one, and the one with nothing to hide behind.
+   *
+   * Tam's back is a claim: he says he cannot dig, and a reign can privately
+   * decide he is lying and rule on that. This is the same argument with the
+   * doubt taken out. Four people watched the timber come down and everybody
+   * agrees about every fact there is, so the only thing left to decide is
+   * what a place owes somebody it broke getting its own work done. No law
+   * touches it and none ever will, which is the point of having it: the
+   * seal is not the only place a reign says what it is. Asked for by the
+   * user.
+   */
+  {
+    id: 'w_hurt',
+    trigger: { kind: 'turn', op: 'gte', value: 3 },
+    priority: 9,
+    character: 'digger',
+    title: 'The Leg Under the Timber',
+    question:
+      'A beam came down on Garry getting the year of work done, and the leg is not going to be what it was.',
+    scene: [
+      'It was nobody\u2019s fault and four people saw all of it. The leg is strapped between two staves, he is grey, and he walked in here on the other one because he would not be carried, which everybody present thinks is the stupidest thing they have seen this year.',
+      'He will mend, slowly, and not straight. Nothing in this valley is written down about what happens to a man in that position, and he knows it, and so does everybody standing behind him.',
+    ],
+    choices: [
+      {
+        id: 'the_place_carries',
+        text: 'He is fed and kept until he walks, and the rest of us do his share.',
+        result:
+          'He is in the dry with his leg up until the thaw, eating what four people put aside for him, and by March he is so grimly bored that he mends every handle in the valley from a chair. The store is thinner than it would have been and nobody here has to wonder what would happen to them.',
+        tags: ['communitarian'],
+        effects: { economy: -4, mood: 6, health: 2 },
+      },
+      {
+        id: 'set_it_and_on',
+        text: 'Set it, and he is back on the ground inside the week. The ground will not wait.',
+        result:
+          'He is out there on the Monday, on one leg and a stave, doing about a third of what he did and saying nothing about it. The year comes in. The leg sets the way a leg sets when it is stood on, and every person who watched him go out remembers the morning it was decided.',
+        tags: ['utilitarian'],
+        effects: { economy: 4, health: -3, mood: -2 },
+      },
+      {
+        id: 'what_he_can_still_do',
+        text: 'Find out what a man on one leg is good for, and pay him for that.',
+        result:
+          'It takes a fortnight of arguing to work out that he can count, and watch, and keep a tally nobody else has the patience for, and he is better at all three than the person who had been doing them. He is paid like a man doing a job, because that is what it is.',
+        tags: ['meritocratic'],
+        effects: { economy: 1, mood: 2, crownSanity: 3 },
+      },
+    ],
+  },
+
   // =============================================================== the herd
   /**
    * The one warm argument in the game.
@@ -2404,7 +2544,7 @@ export const CASES: CaseEvent[] = [
   /**
    * Nobody in this place is a scene. Tam said his back in the first spring,
    * and what you said to him then is the fence this valley has years later;
-   * Marta was on the plot by the stream when the mill-wright came, and whether
+   * Marta was on the field by the stream when the mill-wright came, and whether
    * she still is decides how she answers the day the place wants ground again.
    *
    * Two people, two pairs. Each pair is gated on the flag its first scene left,
@@ -2576,9 +2716,9 @@ export const CASES: CaseEvent[] = [
     priority: 6,
     character: 'marta',
     title: 'Marta, and the Ground You Need',
-    question: 'You gave her plot to the mill. Now the place needs her last strip, and she knows it.',
+    question: 'You gave her field to the mill. Now the place needs her last strip, and she knows it.',
     scene: [
-      'There are more roofs than there were and the next one wants flat ground, and the only flat ground left is the strip Marta kept when you gave her plot to the mill {{ago:v3_millwright}}. She has not planted it. She has not planted anything since.',
+      'There are more roofs than there were and the next one wants flat ground, and the only flat ground left is the strip Marta kept when you gave her field to the mill {{ago:v3_millwright}}. She has not planted it. She has not planted anything since.',
       'She is at your door before anybody has said the word ground, and she is not angry, which is worse. She has been waiting for this exact morning for a long time, and she has a number ready.',
     ],
     choices: [
@@ -2601,9 +2741,9 @@ export const CASES: CaseEvent[] = [
       },
       {
         id: 'the_mill_pays',
-        text: 'The mill took her plot. The mill pays her for this one.',
+        text: 'The mill took her field. The mill pays her for this one.',
         result:
-          'The mill-wright pays, and is not pleased about it, out of a year of the flour her old plot has ground since, which is a year of flour the store never sees. Marta buys a cow with it and names the cow after nobody in particular, loudly, in the lane.',
+          'The mill-wright pays, and is not pleased about it, out of a year of the flour her old field has ground since, which is a year of flour the store never sees. Marta buys a cow with it and names the cow after nobody in particular, loudly, in the lane.',
         tags: ['communitarian'],
         effects: { economy: -4, mood: 8, crownSanity: 2 },
       },

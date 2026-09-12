@@ -7,7 +7,14 @@ import { UI } from '../../content/ui-strings';
 import { getProposal } from '../../engine/registry';
 import { openProposals } from '../../engine/reducer';
 import { CONFIG } from '../../engine/config';
-import { growthPercentOf, lawTrend, scaleEffects } from '../../engine/simulation';
+import {
+  growthPercentOf,
+  keepsWatch,
+  lawTrend,
+  lawWeight,
+  scaleEffects,
+  stageRule,
+} from '../../engine/simulation';
 import { renderTemplate } from '../../engine/format';
 import { MovedBoards } from '../components/MovedBoards';
 import { DevEffects } from '../components/DevCorner';
@@ -212,11 +219,33 @@ export function Composer({ state, dev = false, season, onSeal }: Props) {
             </p>
           )}
           {dev && picked && (
-            <DevEffects
-              raw={picked.o.effects}
-              felt={scaleEffects(picked.o.effects, CONFIG.law.sealScale)}
-              extra={[['perTurn', JSON.stringify(picked.o.perTurn ?? {})]]}
-            />
+            <>
+              <DevEffects
+                title={UI.dev.onTheDay}
+                raw={picked.o.effects}
+                felt={scaleEffects(picked.o.effects, CONFIG.law.sealScale)}
+              />
+              {/* And the yearly one in the same two columns.
+
+                  It used to be one line of raw JSON, which is the figure the
+                  content file holds and not the figure the tile above prints:
+                  a trend written as two is felt as three, the tile said three,
+                  the block said two, and the two numbers were read as a bug.
+                  Same table, same scaling, so the felt column and the row of
+                  boards on the card are the same number. */}
+              <DevEffects
+                title={UI.dev.everyYear}
+                raw={
+                  (picked.o.perTurnWatch && keepsWatch(state)
+                    ? picked.o.perTurnWatch
+                    : stageRule(state) === 'town' && picked.o.perTurnTown
+                      ? picked.o.perTurnTown
+                      : picked.o.perTurn) ?? {}
+                }
+                felt={everyRaw}
+                extra={[[UI.dev.weight, `x${lawWeight(state)} · x${CONFIG.law.trendScale}`]]}
+              />
+            </>
           )}
 
         </section>

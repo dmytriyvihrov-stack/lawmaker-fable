@@ -45,6 +45,7 @@ import {
   advance,
   chooseCase,
   chooseLaw,
+  buildEarly,
   chooseWork,
   continueYear,
   newGame,
@@ -52,7 +53,7 @@ import {
 } from '../src/engine/reducer';
 import { allCases, getCase, getProposal } from '../src/engine/registry';
 import { activeStats, canBuild, seasonOf, trendsOf, worksFor } from '../src/engine/simulation';
-import type { CaseChoice, GameState, StatId } from '../src/engine/types';
+import type { CaseChoice, GameState, StatId, WorkId } from '../src/engine/types';
 import { availableRulings } from '../src/engine/verdict';
 
 /* ------------------------------------------------------------------ args */
@@ -368,46 +369,79 @@ export function play(seed: number, player: Player, moments: Moments, args: Args)
     seconds += ((steps - 1) * CONFIG.idle.seasonMs + CONFIG.idle.holdMs) / 1000 / args.speed;
   };
 
+  /* The year of work, wherever in the year it is taken.
+
+     The year used to stop on the shelf and wait, so this ran at `phase ===
+     'works'` and that was the whole of it. It stops there now only when the
+     year has nothing else in it AND the store can pay for something: the shelf
+     is open in every season and a player who wants a building opens it during
+     the year and takes one. So this runs at the first aftermath of a year as
+     well, through `buildEarly`, which is the same spend without the turning of
+     the year. A year already spent does nothing here, which is what "one thing
+     in a year" means.
+
+     And a year the store cannot pay for anything in is spent on nothing. There
+     used to be a year of rest on the shelf, free and always takeable, so no
+     driver ever met that year; it is gone (`content/works.ts`). */
+  const spendTheYear = (): void => {
+    if (s.lastWorkTurn === s.turn) return;
+    const row = rowFor(s.turn);
+    // autumn: the small things on the map, if this player stops for them
+    if (moments !== 'none') {
+      for (const m of momentsNow(s, seasonOf('works', s.turn))) {
+        if (moments === 'half' && rnd() < 0.5) continue;
+        const before = { ...s.stats };
+        s = takeMoment(s, m.id);
+        const gained = (Object.keys(s.stats) as StatId[]).reduce(
+          (sum, k) => sum + (s.stats[k] - before[k]), 0,
+        );
+        momentsTaken += 1;
+        momentPoints += gained;
+        row.moments.push(m.id);
+        seconds += READ.moment * args.read;
+      }
+    }
+    const open = worksFor(s).filter((w) => canBuild(s, w.id));
+    if (open.length === 0) return;
+    /* Ranked a year ahead and taken today. `chooseWork` is the spend plus the
+       turning of the year, and a building is worth what its trend pays, so a
+       lookahead that stopped at the spend priced every work at its own cost
+       and nothing else. The score reads the year; the state takes the spend
+       alone when the year is still running. */
+    const shelf = s.phase === 'works';
+    const at = pickIndex(
+      open, player, rnd, (i) => stateScore(chooseWork(s, open[i].id)), args.mistake,
+    );
+    const work = open[at];
+    row.work = work.id;
+    row.stats = { ...s.stats };
+    row.boards = activeStats(s);
+    row.population = s.population;
+    seconds += READ.works * args.read;
+    s = shelf ? chooseWork(s, work.id) : buildEarly(s, work.id);
+    watchLowest();
+  };
+
   for (let guard = 0; guard < 1000 && s.phase !== 'portrait'; guard++) {
     if (s.phase === 'intro') {
       s = advance(s);
       continue;
     }
 
+    /* The one stop the shelf has left: a year with nobody at the door, and the
+       first spring, and only where something on it can be paid for. The break
+       below can no longer fire for that reason and is left as a guard: a shelf
+       stop with nothing takeable on it would be a reign with no way forward,
+       which is what the user reported as the game freezing. */
     if (s.phase === 'works') {
-      const row = rowFor(s.turn);
-      // autumn: the small things on the map, if this player stops for them
-      if (moments !== 'none') {
-        for (const m of momentsNow(s, seasonOf('works', s.turn))) {
-          if (moments === 'half' && rnd() < 0.5) continue;
-          const before = { ...s.stats };
-          s = takeMoment(s, m.id);
-          const gained = (Object.keys(s.stats) as StatId[]).reduce(
-            (sum, k) => sum + (s.stats[k] - before[k]), 0,
-          );
-          momentsTaken += 1;
-          momentPoints += gained;
-          row.moments.push(m.id);
-          seconds += READ.moment * args.read;
-        }
-      }
-      const open = worksFor(s).filter((w) => canBuild(s, w.id));
-      const at = pickIndex(
-        open, player, rnd, (i) => stateScore(chooseWork(s, open[i].id)), args.mistake,
-      );
-      const work = open[at];
-      row.work = work.id;
-      row.stats = { ...s.stats };
-      row.boards = activeStats(s);
-      row.population = s.population;
-      seconds += READ.works * args.read;
-      s = chooseWork(s, work.id);
-      watchLowest();
+      spendTheYear();
+      if (s.phase === 'works') break;
       continue;
     }
 
     if (s.phase === 'aftermath') {
       seconds += READ.aftermath * args.read;
+      spendTheYear();
       s = continueYear(s);
       continue;
     }

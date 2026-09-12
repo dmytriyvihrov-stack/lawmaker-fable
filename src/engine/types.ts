@@ -336,6 +336,16 @@ export interface CaseChoice {
   effects: Effects;
   /** One time change to the count of souls, in percent of the current count. */
   souls?: number;
+  /**
+   * And the same thing in whole people, for the scenes that are about one.
+   *
+   * A percentage is right for a scene that empties a quarter of the place
+   * and wrong for one man walking up the road: `souls: -10` on the three
+   * answers that lose Fen took a tenth of a hamlet, which is nobody at eight
+   * souls and four people at forty. Added, optional, so every older save
+   * still loads. Both may be set; the percentage is taken first.
+   */
+  soulsExact?: number;
   /** Marks an exception to your own law. The engine ADDS a cost on top. */
   exceptionToLaw?: LawId;
   beneficiary?: string;          // required together with exceptionToLaw

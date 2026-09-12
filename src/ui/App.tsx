@@ -43,7 +43,7 @@ import { DEFAULT_MONARCH_ID, MONARCHS } from '../content/monarchs';
 import { CASE_SPOTS, LAW_SPOT, STATS, WORKS_SPOT } from '../content/meta';
 import { HUSHED_CASES } from '../content/sound';
 import { TECHS } from '../content/techs';
-import { isWinter, seasonOf, techOpening, yearsToWinter } from '../engine/simulation';
+import { buildableNow, isWinter, seasonOf, techOpening, workSpent, yearsToWinter } from '../engine/simulation';
 import { getCase } from '../engine/registry';
 import { townFolk } from '../engine/folk';
 import { CONFIG } from '../engine/config';
@@ -65,13 +65,12 @@ import { Popup } from './components/Popup';
 import { Primer } from './components/Primer';
 import { DoorNote } from './components/DoorNote';
 import { SmallThingNote } from './components/SmallThingNote';
-import { StandingLaws } from './components/StandingLaws';
 import { TopBar } from './components/TopBar';
 import { SealMoment } from './components/SealMoment';
 import { TechMoment } from './components/TechMoment';
 import { TechOpened } from './components/TechOpened';
 import { MusicToggle } from './components/MusicToggle';
-import { Soundscape } from './components/Soundscape';
+import { wantMusic } from './music';
 import { WinterWarning } from './components/WinterWarning';
 import { TownNaming } from './components/TownNaming';
 import { BoardChoice } from './components/BoardChoice';
@@ -201,12 +200,25 @@ function freshSeed(): number {
  * once, on mount, and it never fires over a save that is being continued.
  */
 function chapterInUrl(): { chapter: Stage; seed: number } | null {
+  if (PLAYER_BUILD) return null;
   const params = new URLSearchParams(window.location.search);
   const asked = params.get('chapter');
   if (asked !== 'village' && asked !== 'town' && asked !== 'kingdom') return null;
   const wanted = Number(params.get('seed'));
   return { chapter: asked, seed: Number.isInteger(wanted) && wanted > 0 ? wanted : freshSeed() };
 }
+
+/**
+ * The build a stranger opens.
+ *
+ * `vite build --mode player` sets this, and `tools/build-itch.ps1` is the only
+ * thing that runs it. What it takes out is every door that is not the game: the
+ * switch in the bottom corner and the whole strip behind it, the chapter
+ * fixtures on the title screen, and `?chapter=` on the URL. Nothing else about
+ * the build changes, and `?see=end` stays, because the closing screen on a
+ * reign that never happened is a thing to show somebody rather than a tool.
+ */
+const PLAYER_BUILD = import.meta.env.MODE === 'player';
 
 const WHEEL: Season[] = ['spring', 'summer', 'autumn', 'winter'];
 
@@ -282,13 +294,15 @@ export function App() {
     setPlotHover(null);
     setWorksOpen(false);
   }, [turnNow]);
-  /* The year has come round to the shelf on its own: the card that comes up
-     then is the year's, with no way out but to spend it, so the one opened
-     from the corner is put away. */
+  /* `phase: works` is the shelf and nothing else on the screen. No year of a
+     played reign ends there any more; what still does is a dev fixture opened
+     at a chapter, and on that screen the shelf is what there is to look at. */
   const phaseNow = game?.phase ?? null;
   useEffect(() => {
-    if (phaseNow === 'works') setWorksOpen(false);
+    if (phaseNow === 'works') setWorksOpen(true);
   }, [phaseNow]);
+  /** The year the shelf last came up by itself, so it comes up once a year. */
+  const shelfShownOn = useRef(-99);
   /* The shelf has been read, whichever way it was opened, and what is on it
      is what the mark compares against from now on. Nothing changes when
      nothing new is on it, so this settles at once. */
@@ -682,6 +696,7 @@ export function App() {
     namedOn.current = -99;
     knownWinter.current = undefined;
     deferredYear.current = null;
+    shelfShownOn.current = -99;
     openOnly(null);
     setIdle(null);
     setWorked(null);
@@ -727,6 +742,51 @@ export function App() {
 
   const openTheDoor = useCallback(() => setIdle(game?.current?.kind === 'case' ? 'waiting' : null), [game?.current?.kind]);
 
+  /**
+   * The shelf, coming up on its own, once in every year it has something in
+   * it the store can pay for.
+   *
+   * It used to be the year that opened it: the year ran out of callers, the
+   * phase stopped on the shelf, and the screen held the valley with nothing on
+   * it at all until somebody went looking for the hammer. On a year whose only
+   * answer was to rest, that stop was a dead end and was reported as the game
+   * freezing. The year does not stop anywhere now, so the card comes to the
+   * player instead: once a year, in the quiet the seasons already drift
+   * through, and never over somebody at the door or over a sheet that has the
+   * window. It is put away with one click and the year carries on underneath
+   * it, spent or not. Asked for by the user.
+   */
+  const shelfHeldBack =
+    !game ||
+    primer ||
+    codexOpen ||
+    registerOpen ||
+    treeOpen ||
+    worldOpen ||
+    worked !== null ||
+    named !== null ||
+    treeOpened ||
+    winterAhead !== null ||
+    hand.busy ||
+    hand.zoomed ||
+    journey.snapshot.errands.length > 0 ||
+    openableBoard(game) !== null ||
+    (!game.townName && game.turn >= CONFIG.townName.fromYear) ||
+    /* the sealing sheet, which takes the window over the top of the card */
+    (game.phase === 'aftermath' && game.log[game.log.length - 1]?.kind === 'law');
+  useEffect(() => {
+    if (!game || shelfHeldBack || worksOpen) return;
+    if (shelfShownOn.current === game.turn) return;
+    /* Only where the year has no card of its own up: the drift between two
+       callers, and the knock at the end of it. A shelf over an open case is a
+       card standing on another card. */
+    if (idle === null) return;
+    if (game.phase !== 'case' && game.phase !== 'composer' && game.phase !== 'aftermath') return;
+    if (workSpent(game) || buildableNow(game).length === 0) return;
+    shelfShownOn.current = game.turn;
+    setWorksOpen(true);
+  }, [game, idle, shelfHeldBack, worksOpen]);
+
   // dev only: ?faces=1 lays out every monarch for a look, the way ?city=all does
   if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('faces')) {
     return (
@@ -771,12 +831,17 @@ export function App() {
             if (saved && !window.confirm(UI.title.confirmNew)) return;
             clearSave();
             setStaleSave(false);
+            /* A reign opens with the room full. Muting is an answer to one
+               evening and not a standing opinion, so it lasts as long as the
+               reign it was given in. Asked for by the user. */
+            wantMusic();
             dispatch({ type: 'new', seed: freshSeed() });
           }}
           onContinue={() => saved && dispatch({ type: 'continue', game: saved })}
-          dev={dev}
+          dev={dev && !PLAYER_BUILD}
           onBeginAt={(chapter) => {
             clearSave();
+            wantMusic();
             dispatch({ type: 'begin', chapter, seed: freshSeed() });
           }}
         />
@@ -793,7 +858,7 @@ export function App() {
           <MusicToggle seed={saved?.seed ?? 1} season="spring" />
         </div>
         <BuildBadge />
-        <DevToggle on={dev} onToggle={() => setDev((v) => !v)} />
+        {!PLAYER_BUILD && <DevToggle on={dev} onToggle={() => setDev((v) => !v)} />}
       </main>
     );
   }
@@ -808,6 +873,7 @@ export function App() {
             if (!window.confirm(UI.portrait.confirmAnew)) return;
             clearSave();
             setSaved(null);
+            wantMusic();
             dispatch({ type: 'reset' });
           }}
         />
@@ -1017,7 +1083,13 @@ export function App() {
               putAway();
               dispatch({ type: 'reopen', proposalId });
             }}
-            onClose={putAway}
+            /* Put away, and on the one screen that is the shelf and nothing
+               else (a dev fixture opened at a chapter) the year turns with
+               it, because there would be nothing behind it to go back to. */
+            onClose={() => {
+              putAway();
+              if (game.phase === 'works') dispatch({ type: 'advance' });
+            }}
           />
         </Popup>
       );
@@ -1211,8 +1283,21 @@ export function App() {
       /* The founding is a `fixed inset-0` sheet at z-40, so on that one screen
          the strip has to be lifted over it or it is drawn and unclickable,
          which is worse than not being drawn. Nothing else is on the screen
-         then: the moment cards that share this level all come later. */
-      <div className={`relative shrink-0 ${game.phase === 'intro' ? 'z-50' : 'z-30'}`}>
+         then: the moment cards that share this level all come later.
+
+         And while dev mode is on it is lifted over all of them, not only that
+         one. The two notes that teach the game - what the marks in the corner
+         are, and what somebody at the door is - are `fixed inset-0` sheets at
+         z-50, and they are the two screens in the game that are nothing but
+         prose: the strip sat under both, so the switch that puts a pencil on
+         a line could not be reached from the one place it was most wanted.
+         Asked for by the user. A stacking context cannot be escaped from the
+         inside, so it is this wrapper that moves. */
+      <div
+        className={`relative shrink-0 ${
+          dev ? 'z-[60]' : game.phase === 'intro' ? 'z-50' : 'z-30'
+        }`}
+      >
         {game.phase !== 'intro' && (<>
         <TopBar
           state={game}
@@ -1231,6 +1316,7 @@ export function App() {
           onBeginAnew={() => {
             clearSave();
             setSaved(null);
+            wantMusic();
             dispatch({ type: 'new', seed: freshSeed() });
           }}
         />
@@ -1271,6 +1357,7 @@ export function App() {
                 setSaved(null);
                 setStaleSave(false);
                 setEditText(false);
+                wantMusic();
                 dispatch({ type: 'new', seed: freshSeed() });
               }}
             />
@@ -1444,12 +1531,11 @@ export function App() {
           its width, which is the hill behind it back. */}
       {game.phase !== 'intro' && (
       <div className="pointer-events-none absolute right-0 top-0 z-20 hidden w-[150px] flex-col gap-2.5 lg:flex">
-        {/* Both cards carry `backdrop-blur`, and a backdrop filter makes a
-            stacking context: the crown's hovers are `z-50` inside its own card
-            and were therefore trapped in it, so the laws card, being the later
-            sibling, painted its whole width over the bottom half of the
-            sentence about the monarch's mood. What decides the order is these
-            two numbers, not the ones inside the cards. */}
+        {/* What is written down used to hang under the crown here, four
+            lines of law over the hill. The Codex holds them, with the
+            wording, which is the whole of what that book is for: the
+            corner keeps the person and what they are doing, and whoever
+            wants the law goes to the book. Asked for by the user. */}
         <div className="pointer-events-auto relative z-20">
           {/* And what you are doing while they sit up there, in one line, on
               the card rather than under it. Loose on the meadow it read as a
@@ -1461,12 +1547,6 @@ export function App() {
             dev={dev}
             doing={hand.zoomed ? undefined : <RulerDoing control={journey} />}
           />
-        </div>
-        <div className="pointer-events-auto relative z-10">
-          {/* "1 being written now" used to go up the moment the phase changed,
-              which is while the wheel is still turning and the drafting table
-              is minutes away. It says it when the table is actually open. */}
-          <StandingLaws state={game} writing={game.phase === 'composer' && !idling} dev={dev} flush />
         </div>
       </div>
       )}
@@ -1496,7 +1576,6 @@ export function App() {
           hand.busy ? 'pointer-events-none opacity-0' : ''
         }`}
       >
-        <Soundscape game={game} season={season} ready={handReady} zoomed={hand.zoomed} mapRef={mapRef} />
         <MusicToggle seed={game.seed} season={season} hushed={graveScene} />
       </div>
       </div>
@@ -1521,6 +1600,7 @@ export function App() {
           question at a time, and the question up there is who you are. */}
       {primer && game.phase !== 'intro' && (
         <Primer
+          dev={dev}
           onDone={() => {
             markWiringSeen();
             setPrimer(false);
@@ -1533,6 +1613,7 @@ export function App() {
           your own laws have already been writing on. */}
       {doorNoteUp && (
         <DoorNote
+          dev={dev}
           onDone={() => {
             markNoteSeen('door');
             setDoorNote(false);
@@ -1624,7 +1705,7 @@ export function App() {
       )}
 
       <BuildBadge />
-      <DevToggle on={dev} onToggle={() => setDev((v) => !v)} />
+      {!PLAYER_BUILD && <DevToggle on={dev} onToggle={() => setDev((v) => !v)} />}
       <DevEditsPanel on={dev} />
       <TextEditLayer on={dev && editText} />
     </div>

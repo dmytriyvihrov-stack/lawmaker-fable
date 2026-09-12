@@ -19,9 +19,6 @@ import {
   cultureOnMood,
   focusOf,
   isWinter,
-  restShare,
-  workOnce,
-  workOnceNow,
   researchGain,
   roomFor,
   seasonOf,
@@ -90,8 +87,9 @@ describe('what a year leaves standing', () => {
 
   it('a year that leaves nothing standing raises nothing', () => {
     let s = at(5);
-    s = { ...s, phase: 'works', stats: { ...s.stats, economy: 90 } };
-    s = chooseWork(s, 'rest');
+    // the fair is the only year of work left that puts nothing up
+    s = { ...s, phase: 'works', techs: ['fair_day'], stats: { ...s.stats, economy: 90 } };
+    s = chooseWork(s, 'fair');
     expect(s.lastWork).toBeNull();
   });
 });
@@ -248,7 +246,11 @@ describe('the years', () => {
 
   it('the charter reveals the hidden boards and pays what was owed', () => {
     let s = seal(at(5, 6), 'pv2_strangers', 0);
-    s.population = CONFIG.town.at - 2;
+    /* One soul short, and the year brings at least one to a place that is
+       growing at all: this test is about what the charter does and not about
+       the size of the step, and at two short it was reading the growth
+       arithmetic to three decimal places. */
+    s.population = CONFIG.town.at - 1;
     s.pendingTownBonus = { army: 10 };
     s.shownCases = ['v1_idle_hand', 'v2_well', 'v3_millwright', 'v4_hay'];
     s = advance(s);
@@ -276,46 +278,6 @@ describe('the year of work', () => {
     const full = at(5);
     full.buildings.well = 2; // the well tops out at two
     expect(chooseWork(full, 'well')).toBe(full);
-  });
-
-  it('a rest after a rest is worth half of one, and a third is worth nothing', () => {
-    let s = at(5, 4);
-    s.phase = 'works';
-    const rest = worksFor(s).find((w) => w.id === 'rest')!;
-    const full = workOnce(s, rest)!.crownSanity!;
-
-    // the first one in a row pays what it has always paid
-    expect(restShare(s)).toBe(1);
-    let before = s.stats.crownSanity;
-    s = chooseWork(s, 'rest');
-    expect(s.stats.crownSanity - before).toBe(full);
-    expect(s.restRun).toBe(1);
-
-    // the second is half a rest
-    s.phase = 'works';
-    s.lastWorkTurn = s.turn - 1;
-    expect(restShare(s)).toBe(0.5);
-    before = s.stats.crownSanity;
-    s = chooseWork(s, 'rest');
-    expect(s.stats.crownSanity - before).toBe(full / 2);
-
-    // the third is a year sat on your hands, and the card says so beforehand
-    s.phase = 'works';
-    s.lastWorkTurn = s.turn - 1;
-    expect(restShare(s)).toBe(0);
-    expect(workOnceNow(s, rest)).toBeUndefined();
-    before = s.stats.crownSanity;
-    s = chooseWork(s, 'rest');
-    expect(s.stats.crownSanity).toBe(before);
-    expect(s.restRun).toBe(3);
-
-    // and anything else at all puts the run back to nought
-    s.phase = 'works';
-    s.lastWorkTurn = s.turn - 1;
-    s.stats.economy = 60;
-    s = chooseWork(s, 'fields');
-    expect(s.restRun).toBe(0);
-    expect(restShare(s)).toBe(1);
   });
 
   it('is half paid by the surplus, and the surplus is what the place learns with', () => {
@@ -358,7 +320,9 @@ describe('the year of work', () => {
       s.stats.economy = CONFIG.works.freeAbove + 5;
       s.lastWorkTurn = 0;
       s.shownCases = ['v1_idle_hand', 'v2_well', 'v3_millwright', 'v4_hay'];
-      s = chooseWork(s, 'rest');
+      // a year nobody spends: there is no work on the shelf that is a way of
+      // spending one on nothing any more, so the year simply turns
+      s = advance(s);
     }
     // the cheapest thing anybody could start on, and the day off is eight
     expect(s.techs[0]).toBe('fair_day');
@@ -455,7 +419,7 @@ describe('reopening a law', () => {
 describe('the tree as a choice', () => {
   /** A year of the place doing nothing but thinking. */
   function spring(s: GameState): GameState {
-    return chooseWork({ ...s, lastWorkTurn: 0, shownCases: [] }, 'rest');
+    return advance({ ...s, lastWorkTurn: 0, shownCases: [] });
   }
 
   it('points the place at one thing, and nothing lands on the click', () => {

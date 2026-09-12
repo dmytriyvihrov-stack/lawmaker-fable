@@ -3,9 +3,22 @@ import { UI } from '../../content/ui-strings';
 import { CARD_BUTTON } from './Popup';
 import { TYPE } from '../type';
 
+/**
+ * How far down a full-screen sheet starts while the dev strip is drawn.
+ *
+ * The strip is lifted over these two sheets on purpose: they are the game's
+ * two screens of pure prose and "edit any text" is wanted on them more than
+ * anywhere. What that left was a heading under the strip, which is a line
+ * nobody can click. The sheet scrolls, so the room costs nothing, and the
+ * narrow figure is the header wrapped onto three rows with the crown lying
+ * down under it. Asked for by the user.
+ */
+const DEV_HEAD = 'pt-[150px] max-lg:pt-[240px]';
 interface Props {
   /** Fires when it has been read, and the first year begins. */
   onDone: () => void;
+  /** The dev strip is on the screen, so this starts below it. */
+  dev?: boolean;
 }
 
 /**
@@ -30,9 +43,13 @@ interface Props {
  * Shown once per browser, on the same note in `save.ts` the old lecture used,
  * so nobody who has already had it gets it twice.
  */
-export function Primer({ onDone }: Props) {
+export function Primer({ onDone, dev = false }: Props) {
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/92 px-5 py-8 backdrop-blur-sm">
+    <div
+      className={`fixed inset-0 z-50 overflow-y-auto bg-ink/92 px-5 py-8 backdrop-blur-sm ${
+        dev ? DEV_HEAD : ''
+      }`}
+    >
       <div className="drift-in mx-auto w-full max-w-xl">
         <h2 className={`${TYPE.display} leading-tight text-parchment`}>{UI.wiring.heading}</h2>
         <p className={`mt-2 ${TYPE.body} leading-relaxed text-parchment-dim`}>{UI.wiring.lead}</p>

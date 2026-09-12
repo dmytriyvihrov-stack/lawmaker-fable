@@ -73,7 +73,7 @@ export const FLAG_LINES: Partial<Record<StoryFlag, string>> = {
   well_shared: 'The dry week is still told as the week everyone drank thin and nobody died.',
   well_lots: 'There is still a hat by the well with five pebbles in it, kept for luck.',
   well_cut: 'The dry week is not told at all.',
-  marta_kept: 'Marta still farms the plot on the stream. The mill is downstream, and slow.',
+  marta_kept: 'Marta still farms the field on the stream. The mill is downstream, and slow.',
   marta_moved: 'The mill feeds the town. Marta did not plant again.',
   fugitive_hidden: 'The riders have not been back. The hay is still behind the house.',
   fugitive_given: 'The riders took him at dusk. Supper was quiet for a month, and then it was not.',

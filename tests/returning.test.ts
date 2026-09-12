@@ -279,21 +279,22 @@ describe('Marta, and the ground, years on', () => {
     const s = after('v3_millwright', 'plot_to_the_mill', 'marta_moved', 8);
     s.current = { kind: 'case', id: 'r2_marta_moved' };
     const scene = getCase('r2_marta_moved')!.scene.map((p) => renderTemplate(p, s)).join(' ');
-    expect(scene).toContain('gave her plot to the mill seven years ago');
+    expect(scene).toContain('gave her field to the mill seven years ago');
   });
 
-  it('the split at the stream leaves her on her ground, and the mill-wright who stays anyway does too', () => {
+  it('the wheel the place owns leaves her on her ground, and the mill-wright who stays anyway does too', () => {
     const base = newGame(3);
     base.current = { kind: 'case', id: 'v3_millwright' };
-    expect(chooseCase(base, 'v3_millwright', 'share_the_stream').flags).toContain('marta_kept');
+    expect(chooseCase(base, 'v3_millwright', 'the_mill_is_ours').flags).toContain('marta_kept');
     expect(chooseCase(base, 'v3_millwright', 'stays_anyway').flags).toContain('marta_kept');
     expect(chooseCase(base, 'v3_millwright', 'plot_to_the_mill').flags).toContain('marta_moved');
   });
 
-  it('the easy compromise costs the store now, and taking her last strip costs souls', () => {
+  it('there is no free way out at the stream, and taking her last strip costs souls', () => {
+    /* The compromise that cost nobody anything is gone. What is left is her
+       ground or the mill, and the answers the three laws grant. */
     const mill = getCase('v3_millwright')!;
-    const split = mill.choices.find((c) => c.id === 'share_the_stream')!;
-    expect(split.effects.economy).toBeLessThan(0);
+    expect(mill.choices.map((c) => c.id)).not.toContain('share_the_stream');
     const s = after('v3_millwright', 'plot_to_the_mill', 'marta_moved', 8);
     s.current = { kind: 'case', id: 'r2_marta_moved' };
     const taken = chooseCase(s, 'r2_marta_moved', 'take_it_as_before');

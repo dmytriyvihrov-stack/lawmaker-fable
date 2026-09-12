@@ -79,13 +79,16 @@
   .hand-strip-out { min-height: 40px; padding: 0 14px; }
   .ruler-topbar-boards { order: 3; flex-basis: 100%; justify-content: space-between; gap: 7px; }
   .ruler-topbar-actions { margin-left: auto; gap: 6px; }
-  .ruler-topbar-actions > button { height: 28px; padding-left: 7px; padding-right: 7px; }
+  .ruler-topbar-actions > button,
+  .ruler-topbar-clock > button { height: 28px; padding-left: 7px; padding-right: 7px; }
   /* Twenty-eight pixels is a thumb's width of miss above and below. Growing
      the buttons costs a third row in the header and a third row costs forty
      pixels of the town, so what grows is the part nobody sees: the reach of
      each one, out past its own edge, where the thumb was landing anyway. */
-  .ruler-topbar-actions > button { position: relative; }
-  .ruler-topbar-actions > button::after { content: ''; position: absolute; inset: -8px -4px; }
+  .ruler-topbar-actions > button,
+  .ruler-topbar-clock > button { position: relative; }
+  .ruler-topbar-actions > button::after,
+  .ruler-topbar-clock > button::after { content: ''; position: absolute; inset: -8px -4px; }
   .ruler-edition .decision-paper { max-height: 39dvh; }
   .ruler-control-dock { left: 10px; top: 8px; }
   .ruler-doing-line { font-size: 11px; }

@@ -40,6 +40,9 @@ export function Title({ hasSave, staleSave = false, onNew, onContinue, dev = fal
         >
           {UI.title.newGame}
         </button>
+        {/* Under the button and not over it: the promise is about what happens
+            after the click, so it reads in the order it happens. */}
+        <p className="-mt-1 text-[12px] leading-snug text-parchment-dim">{UI.title.autoSave}</p>
         {hasSave && (
           <button
             type="button"

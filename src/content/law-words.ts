@@ -27,7 +27,9 @@ export const PREDICATE_WORDS: Record<ActionId, string> = {
   turned_away: 'IS TURNED AWAY BEFORE DARK',
   with_a_day: 'STOPS THE WORK, AND ALL OF US STAND IN IT',
   by_the_house: 'IS CARRIED BY THE HOUSE IT HAPPENED IN',
-  at_the_edge: 'GOES IN THE GROUND AT THE EDGE, THE SAME DAY',
+  // the strip at the edge is what the other two answers do now; this is the
+  // one that puts nobody in the ground. The id is kept: see `pv3_dead`.
+  at_the_edge: 'GOES INTO THE RIVER, THE SAME DAY',
   finders: 'BELONGS TO WHOEVER IS UP EARLY ENOUGH TO FIND IT',
   weighed: 'IS PICKED BY THE PLACE, AND WEIGHED, AND SHARED',
   for_the_cart: 'GOES ON THE CART, AND NOBODY HERE EATS IT',

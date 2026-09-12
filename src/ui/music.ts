@@ -129,12 +129,37 @@ function semitone(root: number, steps: number): number {
   return root * Math.pow(2, steps / 12);
 }
 
+/**
+ * Whether the room should be filled, this time.
+ *
+ * On unless somebody has turned it off. It used to be off unless somebody had
+ * turned it on, so a first reign opened in silence and the note in the corner
+ * was one more thing to find; a game with a soundtrack in it should play the
+ * soundtrack. The browser still refuses to make a sound before the first
+ * click, which is why this is a preference and not a start: see the toggle,
+ * which waits for that click and then opens the card.
+ */
 export function musicWanted(): boolean {
   try {
-    return window.localStorage.getItem(STORE_KEY) === 'on';
+    return window.localStorage.getItem(STORE_KEY) !== 'off';
   } catch {
-    return false;
+    return true;
   }
+}
+
+/**
+ * Who is watching the switch.
+ *
+ * The preference is a module fact and the note in the corner draws it, so
+ * anything that changes it without going through that button has to be able
+ * to tell the button. There is one such thing (`wantMusic`, below) and it
+ * fires in the middle of a reign, with the note already on the screen.
+ */
+const watchers = new Set<() => void>();
+
+export function subscribeMusic(listener: () => void): () => void {
+  watchers.add(listener);
+  return () => watchers.delete(listener);
 }
 
 function remember(on: boolean): void {
@@ -143,6 +168,25 @@ function remember(on: boolean): void {
   } catch {
     // a browser that will not remember it is a browser that asks every time
   }
+  for (const watcher of watchers) watcher();
+}
+
+/**
+ * A new reign starts with the room full.
+ *
+ * Turning the music off is an answer to the evening somebody is having, not
+ * a standing opinion about the game, and a browser that kept it off for good
+ * meant a player who muted one reign at eleven at night never heard the
+ * soundtrack again. So it lasts as long as the reign it was given in: every
+ * new one opens with it on, and the note in the corner is still one click
+ * away. Asked for by the user.
+ *
+ * It is called off a button, so the sound card is already allowed to make a
+ * noise and this can simply start.
+ */
+export function wantMusic(): void {
+  remember(true);
+  if (!playing) start();
 }
 
 /** What `bundle.mjs` leaves on `window` when a build carries recorded music. */
@@ -439,6 +483,16 @@ async function buildRecorded(): Promise<void> {
 export function setSeason(next: Season): void {
   season = next;
   if (!ctx || !pad) return;
+  /* And never behind the tape.
+   *
+   * The pad walks out of the room when a recorded track starts (see
+   * buildRecorded), and this walked it back in at the next turn of the
+   * year: four held voices and a sub two octaves under them, at full pad
+   * gain, under a nine minute mp3, for the rest of the reign. It was heard
+   * as a hum behind the music, which is exactly what it was. Reported by
+   * the user.
+   */
+  if (usingRecorded) return;
   pad.gain.gain.linearRampToValueAtTime(MODES[next].padGain, ctx.currentTime + 4);
 }
 

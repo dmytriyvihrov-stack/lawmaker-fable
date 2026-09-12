@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { BOND_UI, bondWord } from '../../content/bonds';
 import { characterTitle, STATS } from '../../content/meta';
 import { UI } from '../../content/ui-strings';
@@ -43,6 +44,35 @@ interface Props {
  * one person rather than about the place, and this is the only page where a
  * lawmaker can spend anything on somebody instead of on something.
  */
+/**
+ * What a button on this page costs and does, under the pointer, in the game's
+ * own lettering.
+ *
+ * It was a `title` and a grey line of ten point text under the row. The line
+ * said the same sentence beside every face in a register of thirty, which is
+ * three lines of furniture per person and the reason the page scrolled; the
+ * `title` was the browser's own tooltip, in the browser's own box, wherever
+ * the pointer happened to be. The sentence starts with the price, because the
+ * price is the thing anybody is hovering to find out. Asked for by the user.
+ *
+ * And now the name of the thing as well. On the face of the button it was
+ * four or five words per button and three buttons per person, which is a row
+ * of prose where a row of marks would do: what the button is stays under the
+ * pointer with what it costs and what it does, and the button itself is the
+ * gift, the heart or the kiss and the two numbers. Asked for by the user.
+ */
+function Hint({ label, line, children }: { label: string; line: string; children: ReactNode }) {
+  return (
+    <span className="group relative inline-flex">
+      {children}
+      <span className="pointer-events-none absolute left-0 top-full z-50 mt-1.5 hidden w-[250px] rounded-lg border border-ink-line bg-ink p-2.5 text-left shadow-[0_14px_30px_rgba(0,0,0,0.5)] group-hover:block">
+        <span className="block text-[12px] leading-snug text-parchment">{label}</span>
+        <span className="mt-1 block text-[11px] leading-snug text-parchment-dim">{line}</span>
+      </span>
+    </span>
+  );
+}
+
 export function Register({ state, season, onGift, onTake, onVisit, onClose }: Props) {
   const people = metCharacters(state);
   // what each of them is up to now, which is the same reading the town draws,
@@ -118,6 +148,12 @@ export function Register({ state, season, onGift, onTake, onVisit, onClose }: Pr
                the two buttons say what they actually do to a wolf. */
             const beast = who === 'wolf';
 
+            /* What each of the three buttons is, in words, for the card under
+               the pointer and for a reader who cannot see the marks. */
+            const giftLabel = beast ? BOND_UI.wolfGiftLabel : BOND_UI.giftLabel;
+            const takeLabel = beast ? BOND_UI.wolfTakeLabel : BOND_UI.loverLabel;
+            const kissLabel = beast ? BOND_UI.wolfKissLabel : BOND_UI.kissLabel;
+
             const giftWhy =
               gift === null
                 ? fill(BOND_UI.giftLine, CONFIG.bond.giftCost, 0)
@@ -147,6 +183,15 @@ export function Register({ state, season, onGift, onTake, onVisit, onClose }: Pr
                         ? BOND_UI.loverChild
                         : BOND_UI.loverNeeds;
 
+            const kissWhy =
+              visit === null
+                ? fill(BOND_UI.kissLine, 0, CONFIG.bond.kissSanity)
+                : visit === 'waiting'
+                  ? BOND_UI.kissWait.replace('{n}', String(visitAgainAt(state, who)))
+                  : visit === 'gone'
+                    ? BOND_UI.giftGone
+                    : BOND_UI.kissNotYours;
+
             return (
               <li
                 key={who}
@@ -160,15 +205,31 @@ export function Register({ state, season, onGift, onTake, onVisit, onClose }: Pr
                     {/* How they feel about you, in one mark, before their
                         name: a register of thirty faces is read at a glance,
                         and the glance lands here. The words are under the
-                        pointer. */}
+                        pointer.
+
+                        Under the pointer, and in a card of the game's own
+                        making. It was a `title`, which the browser draws in
+                        its own grey lettering, at its own moment, wherever
+                        the pointer happens to be: it landed across the name
+                        and the line under it, so resting on the mark hid the
+                        person it was about. This opens under the mark, out of
+                        the way of the row, with the rung in the game's words
+                        over the line in the town's. Asked for by the user. */}
                     {canBeLiked && (
-                      <span
-                        className="text-[14px] leading-none"
-                        title={`${person.label} ${feeling.word}. ${feeling.line}`}
-                      >
-                        <span aria-hidden>{feeling.mark}</span>
+                      <span className="group relative text-[14px] leading-none">
+                        <span aria-hidden className="cursor-help">
+                          {feeling.mark}
+                        </span>
                         <span className="sr-only">
-                          {person.label} {feeling.word}
+                          {person.label} {feeling.word}. {feeling.line}
+                        </span>
+                        <span className="pointer-events-none absolute left-0 top-full z-50 mt-1.5 hidden w-[240px] rounded-lg border border-ink-line bg-ink p-2.5 text-left shadow-[0_14px_30px_rgba(0,0,0,0.5)] group-hover:block">
+                          <span className="block text-[12px] leading-snug text-parchment">
+                            {person.label} {feeling.word}
+                          </span>
+                          <span className="mt-1 block text-[11px] leading-snug text-parchment-dim">
+                            {feeling.line}
+                          </span>
                         </span>
                       </span>
                     )}
@@ -198,34 +259,41 @@ export function Register({ state, season, onGift, onTake, onVisit, onClose }: Pr
 
                   {canBeLiked && (
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={gift !== null}
-                        onClick={() => onGift(who)}
-                        title={giftWhy}
-                        className={`${act} ${
-                          gift === null
-                            ? 'border-seal/60 bg-seal/15 text-parchment'
-                            : 'border-ink-line text-parchment-dim'
-                        }`}
-                      >
-                        🎁 {beast ? BOND_UI.wolfGiftLabel : BOND_UI.giftLabel}
-                        <span className="ml-1 tabular-nums text-parchment-dim">
-                          {CONFIG.bond.giftCost}
-                        </span>
-                      </button>
+                      <Hint label={giftLabel} line={giftWhy}>
+                        <button
+                          type="button"
+                          disabled={gift !== null}
+                          onClick={() => onGift(who)}
+                          className={`${act} ${
+                            gift === null
+                              ? 'border-seal/60 bg-seal/15 text-parchment'
+                              : 'border-ink-line text-parchment-dim'
+                          }`}
+                        >
+                          <span aria-hidden>🎁</span>
+                          <span className="ml-1 tabular-nums text-parchment-dim">
+                            {CONFIG.bond.giftCost}
+                          </span>
+                          <span className="sr-only">
+                            {giftLabel}. {giftWhy}
+                          </span>
+                        </button>
+                      </Hint>
+                      <Hint label={takeLabel} line={takeWhy}>
                       <button
                         type="button"
                         disabled={mine || take !== null}
                         onClick={() => onTake(who)}
-                        title={takeWhy}
                         className={`${act} ${
                           !mine && take === null
                             ? 'border-seal/60 bg-seal/15 text-parchment'
                             : 'border-ink-line text-parchment-dim'
                         }`}
                       >
-                        {BOND_UI.loverMark} {beast ? BOND_UI.wolfTakeLabel : BOND_UI.loverLabel}
+                        <span className="sr-only">
+                          {takeLabel}. {takeWhy}
+                        </span>
+                        <span aria-hidden>{BOND_UI.loverMark}</span>
                         <span className="ml-1 tabular-nums text-parchment-dim">
                           {CONFIG.bond.loverCost}
                         </span>
@@ -241,48 +309,38 @@ export function Register({ state, season, onGift, onTake, onVisit, onClose }: Pr
                           <span aria-hidden>{crownMark}</span> +{CONFIG.bond.loverSanity}
                         </span>
                       </button>
+                      </Hint>
                       {/* And the one that only ever appears beside one face in
                           the whole register: the one you took, and only every
                           other year. It costs nothing, which is why it is the
                           only button here with no number on it. */}
                       {mine && (
-                        <button
-                          type="button"
-                          disabled={visit !== null}
-                          onClick={() => onVisit(who)}
-                          title={
-                            visit === null
-                              ? fill(BOND_UI.kissLine, 0, CONFIG.bond.kissSanity)
-                              : visit === 'waiting'
-                                ? BOND_UI.kissWait.replace('{n}', String(visitAgainAt(state, who)))
-                                : visit === 'gone'
-                                  ? BOND_UI.giftGone
-                                  : BOND_UI.kissNotYours
-                          }
-                          className={`${act} ${
-                            visit === null
-                              ? 'border-seal/60 bg-seal/15 text-parchment'
-                              : 'border-ink-line text-parchment-dim'
-                          }`}
-                        >
-                          {BOND_UI.kissMark} {beast ? BOND_UI.wolfKissLabel : BOND_UI.kissLabel}
-                          <span
-                            className="ml-1.5 tabular-nums text-good"
-                            title={BOND_UI.crownGain.replace(
-                              '{n}',
-                              String(CONFIG.bond.kissSanity),
-                            )}
+                        <Hint label={kissLabel} line={kissWhy}>
+                          <button
+                            type="button"
+                            disabled={visit !== null}
+                            onClick={() => onVisit(who)}
+                            className={`${act} ${
+                              visit === null
+                                ? 'border-seal/60 bg-seal/15 text-parchment'
+                                : 'border-ink-line text-parchment-dim'
+                            }`}
                           >
-                            <span aria-hidden>{crownMark}</span> +{CONFIG.bond.kissSanity}
-                          </span>
-                        </button>
+                            <span className="sr-only">
+                              {kissLabel}. {kissWhy}
+                            </span>
+                            <span aria-hidden>{BOND_UI.kissMark}</span>
+                            <span className="ml-1.5 tabular-nums text-good">
+                              <span aria-hidden>{crownMark}</span> +{CONFIG.bond.kissSanity}
+                            </span>
+                          </button>
+                        </Hint>
                       )}
-                      {/* and never the store line here: it is over the list */}
-                      {!(storePoor && !mine && gift === 'poor') && (
-                        <span className="text-[10px] leading-snug text-hair">
-                          {mine ? takeWhy : giftWhy}
-                        </span>
-                      )}
+                      {/* And no line of grey text under the row. It said what
+                          a gift costs and what it does beside every face in
+                          the register, which is the same sentence thirty times
+                          down one page. It is on the button it belongs to now,
+                          under the pointer. Asked for by the user. */}
                     </div>
                   )}
 

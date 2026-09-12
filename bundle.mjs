@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join, extname, basename } from 'node:path';
+import { dirname, join, extname, basename, isAbsolute } from 'node:path';
 
 /**
  * Sews the built game into one HTML file with nothing outside it: the whole
@@ -22,6 +22,26 @@ const js = readFileSync(join(assets, files.find((f) => f.endsWith('.js'))), 'utf
  */
 const built = readFileSync(join(here, 'dist', 'index.html'), 'utf8');
 const buildTag = (built.match(/<meta name="lawmaker-build"[^>]*>/) ?? [''])[0];
+
+/**
+ * And whether this is the build a stranger opens.
+ *
+ * `vite build --mode player` leaves `<meta name="lawmaker-player">` in the
+ * page, and `App.tsx` has already taken the dev switch out of the bundle. The
+ * tag is carried through so `tools/build-itch.ps1` can read the finished file
+ * back and refuse to ship one that still has the switch in it, rather than
+ * trusting that the right command ran.
+ */
+const playerTag = (built.match(/<meta name="lawmaker-player"[^>]*>/) ?? [''])[0];
+
+/**
+ * Where the page goes. `lawmaker-fable.html` at the repo root unless told
+ * otherwise: `node bundle.mjs --out <path>` writes it somewhere else, which is
+ * how the itch package is staged without overwriting the player's own file
+ * with a build that has no dev switch in it.
+ */
+const outFlag = process.argv.indexOf('--out');
+const outPath = outFlag > 0 ? process.argv[outFlag + 1] : undefined;
 
 /**
  * Any recorded music. `assets/music/*.mp3`, each one sewn in as a base64
@@ -60,6 +80,7 @@ const musicScript = musicFiles.length
  */
 const page = `<meta charset="utf-8">
 ${buildTag}
+${playerTag}
 <title>Lawmaker Fable</title>
 <style>
 ${css}
@@ -72,7 +93,7 @@ ${js}
 </script>
 `;
 
-const out = join(here, 'lawmaker-fable.html');
+const out = outPath ? (isAbsolute(outPath) ? outPath : join(here, outPath)) : join(here, 'lawmaker-fable.html');
 writeFileSync(out, page, 'utf8');
 const kb = page.length / 1024;
 console.log(`${out}  ${kb.toFixed(0)} kB`);

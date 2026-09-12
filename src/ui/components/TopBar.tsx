@@ -414,24 +414,31 @@ export function TopBar({
               <span aria-hidden>❄️</span> <span className="tabular-nums">{frostShort}</span>
               <span className="sr-only">{frost}</span>
             </span>
+
+            {/* And how fast that dial is allowed to go round.
+
+                The years between decisions are the one stretch of this game
+                that is watched rather than played, and how long anybody wants
+                to watch a field is a fact about them. One button, three
+                notches, and it is remembered for the next reign as well as
+                this one.
+
+                It stood at the far end of the row of doors, between the book
+                of faces and the corner, which is a long way from the only
+                thing on this bar it does anything to. It winds the year on,
+                so it stands with the year. Asked for by the user. */}
+            <button
+              type="button"
+              onClick={() => onSpeed((speed + 1) % CONFIG.speeds.length)}
+              title={`${UI.speed.label}: ${UI.speed.names[speed] ?? UI.speed.names[0]}`}
+              aria-label={UI.speed.label}
+              className={`${box} tracking-[0.1em] text-seal`}
+            >
+              <span aria-hidden>{UI.speed.marks[speed] ?? UI.speed.marks[0]}</span>
+              <span className="sr-only">{UI.speed.names[speed] ?? UI.speed.names[0]}</span>
+            </button>
           </span>
 
-          {/* And how fast that dial is allowed to go round.
-
-              The years between decisions are the one stretch of this game that
-              is watched rather than played, and how long anybody wants to
-              watch a field is a fact about them. One button, three notches,
-              and it is remembered for the next reign as well as this one. */}
-          <button
-            type="button"
-            onClick={() => onSpeed((speed + 1) % CONFIG.speeds.length)}
-            title={`${UI.speed.label}: ${UI.speed.names[speed] ?? UI.speed.names[0]}`}
-            aria-label={UI.speed.label}
-            className={`${box} tracking-[0.1em] text-seal`}
-          >
-            <span aria-hidden>{UI.speed.marks[speed] ?? UI.speed.marks[0]}</span>
-            <span className="sr-only">{UI.speed.names[speed] ?? UI.speed.names[0]}</span>
-          </button>
 
           {/* and the corner, which is not part of the reign at all */}
           <Menu onBeginAnew={onBeginAnew} />

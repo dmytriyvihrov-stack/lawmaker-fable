@@ -111,8 +111,8 @@ export const PROPOSALS: Proposal[] = [
       line: "A year of work first. I have nothing against strangers. I have something against a gate that means nothing.",
     },
     problem: [
-      'People walk past on the road. Some of them stop at the fence.',
-      'Say what the fence is for.',
+      'People walk past on the road. Some of them stop at your village.',
+      'Say how you treat them.',
     ],
     options: [
       /* Three doors, and none of them is the good one. The open door fills
@@ -125,7 +125,16 @@ export const PROPOSALS: Proposal[] = [
         action: 'welcomed',
         label: 'A STRANGER AT THE FENCE IS GIVEN A ROOF AND A SHARE',
         tags: ['communitarian'],
-        effects: {},
+        /* The square, on the day it is read out.
+
+           Four strangers at a table laid for five is a thing the five have an
+           opinion about, and the answer used to cost them nothing at all. It
+           lands once, here, and not every year: how the square feels is one
+           of the terms that decides who moves in, so a standing grievance of
+           this size is an open door that closes itself over about fifteen
+           years, and the one thing this answer is for is that it does not.
+           Asked for by the user. */
+        effects: { mood: -8 },
         /**
          * The open door pays in people and in nothing else.
          *
@@ -139,7 +148,12 @@ export const PROPOSALS: Proposal[] = [
          * town feels. More hands than the store was built for, and more coughs
          * than the well was.
          */
-        perTurn: { health: -2 },
+        /* And the crown, every year of it. An open gate is the fastest
+           growth in the game and it was paid for on one line, the conditions,
+           which reads as a place that is only ever more crowded. It is also a
+           monarch who has stopped being able to name the people in the
+           square, and that is a thing that goes on happening. */
+        perTurn: { health: -2, crownSanity: -1 },
         // and a town that lets people in hears more songs than one that does not
         perTurnTown: { mood: 2, culture: 1, health: -1 },
         growth: 1.22,
@@ -152,10 +166,20 @@ export const PROPOSALS: Proposal[] = [
         label: 'A STRANGER AT THE FENCE WORKS A YEAR BEFORE A SHARE',
         tags: ['meritocratic'],
         effects: { mood: -4 },
-        // a year of somebody else's work is worth having, and worth arguing about
-        perTurn: { economy: 1, crownSanity: -1 },
+        /* A year of somebody else's work is worth having, and worth arguing
+           about, and the arguing is the line the square feels. This is the
+           one board no other answer to the fence costs anything on: an open
+           door upsets the square once, on the day it is read, and a closed
+           gate never upsets it at all, but a place with two kinds of person
+           in it has the same conversation every spring. */
+        perTurn: { economy: 1, crownSanity: -1, mood: -1 },
         perTurnTown: { army: 1, mood: -1 },
-        growth: 1.15,
+        /* A year of work first is a gate, and a gate is heard about on the
+           road. It was fifteen percent, three quarters of the open door, for
+           an answer meant to be the middle one and not the cheap version of
+           the first: ten, against twenty two and five, puts it where it
+           reads. Asked for by the user. */
+        growth: 1.1,
         aftermathId: 'am_strangers_earned',
       },
       {
@@ -225,6 +249,14 @@ export const PROPOSALS: Proposal[] = [
         // a town cannot stop for every one of them, and stops for the ones it
         // decides count, which is where a calendar of feast days comes from
         perTurnTown: { culture: 2, mood: 1, economy: -2 },
+        /* The strip at the edge, on this answer and the one under it.
+
+           Both of them put the body in the ground at the edge of the place;
+           what they argue about is who stops work for it. So the stones go up
+           on the strip either way, and the map says so the year the law is
+           sealed rather than waiting for a case to mention it. Asked for by
+           the user. */
+        cityFlagsOn: ['graves_at_the_edge'],
         aftermathId: 'am_dead_with_a_day',
       },
       {
@@ -238,20 +270,40 @@ export const PROPOSALS: Proposal[] = [
            upstairs what a death is worth. It was the invisible middle of this
            law, best at nothing and worst at nothing, and a player reading the
            card had no reason to pick it over either neighbour. */
-        perTurn: { crownSanity: 1, economy: 1, mood: -1 },
+        /* And what it costs is the songs, not the store.
+
+           It paid the store a point a year, for a law whose whole content is
+           that the place does not turn out: a household with a spade is not a
+           harvest, and the card read as thrift with no downside. What a place
+           that buries its own quietly actually loses is the thing everybody
+           used to be standing in. Asked for by the user, twice: once to take
+           the coin off it and once because the middle answer of this law was
+           the one nobody could find a reason to pick. */
+        perTurn: { crownSanity: 1, mood: -1, culture: -1 },
         /* And at a town it is also how a place stops noticing: the ones with
            nobody to carry them are carried by nobody. */
-        perTurnTown: { crownSanity: 1, economy: 2, mood: -2, health: -1 },
+        perTurnTown: { crownSanity: 1, mood: -2, health: -1, culture: -1 },
+        cityFlagsOn: ['graves_at_the_edge'],
         aftermathId: 'am_dead_by_the_house',
       },
       {
         subject: 'dead',
+        /* The id is the old one and the answer is not.
+
+           This slot used to be the strip at the edge, which is what the two
+           answers above it now do on their own: with the stones going up
+           either way there was nothing left here to choose, so the third door
+           is the one that puts nobody in the ground at all. The `ActionId` is
+           a closed list and a save holds the law by it, so it keeps the name
+           it was sealed under. Asked for by the user. */
         action: 'at_the_edge',
-        label: 'A DEATH IN THIS PLACE GOES IN THE GROUND AT THE EDGE, THE SAME DAY',
+        label: 'A DEATH IN THIS PLACE GOES INTO THE RIVER, THE SAME DAY',
         tags: ['utilitarian'],
         effects: { mood: -16 },
-        perTurn: { economy: 2, health: 1, mood: -3 },
-        perTurnTown: { economy: 2, health: 1, mood: -3, culture: -1 },
+        /* What it saves and what it costs: no ground, no morning, no box, and
+           a river everybody downstream of you drinks out of. */
+        perTurn: { economy: 2, health: -1, mood: -3 },
+        perTurnTown: { economy: 2, health: -2, mood: -3, culture: -1 },
         isBadIdea: true,
         cityFlagsOn: ['mourning_ribbons'],
         aftermathId: 'am_dead_at_the_edge',

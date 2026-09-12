@@ -73,15 +73,16 @@ export const VERDICT_VERBS: WordTile[] = [
   { id: 'goes_down_the_road', text: 'GOES DOWN THE ROAD' },
   { id: 'is_kept_in_sight', text: 'IS KEPT IN SIGHT' },
   // the hamlet
-  { id: 'eats', text: 'EATS' },
-  { id: 'eats_when_he_digs', text: 'EATS WHEN HE DIGS' },
+  { id: 'eats', text: 'EATS AS ALL DO, ANYWAY' },
+  { id: 'eats_when_he_digs', text: 'IS PUT TO WORK ANYWAY, AND EATS ONLY THEN' },
   /* There was a 'GETS HALF A SHARE' on this bench as well, and rewording this
      one round it did not help: both of them read as less bread for Tam, and a
      player picking between them was picking between two wordings. So there is
-     one, and it is this one. What it is, and what the law is for, is the cut
-     being made in the open with the law said out loud over it, which is what
-     the four who dig then go home and build fences about. */
-  { id: 'share_is_cut', text: 'HAS HIS SHARE CUT, AND THE LAW READ OUT' },
+     one, and it is this one: the cut, made in the open, which is what the four
+     who dig then go home and build fences about. It carried ", AND THE LAW
+     READ OUT" on the end of it and does not any more, because a tile on a
+     bench is read at the width of a bench. Asked for by the user. */
+  { id: 'share_is_cut', text: 'HAS HIS SHARE CUT' },
   { id: 'mends_tools', text: 'MENDS TOOLS, THE HEADMAN SAYS' },
   { id: 'his_own_field', text: 'EATS WHAT HIS OWN FIELD GIVES' },
   { id: 'is_shared_thin', text: 'IS SHARED THIN, ALL WEEK' },
@@ -91,7 +92,7 @@ export const VERDICT_VERBS: WordTile[] = [
   { id: 'headman_last', text: 'IS DRUNK LAST BY THE HEADMAN' },
   { id: 'is_sold', text: 'GOES TO WHOEVER PAYS' },
   { id: 'stays_with_marta', text: 'STAYS WITH MARTA' },
-  { id: 'is_split', text: 'IS SPLIT, MILL AND FIELD' },
+  { id: 'wheel_is_the_places', text: "STAYS WITH MARTA, AND THE WHEEL IS THE PLACE'S" },
   { id: 'goes_to_the_mill', text: 'GOES TO THE MILL' },
   { id: 'waits_a_year', text: 'WAITS A YEAR' },
   { id: 'gets_a_mill_anyway', text: 'GETS A MILL ANYWAY' },
@@ -105,6 +106,15 @@ export const VERDICT_VERBS: WordTile[] = [
   { id: 'one_house', text: 'IS ONE HOUSE UNTIL MARCH' },
   { id: 'three_houses', text: 'IS THREE COLD HOUSES' },
   { id: 'sends_two', text: 'SENDS TWO TO THE HALL OF THE LORD' },
+
+  // the glade in the first spring, which is the only windfall in the game
+  { id: 'goes_round_alike', text: 'GOES ROUND ALIKE' },
+  { id: 'is_hers_first', text: 'IS HERS FIRST, AND THEN GOES ROUND' },
+  { id: 'comes_to_the_house', text: 'COMES TO THE HOUSE' },
+  // and the leg, which is the same argument with the doubt taken out of it
+  { id: 'is_kept_until_he_walks', text: 'IS KEPT UNTIL HE WALKS' },
+  { id: 'is_set_and_stood_on', text: 'IS SET, AND STOOD ON BY MONDAY' },
+  { id: 'is_paid_for_what_he_can_do', text: 'IS PAID FOR WHAT HE CAN STILL DO' },
 
   // the thing at the woodpile, and what it turned into
   { id: 'is_fed_and_kept', text: 'IS FED, AND KEPT' },
@@ -246,15 +256,19 @@ export const VERDICT_VERBS: WordTile[] = [
   { id: 'is_cut_into_hives', text: 'IS CUT INTO HIVES FOR EVERY ROOF' },
 
   // the frozen ground, and the man at the gatepost
-  { id: 'burns_the_ground_open', text: 'IS BURNED OPEN, ALL WEEK IF IT TAKES IT' },
-  { id: 'waits_in_the_barn', text: 'WAITS IN THE BARN UNTIL THE THAW' },
-  { id: 'goes_under_stones', text: 'GOES UNDER STONES, ABOVE THE FROST' },
-  { id: 'is_dug_by_all_of_us', text: 'IS DUG BY ALL OF US, TWO DAYS' },
-  { id: 'is_each_house_its_own', text: 'IS EACH HOUSE ITS OWN HOLE' },
+  /* The five words of the frozen week, all rewritten to agree with the three
+     people the question is about rather than with the ground. The bench read
+     "THE FROZEN GROUND WAITS IN THE BARN UNTIL THE THAW", which is not a
+     sentence anybody can act on. Asked for by the user. */
+  { id: 'burns_the_ground_open', text: 'GO IN THE GROUND, AND THE WOODPILE THAWS IT' },
+  { id: 'waits_in_the_barn', text: 'WAIT IN THE BARN UNTIL THE THAW' },
+  { id: 'goes_under_stones', text: 'GO UNDER STONES AT THE EDGE, ABOVE THE FROST' },
+  { id: 'is_dug_by_all_of_us', text: 'GO IN THE GROUND, AND EVERY PAIR OF HANDS DIGS' },
+  { id: 'is_each_house_its_own', text: 'ARE EACH THEIR OWN HOUSE TO BURY' },
   { id: 'is_ours_now', text: 'IS OURS NOW, AND GOES IN HERE' },
   { id: 'waits_for_an_answer', text: 'WAITS WHILE THE NAME GOES DOWN THE ROAD' },
   { id: 'goes_past_the_boundary', text: 'GOES OVER THE BOUNDARY' },
-  { id: 'goes_to_the_edge_the_same_day', text: 'GOES TO THE EDGE, THE SAME DAY, LIKE ANY OF US' },
+  { id: 'goes_to_the_edge_the_same_day', text: 'GOES INTO THE RIVER, THE SAME DAY, LIKE ANY OF US' },
 
   // the ring in the beeches, and the long night
   { id: 'is_the_childs', text: "IS THE CHILD'S, WHO WAS UP FIRST" },
@@ -440,8 +454,10 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
   },
 
   v3_millwright: {
-    subject: 'THE PLOT ON THE STREAM',
-    verbs: ['stays_with_marta', 'is_split', 'goes_to_the_mill'],
+    subject: 'THE FIELD ON THE STREAM',
+    // two plain words and not three: the split that used to sit between
+    // them was the answer nobody paid for. See `v3_millwright` in `cases.ts`.
+    verbs: ['stays_with_marta', 'goes_to_the_mill'],
     objects: [],
     rulings: [
       {
@@ -457,25 +473,6 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
         ],
       },
       {
-        verb: 'is_split',
-        choiceId: 'share_the_stream',
-        against: [
-          {
-            law: 'strangers_earned',
-            how: 'bends',
-            result:
-              'He has the bank by autumn, and the law said a year first. The two who did their year before a share say so to each other.',
-          },
-          {
-            law: 'strangers_turned_away',
-            how: 'breaks',
-            beneficiary: 'the mill-wright',
-            result:
-              'Turned away before dark, the gate says, and by dark he is measuring the bank. The gate is read differently from that week on, by everybody who reaches it.',
-          },
-        ],
-      },
-      {
         verb: 'goes_to_the_mill',
         choiceId: 'plot_to_the_mill',
         against: [
@@ -484,7 +481,7 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
             how: 'breaks',
             beneficiary: 'the mill-wright',
             result:
-              'The best plot on the stream, on the day he arrived, under a law that asks a year of everybody else. The ones who gave their year work it out on their fingers.',
+              'The best field on the stream, on the day he arrived, under a law that asks a year of everybody else. The ones who gave their year work it out on their fingers.',
           },
           {
             law: 'strangers_turned_away',
@@ -494,6 +491,11 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
               'A stranger given the best ground in the place, under a law that turns strangers away before dark. Three more try the fence that summer, and one of them has a trade.',
           },
         ],
+      },
+      {
+        verb: 'wheel_is_the_places',
+        choiceId: 'the_mill_is_ours',
+        needsLaw: 'strangers_welcomed',
       },
       { verb: 'waits_a_year', choiceId: 'a_year_first', needsLaw: 'strangers_earned' },
       { verb: 'gets_a_mill_anyway', choiceId: 'stays_anyway', needsLaw: 'strangers_turned_away' },
@@ -1432,6 +1434,28 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
     ],
   },
 
+  w_ring: {
+    subject: 'WHAT SHE FOUND',
+    verbs: ['goes_round_alike', 'is_hers_first', 'comes_to_the_house'],
+    objects: [],
+    rulings: [
+      { verb: 'goes_round_alike', choiceId: 'share_alike' },
+      { verb: 'is_hers_first', choiceId: 'finder_first' },
+      { verb: 'comes_to_the_house', choiceId: 'the_house_takes' },
+    ],
+  },
+
+  w_hurt: {
+    subject: 'GARRY',
+    verbs: ['is_kept_until_he_walks', 'is_set_and_stood_on', 'is_paid_for_what_he_can_do'],
+    objects: [],
+    rulings: [
+      { verb: 'is_kept_until_he_walks', choiceId: 'the_place_carries' },
+      { verb: 'is_set_and_stood_on', choiceId: 'set_it_and_on' },
+      { verb: 'is_paid_for_what_he_can_do', choiceId: 'what_he_can_still_do' },
+    ],
+  },
+
   w_goats: {
     subject: 'THE HERD',
     verbs: ['is_split_between_houses', 'is_the_boys', 'stays_whole_he_walks_it'],
@@ -1458,7 +1482,7 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
   },
 
   v5_winter_ground: {
-    subject: 'THE FROZEN GROUND',
+    subject: 'THE THREE IN THE LONG HOUSE',
     verbs: ['burns_the_ground_open', 'waits_in_the_barn', 'goes_under_stones'],
     objects: [],
     rulings: [
@@ -1477,7 +1501,7 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
             law: 'dead_at_the_edge',
             how: 'bends',
             result:
-              'Six days of fire is six days, and the law says the same day, and the strip gets them on the sixth. Nobody argues with fire.',
+              'Six days of fire is six days, and the law says the same day, and the water gets them on the sixth. Nobody argues with fire.',
           },
         ],
       },
@@ -1497,7 +1521,7 @@ export const CASE_VERDICTS: Record<string, CaseVerdict> = {
             how: 'breaks',
             beneficiary: 'the three in the barn',
             result:
-              'April is not the same day. The law on the post says the same day, and the barn is walked past every morning by people who wrote it with you.',
+              'April is not the same day. The law on the post says the same day and says the river, and the barn is walked past every morning by people who wrote it with you.',
           },
         ],
       },

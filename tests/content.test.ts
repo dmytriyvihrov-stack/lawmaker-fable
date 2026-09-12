@@ -662,10 +662,6 @@ describe('content validator', () => {
   it('24. the works are buildable, priced by stage, and one of them shelters a winter', () => {
     const ids = WORKS.map((w) => w.id);
     expect(new Set(ids).size).toBe(ids.length);
-    const rest = WORKS.find((w) => w.id === 'rest')!;
-    expect(rest.cost).toBe(0);
-    expect(rest.maxLevel).toBe(0);
-
     for (const w of WORKS) {
       expect(w.name.length, w.id).toBeGreaterThan(0);
       expect(w.line.length, w.id).toBeGreaterThan(10);
@@ -714,7 +710,6 @@ describe('content validator', () => {
   it('25. every work has something to show for itself in the town picture', () => {
     const city = Object.values(RAW_UI).join('\n');
     for (const w of WORKS) {
-      if (w.id === 'rest') continue;
       expect(city.includes(w.id), `${w.id} is invisible in the town`).toBe(true);
     }
   });
@@ -1040,6 +1035,7 @@ describe('content validator', () => {
         [...(ch.cityFlagsOn ?? [])].sort().join(','),
         [...(ch.cityFlagsOff ?? [])].sort().join(','),
         ch.souls ?? 0,
+        ch.soulsExact ?? 0,
         ch.schedule?.caseId ?? '',
         ch.enactLaw ? 'decree' : '',
         ch.setIva ?? '',
@@ -1260,6 +1256,7 @@ describe('content validator', () => {
         [...(ch.cityFlagsOn ?? [])].sort().join(','),
         [...(ch.cityFlagsOff ?? [])].sort().join(','),
         ch.souls ?? 0,
+        ch.soulsExact ?? 0,
         ch.schedule?.caseId ?? '',
         ch.enactLaw ? 'decree' : '',
         ch.setIva ?? '',

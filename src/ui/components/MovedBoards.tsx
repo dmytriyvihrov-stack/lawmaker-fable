@@ -12,6 +12,8 @@ interface Props {
   every?: Effects;
   /** A one time change to the count of souls, in percent of the place. */
   souls?: number;
+  /** And the same in whole people, for a scene that is about one of them. */
+  soulsExact?: number;
   /**
    * The place, so a line about a board it has not opened yet can say so. A
    * promise about the watch, made to a settlement that has not decided it
@@ -97,7 +99,7 @@ function rows(effects: Effects | undefined) {
  * answer at the bench, a building in the year of work. One shape everywhere,
  * so the numbers under a dilemma read the same as the numbers under a law.
  */
-export function MovedBoards({ once, every, souls, place, emptyLine, bare, row, numeric, plain, className }: Props) {
+export function MovedBoards({ once, every, souls, soulsExact, place, emptyLine, bare, row, numeric, plain, className }: Props) {
   const nowRows = rows(once);
   const yearRows = rows(every);
 
@@ -117,7 +119,7 @@ export function MovedBoards({ once, every, souls, place, emptyLine, bare, row, n
   /** Whether the place is big enough to have this board at all yet. */
   const felt = (id: StatId): boolean => place === undefined || isActiveStat(place, id);
 
-  if (nowRows.length === 0 && yearRows.length === 0 && !souls) {
+  if (nowRows.length === 0 && yearRows.length === 0 && !souls && !soulsExact) {
     return emptyLine ? (
       <p className={`text-[12px] leading-snug text-parchment-dim ${className ?? ''}`}>
         {emptyLine}
@@ -213,6 +215,19 @@ export function MovedBoards({ once, every, souls, place, emptyLine, bare, row, n
           whenLabel={plain ? undefined : UI.seal.once}
         />
       )}
+      {/* And the ones counted in people rather than in percent: one man up the
+          road is one man, whether the place is eight or eighty. */}
+      {soulsExact !== undefined && soulsExact !== 0 && (
+        <Row
+          emoji={UI.court.peopleIcon}
+          label={UI.caseScreen.souls}
+          value={signed(soulsExact)}
+          tone={soulsExact > 0 ? 'text-good' : 'text-bad'}
+          width={widthFor(false)}
+          when={plain ? undefined : UI.seal.onceIcon}
+          whenLabel={plain ? undefined : UI.seal.once}
+        />
+      )}
     </ul>
   );
 }
@@ -228,12 +243,14 @@ export function AffectedStats({
   once,
   every,
   souls,
+  soulsExact,
   place,
   className,
 }: {
   once?: Effects;
   every?: Effects;
   souls?: number;
+  soulsExact?: number;
   place?: Place;
   className?: string;
 }) {
@@ -247,7 +264,8 @@ export function AffectedStats({
   const touched = STATS.filter(
     (s) => lean.has(s.id) && (place === undefined || isActiveStat(place, s.id)),
   );
-  if (touched.length === 0 && !souls) return null;
+  const anySouls = (souls ?? 0) !== 0 || (soulsExact ?? 0) !== 0;
+  if (touched.length === 0 && !anySouls) return null;
 
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className ?? ''}`}>
@@ -261,7 +279,7 @@ export function AffectedStats({
           <span className="sr-only">{s.label}</span>
         </span>
       ))}
-      {souls !== undefined && souls !== 0 && (
+      {anySouls && (
         <span
           title={UI.caseScreen.souls}
           className="flex items-center text-[12px] leading-none text-parchment-dim"

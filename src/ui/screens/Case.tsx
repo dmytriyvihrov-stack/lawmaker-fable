@@ -86,7 +86,7 @@ function ChoiceRow({
           cannot carry. Neither says by how much or which way: that stays for
           the aftermath. */}
       <div className="mt-1 flex flex-wrap items-center gap-2 px-1">
-        <AffectedStats once={fullCost(choice)} souls={choice.souls} place={state} />
+        <AffectedStats once={fullCost(choice)} souls={choice.souls} soulsExact={choice.soulsExact} place={state} />
         <ConsequenceHint choice={choice} />
         {/* Every answer on this card is about somebody. This one is about the
             somebody, and a lawmaker weighing it already knows that, so the
@@ -99,7 +99,7 @@ function ChoiceRow({
         )}
       </div>
       {dev && (
-        <MovedBoards className="mt-1 px-1" once={fullCost(choice)} souls={choice.souls} place={state} />
+        <MovedBoards className="mt-1 px-1" once={fullCost(choice)} souls={choice.souls} soulsExact={choice.soulsExact} place={state} />
       )}
     </div>
   );
@@ -451,6 +451,7 @@ export function Case({ state, dev = false, onChoose }: Props) {
                     <AffectedStats
                       once={fullCost(choice, crossed?.how)}
                       souls={choice.souls}
+                      soulsExact={choice.soulsExact}
                       place={state}
                     />
                     <ConsequenceHint choice={choice} against={parsed?.against?.how} />
@@ -472,6 +473,7 @@ export function Case({ state, dev = false, onChoose }: Props) {
                         className="mt-1"
                         once={fullCost(choice, crossed?.how)}
                         souls={choice.souls}
+                        soulsExact={choice.soulsExact}
                         place={state}
                         emptyLine={UI.caseScreen.movesNothing}
                       />

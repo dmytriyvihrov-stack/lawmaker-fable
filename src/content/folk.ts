@@ -98,6 +98,7 @@ export const FOLK: Record<string, FolkLook> = {
     doing: 'building',
   },
   riders: { r: 9, y: 25, hair: 'cap', prop: 'reins', seal: true, cloth: 'rich', doing: 'riding' },
+  fugitive: { r: 9.5, y: 26, hair: 'crop', prop: 'spade', cloth: 'poor', doing: 'digging' },
   charter: {
     r: 9,
     y: 26,
@@ -253,7 +254,7 @@ export const CASE_DOING: Record<string, Doing> = {
   v1_idle_hand: 'mending',
   v2_well: 'playing',
   v3_millwright: 'building',
-  v4_hay: 'riding',
+  v4_hay: 'digging',
   t_town: 'writing',
   wv_hearth: 'tending',
   d1_pies: 'trading',
@@ -279,6 +280,11 @@ export const CASE_DOING: Record<string, Doing> = {
   s2_ballad: 'playing',
   w_race: 'running',
   w_bees: 'tending',
+  /* She found a glade in the first spring, so from the first spring there
+     is somebody out in the beeches with a basket, which is the whole trick
+     of this table happening on the first screen of the game. */
+  w_ring: 'foraging',
+  w_hurt: 'resting',
   w_honey: 'counting',
   w_pot: 'counting',
   w_brother: 'pouring',
@@ -323,6 +329,12 @@ export const CHOICE_DOING: Record<string, Doing> = {
   'v1_idle_hand:his_own_field': 'limping',
   // the one answer that gives him a job rather than a verdict
   'v1_idle_hand:headman_decides': 'building',
+  /* And the same three shapes for the leg: carried, and he sits until the
+     thaw; stood on, and he is on the lane with a stave for the rest of the
+     reign; given something he can still do, and he is doing it. */
+  'w_hurt:the_place_carries': 'resting',
+  'w_hurt:set_it_and_on': 'limping',
+  'w_hurt:what_he_can_still_do': 'counting',
   // a goat in every yard is a goat in every yard, and the boy who walked them
   // has his basket back and the beeches to take it to
   'w_goats:split_them': 'foraging',
@@ -364,7 +376,7 @@ export const CHOICE_DOING: Record<string, Doing> = {
  * leave Marta building.
  */
 export const CHOICE_DOING_OTHERS: Record<string, Record<string, Doing>> = {
-  // her plot went to the mill, and she ate the flour, and did not plant again
+  // her field went to the mill, and she ate the flour, and did not plant again
   'v3_millwright:plot_to_the_mill': { marta: 'resting' },
 };
 
@@ -417,6 +429,7 @@ export const AGES: Record<string, number> = {
   marta: 34,
   millwright: 41,
   riders: 30,
+  fugitive: 27,
   charter: 47,
   miller: 52,
   lever: 36,
@@ -506,7 +519,15 @@ export const STATIONS: Record<Doing, { x: number; y: number; span: number }> = {
   running: { x: 962, y: 442, span: 116 },
   ferrying: { x: 1148, y: 508, span: 52 },
   counting: { x: 1030, y: 362, span: 8 },
-  building: { x: 896, y: 332, span: 14 },
+  /* Beside the mill, on the bank, and not in the middle of the meadow.
+
+     A man whose whole scene is a wheel on the water stood two hundred units
+     uphill of the water with a frame and a hammer, building nothing next to
+     nothing, and a player said so in one word. The mill is drawn from
+     `MILL_SITE` (968, 392) with its wheel at (1048, 468); this is the ground
+     just downhill of the wall, eighty units clear of the middle of the river,
+     which is well outside the sixty unit stroke it is drawn with. */
+  building: { x: 1012, y: 444, span: 14 },
   prowling: { x: 1180, y: 250, span: 76 },
   // the top of the common, above the goats and well clear of the card
   herding: { x: 206, y: 556, span: 46 },

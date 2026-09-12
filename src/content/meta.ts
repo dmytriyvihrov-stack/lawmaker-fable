@@ -90,6 +90,11 @@ export const CHARACTERS: Record<string, { label: string; emoji: string; role?: s
   marta: { label: 'Marta', emoji: '🌱', role: 'who works the strip' },
   millwright: { label: 'Sten', emoji: '⚙️', role: 'the mill-wright' },
   riders: { label: 'The Riders', emoji: '🐎' },
+  /* The man the riders came for. He stood in his own scene for a year with
+     no name and no face, because the scene was filed under the two men on
+     horses: the question is about him, the register remembers him, and the
+     answer is about whether he goes on living here. Asked for by the user. */
+  fugitive: { label: 'Fen', emoji: '🧳', role: 'who came in April' },
   charter: { label: 'Ardin', emoji: '📜', role: "the crown's clerk" },
   treasurer: { label: 'Mott', emoji: '🧮', role: 'the treasurer' },
   healer: { label: 'Sabel', emoji: '🌡️', role: 'the healer' },
@@ -114,14 +119,14 @@ export const CHARACTERS: Record<string, { label: string; emoji: string; role?: s
  * A scene has one person at the door, and the register, the town, the ages and
  * the bonds all read that one person off the log. Marta stood in her own field
  * for the whole of the Mill-Wright's scene and none of the four knew she
- * existed until she came back eight years later, so a reign that took her plot
+ * existed until she came back eight years later, so a reign that took her field
  * moved *his* opinion of you and not hers.
  *
  * Only people who are actually named and actually there. This is not a cast
  * list; it is the second person the ruling lands on.
  */
 export const ALSO_IN_SCENE: Record<string, string[]> = {
-  /* her plot, her stream, and a stranger doing all of the talking */
+  /* her field, her stream, and a stranger doing all of the talking */
   v3_millwright: ['marta'],
   /* the strip the ring came up on is hers, and she is standing behind the child */
   v7_beeches: ['marta'],
@@ -279,6 +284,10 @@ export const CASE_SPOTS: Record<string, { x: number; y: number }> = {
   r4_healer_yes: { x: 546, y: 440 },
   r8_wat_ponies: { x: 966, y: 420 },
   r2_marta_moved: { x: 1000, y: 452 },
+  /* Up at the top of the wood, where the glade is, and down on the ground
+     the year of work was being got out of when the beam came down. */
+  w_ring: { x: 742, y: 408 },
+  w_hurt: { x: 382, y: 410 },
   /* the trials, which are heard where a decree is read */
   tr_accused: { x: 709, y: 417 },
   tr_accused_wrong: { x: 709, y: 417 },

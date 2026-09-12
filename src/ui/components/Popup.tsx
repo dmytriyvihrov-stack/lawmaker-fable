@@ -159,24 +159,57 @@ export function PopupHead({
   note,
   wax = true,
   mark = 'seal',
+  onClose,
+  closeLabel,
 }: {
   kicker: string;
   /** One short line under the kicker: the rule of this screen, said once. */
   note?: string;
   wax?: boolean;
   mark?: 'seal' | 'hammer';
+  /**
+   * The way out, when a card has one.
+   *
+   * In the head, beside what the card is, and not in the body. The shelf drew
+   * its own cross in the top right corner of the content, which put it
+   * directly under the hammer on the band above: two round marks stacked in
+   * one corner, the top one decoration and the bottom one the only way out,
+   * and a player aiming at the way out hit the decoration. Asked for by the
+   * user. It sits left of the mark, which keeps its corner.
+   */
+  onClose?: () => void;
+  closeLabel?: string;
 }) {
   const timber = mark === 'hammer';
   return (
     <div
-      className={`relative border-b px-5 py-2.5 ${
+      className={`relative border-b py-2.5 pl-5 ${wax ? 'pr-[68px]' : 'pr-5'} ${
         timber ? 'border-timber/50 bg-timber/[0.12]' : 'border-seal/50 bg-seal/[0.14]'
       }`}
     >
-      <div className={`${TYPE.label} text-parchment`}>{kicker}</div>
-      {note !== undefined && (
-        <div className={`mt-0.5 ${TYPE.note} leading-snug text-parchment-dim`}>{note}</div>
-      )}
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <div className={`${TYPE.label} text-parchment`}>{kicker}</div>
+          {note !== undefined && (
+            <div className={`mt-0.5 ${TYPE.note} leading-snug text-parchment-dim`}>{note}</div>
+          )}
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={closeLabel}
+            title={closeLabel}
+            className={`-my-1 min-h-[30px] min-w-[30px] shrink-0 rounded-md border leading-none ${
+              timber
+                ? 'border-timber/50 text-timber hover:text-parchment'
+                : 'border-seal/50 text-parchment-dim hover:text-parchment'
+            }`}
+          >
+            <span aria-hidden>✕</span>
+          </button>
+        )}
+      </div>
       {wax && (
         <span aria-hidden className="absolute -top-1 right-5">
           <svg viewBox="-30 -30 60 60" width="40" height="40">

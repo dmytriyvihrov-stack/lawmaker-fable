@@ -37,7 +37,7 @@ export function ConsequenceHint({ choice, against, className = '' }: Props) {
   const layers = [...(choice.cityFlagsOn ?? []), ...(choice.cityFlagsOff ?? [])];
   if (layers.length > 0) notes.push(UI.consequence.changes);
   if (choice.setFlags?.length || choice.setIva) notes.push(UI.consequence.remembered);
-  if (choice.souls !== undefined && choice.souls !== 0) notes.push(UI.consequence.souls);
+  if ((choice.souls ?? 0) !== 0 || (choice.soulsExact ?? 0) !== 0) notes.push(UI.consequence.souls);
   if (choice.exceptionToLaw || against === 'breaks') notes.push(UI.consequence.bent);
   else if (against === 'bends') notes.push(UI.consequence.stretched);
   if (choice.enactLaw) {

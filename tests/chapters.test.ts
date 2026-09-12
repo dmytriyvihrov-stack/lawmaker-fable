@@ -5,6 +5,7 @@ import {
   advance,
   chooseCase,
   chooseLaw,
+  buildEarly,
   chooseWork,
   continueYear,
   newGame,
@@ -53,11 +54,17 @@ function playOn(start: GameState, years: number): GameState {
       continue;
     }
     if (s.phase === 'aftermath') {
+      // the year runs on past the shelf now, so the work is taken during it
+      if (s.lastWorkTurn !== s.turn) {
+        const open = worksFor(s).filter((w) => canBuild(s, w.id));
+        if (open.length > 0) s = buildEarly(s, open[0].id);
+      }
       s = continueYear(s);
       continue;
     }
     if (s.phase === 'works') {
       const open = worksFor(s).filter((w) => canBuild(s, w.id));
+      if (open.length === 0) break;
       s = chooseWork(s, open[0].id);
       continue;
     }

@@ -15,7 +15,7 @@ export const HAND_INSTRUCTIONS: Record<string, string> = {
   'v1_idle_hand:no_work_no_bread': 'Take his loaf back to the cart.',
   'v1_idle_hand:cut_his_share': 'Cut the loaf. They are watching.',
   'v1_idle_hand:headman_decides': 'Give him the broken handles.',
-  'v1_idle_hand:his_own_field': 'Leave him to his field.',
+  'v1_idle_hand:his_own_field': 'Drag the valley until he is out of sight.',
 
   /* four buckets a day, and a queue */
   'v2_well:share_thin': 'Pour it along the cups.',
@@ -37,7 +37,7 @@ export const HAND_INSTRUCTIONS: Record<string, string> = {
   'v6_road_dead:ours_now': 'Carry him in, to the edge.',
   'v6_road_dead:send_word': 'Give the rider the name from his coat.',
   'v6_road_dead:past_the_boundary': 'Carry him past the marker.',
-  'v6_road_dead:edge_same_day': 'Him to the edge. His coat to the pile.',
+  'v6_road_dead:edge_same_day': 'Him to the water. His coat to the pile.',
 };
 
 /** The strip the instruction sits on, and the way back to the words. */

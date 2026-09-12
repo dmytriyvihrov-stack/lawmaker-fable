@@ -26,7 +26,7 @@ export function BuildBadge() {
     <div
       data-dev-chrome
       title={build}
-      className="ruler-corner-chip pointer-events-none fixed bottom-20 right-2 z-40 rounded px-1.5 py-0.5 text-[10px] lowercase tracking-[0.2em] text-parchment-dim opacity-15 hover:opacity-60"
+      className="ruler-corner-chip pointer-events-none fixed bottom-20 right-2 z-[70] rounded px-1.5 py-0.5 text-[10px] lowercase tracking-[0.2em] text-parchment-dim opacity-15 hover:opacity-60"
     >
       build {build}
     </div>
@@ -42,10 +42,14 @@ export function DevToggle({ on, onToggle }: { on: boolean; onToggle: () => void 
     <button
       type="button"
       data-dev-chrome
+      /* The one string in the bundle that belongs to this switch alone, so a
+         player build can be read back and checked rather than trusted. See
+         `tools/build-itch.ps1`. */
+      data-dev-switch
       onClick={onToggle}
       aria-pressed={on}
       title={UI.dev.on}
-      className={`ruler-corner-chip fixed bottom-2 right-2 z-40 rounded px-1.5 py-0.5 text-[10px] lowercase tracking-[0.2em] transition-opacity ${
+      className={`ruler-corner-chip fixed bottom-2 right-2 z-[70] rounded px-1.5 py-0.5 text-[10px] lowercase tracking-[0.2em] transition-opacity ${
         on
           ? 'border border-seal text-seal opacity-90'
           : 'text-parchment-dim opacity-15 hover:opacity-60'
@@ -156,14 +160,24 @@ export function DevBar({
 /**
  * What an answer actually did, in the units the engine used: what the content
  * asked for, and what the place got after the scaling.
+ *
+ * Both columns, always, and that is the point of it. A block that printed only
+ * what the content file says is a block that disagrees with the row of boards
+ * on the card above it, because the row of boards is the scaled figure and is
+ * the one the year will actually pay: a trend written as two in `proposals.ts`
+ * reads `+3` on the tile, and somebody comparing the two under the table has
+ * found a bug that is not there. Reported by the user.
  */
 export function DevEffects({
   raw,
   felt,
+  title,
   extra,
 }: {
   raw?: Effects;
   felt?: Effects;
+  /** What this block is about, when a screen shows more than one of them. */
+  title?: string;
   extra?: [string, string][];
 }) {
   const ids = STATS.map((s) => s.id).filter(
@@ -173,7 +187,9 @@ export function DevEffects({
 
   return (
     <div className="mt-2 rounded-md border border-seal/40 bg-seal/5 p-2">
-      <div className="text-[9px] uppercase tracking-[0.2em] text-seal">{UI.dev.heading}</div>
+      <div className="text-[9px] uppercase tracking-[0.2em] text-seal">
+        {title ? `${UI.dev.heading} · ${title}` : UI.dev.heading}
+      </div>
       {ids.length > 0 && (
         <table className="mt-1 w-full text-[11px]">
           <tbody>

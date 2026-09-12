@@ -67,8 +67,8 @@ export const AFTERMATHS: AftermathScene[] = [
   {
     id: 'am_dead_at_the_edge',
     paragraphs: [
-      '{{law:dead_at_the_edge}} is read out once and never has to be read out again. The strip at the edge is chosen the same afternoon, by two people, quickly, because nobody wants to be the one still standing there choosing it.',
-      'It works. The sowing is never late again and nobody is ever kept from the field. What it also does is make a corner of the place that people walk the long way round, and by the third year there is not a child here who will go near it after dark.',
+      '{{law:dead_at_the_edge}} is read out once and never has to be read out again. Nobody argues with it in the room, and nobody looks at anybody else either.',
+      'It works. The sowing is never late again, there is no ground to keep and no box to build. What it also does is put the place upstream of itself, and by the third year nobody here will drink below the bend, and nobody has said out loud why.',
     ],
   },
   {

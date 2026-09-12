@@ -48,7 +48,7 @@ export function DevEditsPanel({ on }: { on: boolean }) {
   };
 
   return (
-    <div data-dev-chrome className="fixed bottom-11 right-2 z-40">
+    <div data-dev-chrome className="fixed bottom-11 right-2 z-[70]">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
